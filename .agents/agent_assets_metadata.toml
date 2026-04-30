@@ -1,0 +1,32 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "kGdDRW-V_oGR7UBGFGc3W"
+uri = "file://artifacts/snackveda/src/assets/images/hero.png"
+type = "image"
+title = "SnackVeda Hero Image"
+
+[[generated]]
+id = "0W_tBzSBdz1DDLUBSUt78"
+uri = "file://artifacts/snackveda/src/assets/images/about.png"
+type = "image"
+title = "SnackVeda About Image"
+
+[[generated]]
+id = "u2Yibf-MFo9Ev5estTgp9"
+uri = "file://artifacts/snackveda/src/assets/images/category-chips.png"
+type = "image"
+title = "Healthy Chips Category"
+
+[[generated]]
+id = "Pe0G306wKE49NrxdSF7L0"
+uri = "file://artifacts/snackveda/src/assets/images/category-makhana.png"
+type = "image"
+title = "Makhana Category"
+
+[[generated]]
+id = "pTm9sFOy1x5yaspRwPPQh"
+uri = "file://artifacts/snackveda/src/assets/images/category-superpuffs.png"
+type = "image"
+title = "Superpuffs Category"

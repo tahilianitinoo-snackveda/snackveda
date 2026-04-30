@@ -1,10 +1,15 @@
 import express, { type Express } from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import { sessionMiddleware } from "./lib/session";
+import { loadUser } from "./lib/auth";
 
 const app: Express = express();
+
+app.set("trust proxy", 1);
 
 app.use(
   pinoHttp({
@@ -25,10 +30,21 @@ app.use(
     },
   }),
 );
-app.use(cors());
+app.use(cors({ origin: true, credentials: true }));
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(sessionMiddleware);
+app.use(loadUser);
 
 app.use("/api", router);
+
+app.use(
+  (err: Error, _req: express.Request, res: express.Response, next: express.NextFunction) => {
+    logger.error({ err }, "unhandled error");
+    if (res.headersSent) return next(err);
+    res.status(500).json({ message: "Internal server error", code: "INTERNAL_ERROR" });
+  },
+);
 
 export default app;

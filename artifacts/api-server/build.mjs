@@ -100,6 +100,9 @@ async function buildAll() {
       "puppeteer",
       "puppeteer-core",
       "electron",
+      "connect-pg-simple",
+      "express-session",
+      "bcryptjs",
     ],
     sourcemap: "linked",
     plugins: [

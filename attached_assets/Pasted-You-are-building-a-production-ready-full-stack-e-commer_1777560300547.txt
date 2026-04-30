@@ -1,0 +1,732 @@
+You are building a production-ready full-stack e-commerce platform called **SnackVeda** for Narayani Distributors. Build real, working, deployable code. Not a demo.
+
+
+
+TECH STACK
+
+•	Next.js 15 (App Router)
+•	TypeScript
+•	Tailwind CSS
+•	ShadCN UI
+•	Supabase (Auth + DB + Storage)
+•	Prisma ORM
+•	Zustand (cart state)
+•	Resend (email)
+•	Twilio (WhatsApp)
+•	jsPDF + jspdf-autotable (invoices)
+•	Vercel (deployment target)
+
+
+
+DESIGN DIRECTION
+
+Premium modern Indian food brand aesthetic. Rules:
+•	Colors: Primary teal `#0F766E`, accent amber `#F59E0B`, background cream `#FAFAF9`, dark slate `#1E293B`, light gray `#F1F5F9`
+•	Fonts: `Playfair Display` (headings/display) + `Plus Jakarta Sans` (body) — import from Google Fonts in layout.tsx
+•	Feel: Clean, warm, trustworthy — like a premium D2C food brand, NOT a generic template
+•	Mobile-first, fully responsive on all breakpoints
+•	Smooth hover transitions on all interactive elements
+•	Sticky navbar with cart icon and item count badge
+•	NO purple gradients, NO generic AI aesthetics, NO Inter font
+
+
+
+FOLDER STRUCTURE
+
+Create exactly this structure:
+
+src/
+├── app/
+│   ├── layout.tsx                        ← Root layout, fonts, providers
+│   ├── globals.css                       ← CSS variables + Tailwind base
+│   ├── (store)/
+│   │   ├── page.tsx                      ← Home
+│   │   ├── about/page.tsx
+│   │   ├── shop/page.tsx
+│   │   ├── shop/[slug]/page.tsx
+│   │   ├── cart/page.tsx
+│   │   ├── checkout/page.tsx
+│   │   ├── b2b/page.tsx
+│   │   ├── faq/page.tsx
+│   │   └── contact/page.tsx
+│   ├── (auth)/
+│   │   ├── login/page.tsx
+│   │   └── register/page.tsx
+│   ├── (account)/
+│   │   └── account/
+│   │       ├── page.tsx
+│   │       └── orders/[id]/page.tsx
+│   ├── admin/
+│   │   ├── layout.tsx                    ← Admin layout with sidebar
+│   │   ├── page.tsx                      ← Dashboard
+│   │   ├── products/page.tsx
+│   │   ├── customers/page.tsx
+│   │   ├── orders/page.tsx
+│   │   ├── payments/page.tsx
+│   │   └── content/page.tsx
+│   └── api/
+│       ├── auth/register/route.ts
+│       ├── products/route.ts
+│       ├── products/[slug]/route.ts
+│       ├── cart/validate/route.ts
+│       ├── orders/b2c/route.ts
+│       ├── orders/b2b/route.ts
+│       ├── orders/[id]/route.ts
+│       ├── payments/confirm/route.ts
+│       ├── invoices/[orderId]/route.ts
+│       └── admin/
+│           ├── products/route.ts
+│           ├── customers/route.ts
+│           └── orders/route.ts
+├── components/
+│   ├── layout/
+│   │   ├── Navbar.tsx
+│   │   ├── Footer.tsx
+│   │   └── AdminSidebar.tsx
+│   ├── store/
+│   │   ├── ProductCard.tsx
+│   │   ├── ProductGrid.tsx
+│   │   ├── CartDrawer.tsx
+│   │   ├── PriceDisplay.tsx
+│   │   └── DiscountBadge.tsx
+│   └── admin/
+│       ├── StatsCard.tsx
+│       ├── OrderTable.tsx
+│       └── ProductForm.tsx
+├── lib/
+│   ├── supabase/
+│   │   ├── client.ts
+│   │   └── server.ts
+│   ├── prisma.ts
+│   ├── pricing.ts
+│   ├── notifications.ts
+│   └── invoice.ts
+├── hooks/
+│   ├── useCart.ts
+│   ├── useAuth.ts
+│   └── useProducts.ts
+├── store/
+│   └── cartStore.ts
+└── types/
+    └── index.ts
+prisma/
+├── schema.prisma
+└── seed.ts
+
+
+
+
+STEP 1 — INSTALL DEPENDENCIES
+
+npm install @supabase/supabase-js @supabase/ssr
+npm install prisma @prisma/client
+npm install zustand
+npm install resend
+npm install twilio
+npm install jspdf jspdf-autotable
+npm install date-fns
+npm install react-hot-toast
+npm install lucide-react
+npx shadcn@latest init --defaults
+npx shadcn@latest add button card badge dialog dropdown-menu input label select table tabs sheet separator avatar
+
+
+
+
+STEP 2 — ENVIRONMENT VARIABLES
+
+Create `.env.local`:
+
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+DATABASE_URL=your_supabase_pooler_connection_string
+DIRECT_URL=your_supabase_direct_connection_string
+RESEND_API_KEY=your_resend_api_key
+TWILIO_ACCOUNT_SID=your_twilio_account_sid
+TWILIO_AUTH_TOKEN=your_twilio_auth_token
+TWILIO_WHATSAPP_FROM=whatsapp:+14155238886
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+ADMIN_EMAIL=admin@snackveda.com
+
+
+
+
+STEP 3 — PRISMA SCHEMA
+
+`prisma/schema.prisma`:
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum UserRole { b2c_customer b2b_customer super_admin }
+enum CustomerType { retail kirana modern_retail gym pharmacy cafe corporate }
+enum B2bStatus { pending approved rejected }
+enum ProductCategory { healthy_chips makhana superpuffs }
+enum ProductStatus { active inactive out_of_stock }
+enum OrderType { b2c b2b }
+enum OrderStatus { pending confirmed dispatched delivered cancelled }
+enum PaymentMethod { upi bank_transfer payment_link }
+enum PaymentStatus { pending received failed refunded }
+
+model User {
+  id         String    @id @default(uuid())
+  email      String    @unique
+  phone      String?
+  full_name  String
+  role       UserRole
+  is_active  Boolean   @default(true)
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  profile    CustomerProfile?
+  orders     Order[]
+  payments_marked Payment[] @relation("MarkedBy")
+}
+
+model CustomerProfile {
+  id               String       @id @default(uuid())
+  user_id          String       @unique
+  user             User         @relation(fields: [user_id], references: [id])
+  customer_type    CustomerType
+  business_name    String?
+  gst_number       String?
+  business_address String?
+  orders_count     Int          @default(0)
+  b2b_status       B2bStatus?
+  approved_at      DateTime?
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+}
+
+model Product {
+  id                String          @id @default(uuid())
+  name              String
+  slug              String          @unique
+  category          ProductCategory
+  variant           String?
+  b2c_price         Decimal         @db.Decimal(10,2)
+  b2b_price         Decimal         @db.Decimal(10,2)
+  moq               Int
+  carton_qty        Int
+  gst_percent       Decimal         @db.Decimal(5,2)
+  hsn_code          String
+  shelf_life_months Int
+  weight_grams      Int
+  description       String?
+  stock_qty         Int             @default(100)
+  status            ProductStatus   @default(active)
+  sort_order        Int             @default(0)
+  created_at        DateTime        @default(now())
+  updated_at        DateTime        @updatedAt
+  images            ProductImage[]
+  order_items       OrderItem[]
+}
+
+model ProductImage {
+  id         String  @id @default(uuid())
+  product_id String
+  product    Product @relation(fields: [product_id], references: [id])
+  url        String
+  alt_text   String?
+  is_primary Boolean @default(false)
+  sort_order Int     @default(0)
+}
+
+model Address {
+  id         String   @id @default(uuid())
+  user_id    String
+  full_name  String
+  phone      String
+  line1      String
+  line2      String?
+  city       String
+  state      String
+  pincode    String
+  is_default Boolean  @default(false)
+  created_at DateTime @default(now())
+  orders     Order[]
+}
+
+model Order {
+  id                  String      @id @default(uuid())
+  order_number        String      @unique
+  user_id             String
+  user                User        @relation(fields: [user_id], references: [id])
+  order_type          OrderType
+  status              OrderStatus @default(pending)
+  subtotal            Decimal     @db.Decimal(12,2)
+  discount_amount     Decimal     @default(0) @db.Decimal(12,2)
+  discount_percent    Decimal     @default(0) @db.Decimal(5,2)
+  gst_amount          Decimal     @db.Decimal(12,2)
+  shipping_charge     Decimal     @default(0) @db.Decimal(10,2)
+  total_amount        Decimal     @db.Decimal(12,2)
+  shipping_address_id String?
+  address             Address?    @relation(fields: [shipping_address_id], references: [id])
+  notes               String?
+  created_at          DateTime    @default(now())
+  updated_at          DateTime    @updatedAt
+  items               OrderItem[]
+  payment             Payment?
+  invoice             Invoice?
+}
+
+model OrderItem {
+  id          String  @id @default(uuid())
+  order_id    String
+  order       Order   @relation(fields: [order_id], references: [id])
+  product_id  String
+  product     Product @relation(fields: [product_id], references: [id])
+  quantity    Int
+  unit_price  Decimal @db.Decimal(10,2)
+  gst_percent Decimal @db.Decimal(5,2)
+  gst_amount  Decimal @db.Decimal(10,2)
+  line_total  Decimal @db.Decimal(12,2)
+  hsn_code    String
+}
+
+model Payment {
+  id               String        @id @default(uuid())
+  order_id         String        @unique
+  order            Order         @relation(fields: [order_id], references: [id])
+  payment_method   PaymentMethod
+  payment_status   PaymentStatus @default(pending)
+  amount           Decimal       @db.Decimal(12,2)
+  reference_number String?
+  payment_link_url String?
+  paid_at          DateTime?
+  marked_by_id     String?
+  marked_by        User?         @relation("MarkedBy", fields: [marked_by_id], references: [id])
+  created_at       DateTime      @default(now())
+}
+
+model Invoice {
+  id             String   @id @default(uuid())
+  order_id       String   @unique
+  order          Order    @relation(fields: [order_id], references: [id])
+  invoice_number String   @unique
+  pdf_url        String?
+  created_at     DateTime @default(now())
+}
+
+
+
+
+STEP 4 — PRODUCT SEED DATA
+
+`prisma/seed.ts` — seed all 16 products:
+
+**HEALTHY CHIPS (150g jar)** — b2c: 169, b2b: 127, moq: 5, carton: 40, gst: 5, hsn: 21069099, shelf: 6, weight: 150
+1.	Ragi Chips Indie Masala — slug: ragi-chips-indie-masala — desc: "Crispy ragi chips with bold Indian spice blend. High in calcium and fiber, zero guilt."
+2.	Ragi Chips Peri Peri — slug: ragi-chips-peri-peri — desc: "Ragi chips with fiery peri peri kick. The smarter chip that doesn't hold back on flavor."
+3.	Quinoa Chips Peri Peri — slug: quinoa-chips-peri-peri — desc: "Protein-packed quinoa chips with a punchy peri peri seasoning. Snack smarter."
+4.	Quinoa Chips Indie Masala — slug: quinoa-chips-indie-masala — desc: "Quinoa chips with classic Indian masala. Complete protein in every crunch."
+5.	Oats Chips Peri Peri — slug: oats-chips-peri-peri — desc: "Fiber-rich oats chips with spicy peri peri coating. Keeps you full, keeps you happy."
+6.	Oats Chips Indie Masala — slug: oats-chips-indie-masala — desc: "Oats chips with tangy Indian masala. A wholesome twist on your favorite snack."
+7.	Beetroot Chips Cream & Onion — slug: beetroot-chips-cream-onion — desc: "Vibrant beetroot chips with cool cream and onion flavor. Rich in antioxidants."
+8.	Beetroot Chips Indie Masala — slug: beetroot-chips-indie-masala — desc: "Earthy beetroot chips seasoned with bold Indian spices. Color your snack game."
+
+**MAKHANA (76g can)** — b2c: 239, b2b: 169, moq: 5, carton: 16, gst: 5, hsn: 20081920, shelf: 6, weight: 76
+9.	Makhana Cream & Onion — slug: makhana-cream-onion — desc: "Light and crunchy lotus seeds with smooth cream and onion flavor. High protein, low calorie."
+10.	Makhana Tandoori — slug: makhana-tandoori — desc: "Smoky tandoori spiced makhana. The guilt-free snack with serious personality."
+11.	Makhana Peri Peri — slug: makhana-peri-peri — desc: "Fiery peri peri makhana for the bold snacker. All the heat, none of the regret."
+12.	Makhana Pudina — slug: makhana-pudina — desc: "Cool and refreshing pudina makhana. The perfect palate cleanser between meetings."
+13.	Makhana Himalayan Salt — slug: makhana-himalayan-salt — desc: "Simply salted makhana with pure Himalayan pink salt. Clean snacking at its finest."
+
+**SUPERPUFFS (50g pouch)** — b2c: 50, b2b: 41, moq: 35, carton: 35, gst: 5, hsn: 21069099, shelf: 9, weight: 50
+14.	Superpuffs Hot'n Sweet Chilli — slug: superpuffs-hot-sweet-chilli — desc: "Airy puffs with a sweet chilli punch. Dangerously munchable."
+15.	Superpuffs Spanish Tomato — slug: superpuffs-spanish-tomato — desc: "Light puffs bursting with tangy Spanish tomato flavor. A global taste, made better."
+16.	Superpuffs Cream & Onion — slug: superpuffs-cream-onion — desc: "Classic cream and onion puffs, made cleaner and crunchier. Always the crowd favorite."
+
+
+
+STEP 5 — CORE LIBRARY FILES
+
+`src/lib/pricing.ts`
+export function getB2cDiscount(ordersCount: number) {
+  if (ordersCount === 0) return { percent: 15, label: "First Order — 15% Off", color: "amber" }
+  if (ordersCount === 1) return { percent: 10, label: "Loyalty Discount — 10% Off", color: "teal" }
+  return { percent: 5, label: "Regular Discount — 5% Off", color: "slate" }
+}
+
+export function calculateB2cTotal(items: CartItem[], ordersCount: number) {
+  const subtotal = items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0)
+  const { percent } = getB2cDiscount(ordersCount)
+  const discountAmount = parseFloat(((subtotal * percent) / 100).toFixed(2))
+  const afterDiscount = subtotal - discountAmount
+  const gstAmount = parseFloat(((afterDiscount * 5) / 100).toFixed(2))
+  const shippingCharge = afterDiscount >= 999 ? 0 : 60
+  const total = afterDiscount + gstAmount + shippingCharge
+  return { subtotal, discountAmount, discountPercent: percent, gstAmount, shippingCharge, total }
+}
+
+export function calculateB2bTotal(items: CartItem[]) {
+  const subtotal = items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0)
+  if (subtotal < 3000) throw new Error("Minimum B2B order value is ₹3,000")
+  const gstAmount = parseFloat(((subtotal * 5) / 100).toFixed(2))
+  const total = subtotal + gstAmount
+  return { subtotal, gstAmount, total }
+}
+
+export function validateB2bMoq(items: CartItem[]) {
+  const violations = items.filter(i => i.quantity < i.product.moq)
+  if (violations.length > 0) {
+    throw new Error(`MOQ not met for: ${violations.map(v => `${v.product.name} (min ${v.product.moq})`).join(', ')}`)
+  }
+}
+
+
+`src/store/cartStore.ts`
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+
+interface CartItem {
+  product: Product
+  quantity: number
+  unitPrice: number
+}
+
+interface CartStore {
+  items: CartItem[]
+  orderType: 'b2c' | 'b2b'
+  isOpen: boolean
+  addItem: (product: Product, unitPrice: number, qty?: number) => void
+  removeItem: (productId: string) => void
+  updateQty: (productId: string, qty: number) => void
+  clearCart: () => void
+  toggleCart: () => void
+  setOrderType: (type: 'b2c' | 'b2b') => void
+}
+
+export const useCartStore = create<CartStore>()(
+  persist(
+    (set, get) => ({
+      items: [],
+      orderType: 'b2c',
+      isOpen: false,
+      addItem: (product, unitPrice, qty = 1) => {
+        const items = get().items
+        const existing = items.find(i => i.product.id === product.id)
+        if (existing) {
+          set({ items: items.map(i => i.product.id === product.id ? { ...i, quantity: i.quantity + qty } : i) })
+        } else {
+          set({ items: [...items, { product, quantity: qty, unitPrice }] })
+        }
+      },
+      removeItem: (productId) => set({ items: get().items.filter(i => i.product.id !== productId) }),
+      updateQty: (productId, qty) => {
+        if (qty <= 0) { get().removeItem(productId); return }
+        set({ items: get().items.map(i => i.product.id === productId ? { ...i, quantity: qty } : i) })
+      },
+      clearCart: () => set({ items: [] }),
+      toggleCart: () => set({ isOpen: !get().isOpen }),
+      setOrderType: (type) => set({ orderType: type }),
+    }),
+    { name: 'snackveda-cart' }
+  )
+)
+
+
+
+
+STEP 6 — BUILD THESE PAGES (COMPLETE CODE, NO PLACEHOLDERS)
+
+HOME PAGE (`src/app/(store)/page.tsx`)
+Full sections required:
+17.	**Hero** — Full viewport height. Dark overlay. Tagline: *"Where Mindful Eating Meets Joyful Snacking"*. Sub: *"Clean Ingredients. Bold Indian Flavors. Made for Everyday Life."* Two CTAs: `Shop Now` (teal filled) + `Bulk Orders` (amber outlined). Subtle animated gradient background in teal/amber tones.
+18.	**Stats ticker** — Animated horizontal bar: "16+ Flavors  |  3 Categories  |  PAN India Delivery  |  100% Better Ingredients  |  No Preservatives"
+19.	**Categories** — 3 large cards: Healthy Chips / Makhana / Superpuffs. Each with gradient background, product count, tagline, Shop Now link.
+20.	**Featured Products** — Fetch 6 products from `/api/products`. Show ProductCard grid.
+21.	**B2B Banner** — Full-width teal section: "Are You a Business Buyer?" with trade pricing CTA.
+22.	**Why SnackVeda** — 6 feature cards with lucide icons: Better Ingredients / Bold Flavors / Smart Snacking / Better Than Junk / Clean & Convenient / Built for New India.
+23.	**Footer CTA** — "Ready to snack smarter?" with Shop button.
+
+SHOP PAGE (`src/app/(store)/shop/page.tsx`)
+•	Category filter tabs: All / Healthy Chips / Makhana / Superpuffs
+•	Sort: Featured / Price Low-High / Price High-Low
+•	ProductGrid with all products from API
+•	Price shows B2C retail to guests, B2B trade to approved B2B users, with discount badge for logged-in B2C
+
+PRODUCT DETAIL PAGE (`src/app/(store)/shop/[slug]/page.tsx`)
+•	Fetch product by slug from API
+•	Left: large product image area (gradient placeholder with product name if no image)
+•	Right: name, category badge, variant, price with discount, quantity selector, Add to Cart
+•	For B2B users: show MOQ info, quantity must be >= MOQ
+•	Product description, shelf life, weight, HSN code
+•	Related products from same category (3 cards)
+
+CART PAGE (`src/app/(store)/cart/page.tsx`)
+•	Cart items list with +/- quantity controls and remove button
+•	Price summary panel: subtotal, discount (with label), GST 5%, shipping (free above ₹999), total
+•	B2C discount notification banner showing current discount tier
+•	Checkout button
+•	Empty cart state with Shop link
+
+CHECKOUT PAGE (`src/app/(store)/checkout/page.tsx`)
+•	Two-column layout: form (left) + order summary (right)
+•	B2C: shipping address form (name, phone, line1, line2, city, state, pincode)
+•	B2B: business address + GST number display
+•	Payment section:
+  - B2C: UPI payment — show QR placeholder + UPI ID input for reference
+  - B2B: Bank transfer details + UPI + "Request Payment Link" button
+•	Place Order button → creates order via API → shows confirmation with order number
+
+B2B PAGE (`src/app/(store)/b2b/page.tsx`)
+•	Hero: "Grow Your Business with SnackVeda" — teal background, trade-focused copy
+•	6 buyer type cards with icons: Kirana Store / Modern Retail / Gym / Pharmacy / Cafe / Corporate
+•	B2B benefits: Trade Pricing / MOQ System / Advance Payment / Bulk Dispatch / GST Invoice
+•	Product table showing B2B prices for all 16 SKUs
+•	Minimum order: ₹3,000
+•	Registration CTA: "Apply for Trade Account" → links to /register?type=b2b
+•	Contact for bulk inquiry: WhatsApp + email
+
+FAQ PAGE (`src/app/(store)/faq/page.tsx`)
+•	Accordion UI (ShadCN Accordion) for all 10 questions
+•	Questions and answers as specified in brand content section
+
+LOGIN PAGE (`src/app/(auth)/login/page.tsx`)
+•	Centered card layout
+•	Email + password fields
+•	Sign In button
+•	"New customer? Register" link
+•	"B2B buyer? Register for trade account" link
+
+REGISTER PAGE (`src/app/(auth)/register/page.tsx`)
+•	Step 1: Choose account type — B2C Consumer card / B2B Business Buyer card
+•	Step 2 (B2C): Full name, email, phone, password, confirm password
+•	Step 2 (B2B): All B2C fields + Business name, Business type dropdown (kirana/modern_retail/gym/pharmacy/cafe/corporate), GST number, Business address
+•	Submit → POST /api/auth/register → redirect to login or account
+
+MY ACCOUNT (`src/app/(account)/account/page.tsx`)
+•	Tabs: My Orders / Profile / Addresses
+•	Orders tab: table of all orders with order number, date, amount, status badge, View + Invoice buttons
+•	Profile tab: name, email, phone (editable)
+•	B2B users see approval status badge
+
+ADMIN DASHBOARD (`src/app/admin/page.tsx`)
+•	Sidebar with: Dashboard, Products, Customers (B2C / B2B), Orders (B2C / B2B), Payments, Invoices, Content
+•	4 KPI stat cards: Today's Orders, Pending Payments, This Month Revenue, Low Stock Alerts
+•	Recent orders table (last 10)
+•	Pending B2B approvals panel
+
+ADMIN PRODUCTS (`src/app/admin/products/page.tsx`)
+•	Full products table: name, category, B2C price, B2B price, stock, status, actions
+•	Add Product button → opens Sheet/Dialog with full form
+•	Edit inline for stock quantity
+•	Toggle product status active/inactive
+
+ADMIN ORDERS (`src/app/admin/orders/page.tsx`)
+•	Tabs: B2C Orders / B2B Orders
+•	Columns: order number, customer, date, amount, payment status, order status, actions
+•	Status dropdown to update order status
+•	View order → full detail modal with items, payment info, generate invoice button
+
+ADMIN PAYMENTS (`src/app/admin/payments/page.tsx`)
+•	Pending B2B payments list
+•	Per order: Generate Payment Link button, Mark as Received (with UTR/reference input)
+•	Paid payments history
+
+ADMIN CUSTOMERS (`src/app/admin/customers/page.tsx`)
+•	Tabs: B2C Customers / B2B Applications
+•	B2B Applications: pending list with Approve / Reject buttons
+•	Customer detail view with order history
+
+
+
+STEP 7 — API ROUTES (COMPLETE WITH ERROR HANDLING)
+
+`src/app/api/auth/register/route.ts`
+POST — create Supabase auth user, then create Prisma User + CustomerProfile. B2B gets b2b_status: pending. Return user data.
+
+`src/app/api/products/route.ts`
+GET — return all active products with images, ordered by category then sort_order.
+
+`src/app/api/products/[slug]/route.ts`
+GET — return single product by slug with images and related products from same category.
+
+`src/app/api/cart/validate/route.ts`
+POST — validate cart items: check stock availability, enforce MOQ for B2B, enforce min order ₹3000 for B2B.
+
+`src/app/api/orders/b2c/route.ts`
+POST (auth required):
+24.	Get customer profile, read orders_count
+25.	Calculate total with discount ladder
+26.	Create Order + OrderItems in transaction
+27.	Create Payment record (pending)
+28.	Increment orders_count on CustomerProfile
+29.	Send confirmation email via Resend
+30.	Send WhatsApp via Twilio
+31.	Return order with order_number
+
+`src/app/api/orders/b2b/route.ts`
+POST (auth required, b2b_status must be approved):
+32.	Validate MOQ per item
+33.	Validate minimum order ₹3000
+34.	Create Order + OrderItems
+35.	Create Payment record (pending)
+36.	Send admin notification
+37.	Return order
+
+`src/app/api/payments/confirm/route.ts`
+PATCH (admin only):
+38.	Update Payment: status = received, paid_at = now, reference_number
+39.	Update Order status = confirmed
+40.	Generate invoice PDF
+41.	Upload to Supabase Storage
+42.	Create Invoice record
+43.	Send customer notification email + WhatsApp
+44.	Return updated order
+
+`src/app/api/invoices/[orderId]/route.ts`
+GET (auth required): Generate and return invoice PDF for order. Use jsPDF with GST breakdown table.
+
+`src/app/api/admin/customers/route.ts`
+GET: list customers. PATCH: update b2b_status.
+
+`src/app/api/admin/products/route.ts`
+GET/POST/PATCH/DELETE: full CRUD for products (admin only).
+
+`src/app/api/admin/orders/route.ts`
+GET: all orders with filters. PATCH: update order status.
+
+
+
+STEP 8 — MIDDLEWARE
+
+`src/middleware.ts`:
+import { createServerClient } from '@supabase/ssr'
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+
+export async function middleware(request: NextRequest) {
+  const response = NextResponse.next()
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { cookies: { get: (name) => request.cookies.get(name)?.value, set: (name, value, options) => response.cookies.set(name, value, options), remove: (name, options) => response.cookies.delete(name) } }
+  )
+  const { data: { session } } = await supabase.auth.getSession()
+
+  // Protect account routes
+  if (request.nextUrl.pathname.startsWith('/account') && !session) {
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
+
+  // Protect admin routes - check role in DB
+  if (request.nextUrl.pathname.startsWith('/admin')) {
+    if (!session) return NextResponse.redirect(new URL('/login', request.url))
+    // Role check happens in each admin page/API
+  }
+
+  return response
+}
+
+export const config = { matcher: ['/account/:path*', '/admin/:path*', '/checkout'] }
+
+
+
+
+STEP 9 — GLOBAL STYLES & DESIGN TOKENS
+
+`src/app/globals.css`:
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #0F766E;
+  --color-primary-light: #14B8A6;
+  --color-primary-dark: #0D5E57;
+  --color-accent: #F59E0B;
+  --color-accent-light: #FCD34D;
+  --color-bg: #FAFAF9;
+  --color-dark: #1E293B;
+  --color-muted: #64748B;
+  --color-border: #E2E8F0;
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+body { font-family: var(--font-body); background: var(--color-bg); color: var(--color-dark); }
+h1, h2, h3 { font-family: var(--font-display); }
+
+.btn-primary { @apply bg-teal-700 hover:bg-teal-800 text-white font-semibold px-6 py-3 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md; }
+.btn-accent { @apply bg-amber-500 hover:bg-amber-600 text-white font-semibold px-6 py-3 rounded-lg transition-all duration-200; }
+.card-hover { @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1; }
+
+
+`tailwind.config.ts` — extend with brand colors:
+colors: {
+  brand: {
+    teal: '#0F766E',
+    amber: '#F59E0B',
+    cream: '#FAFAF9',
+    dark: '#1E293B',
+  }
+}
+
+
+
+
+STEP 10 — NAVBAR COMPONENT
+
+`src/components/layout/Navbar.tsx` — build with:
+•	Logo: "SnackVeda" in Playfair Display font, teal color
+•	Desktop nav links: Home / Shop / About / B2B / FAQ / Contact
+•	Auth area: Login + Register buttons (guests) OR My Account dropdown (logged in)
+•	Cart icon with item count badge (amber)
+•	Mobile: hamburger menu → full-screen overlay with all links
+•	Sticky on scroll with subtle shadow
+•	Active link indicator
+
+
+
+STEP 11 — FOOTER COMPONENT
+
+`src/components/layout/Footer.tsx`:
+•	4-column layout: Brand (logo + tagline) / Quick Links / Categories / Contact
+•	Bottom bar: copyright, "Operated by Narayani Distributors"
+•	Dark teal background, white text
+•	Social links placeholders
+
+
+
+STEP 12 — PRODUCT CARD COMPONENT
+
+`src/components/store/ProductCard.tsx`:
+•	Rounded card with subtle shadow
+•	Product image area — if no image: gradient placeholder using category color (chips: amber gradient, makhana: teal gradient, superpuffs: orange gradient) with product name centered
+•	Category badge (colored pill)
+•	Product name (Playfair Display)
+•	Variant tag (weight)
+•	Price display: retail price, discount badge if applicable
+•	Add to Cart button — teal, full width
+•	Hover: lift animation, button reveals
+•	Out of stock: disabled state with badge
+
+
+
+FINAL REQUIREMENTS
+
+45.	Every page must be 100% mobile responsive
+46.	All forms must have proper validation with error messages
+47.	All API routes must return proper HTTP status codes
+48.	TypeScript — no `any` types, proper interfaces for everything
+49.	Loading states on all async operations
+50.	Error boundaries on all pages
+51.	Empty states for all lists (no orders, no products, etc.)
+52.	Create `.env.example` with all variable names (no values)
+53.	Create `README.md` with setup instructions
+54.	All prices display with ₹ symbol and 2 decimal places
+55.	All dates display in Indian format (DD MMM YYYY)
+56.	Order numbers format: SV-B2C-2025-0001 and SV-B2B-2025-0001
+
+Build this completely. Ship production-ready code.

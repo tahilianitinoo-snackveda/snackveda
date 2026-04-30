@@ -3,34 +3,990 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: SnackVeda e-commerce API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
-    description: Health operations
+  - name: auth
+  - name: products
+  - name: cart
+  - name: orders
+  - name: payments
+  - name: invoices
+  - name: account
+  - name: admin
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
           content:
             application/json:
+              schema: { $ref: "#/components/schemas/HealthStatus" }
+
+  /auth/register:
+    post:
+      operationId: registerUser
+      tags: [auth]
+      summary: Register a new B2C or B2B user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RegisterBody" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthUser" }
+        "400":
+          description: Invalid
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /auth/login:
+    post:
+      operationId: loginUser
+      tags: [auth]
+      summary: Log in
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginBody" }
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthUser" }
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /auth/logout:
+    post:
+      operationId: logoutUser
+      tags: [auth]
+      summary: Log out
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessResponse" }
+
+  /auth/me:
+    get:
+      operationId: getCurrentUser
+      tags: [auth]
+      summary: Get the current logged-in user (or null)
+      responses:
+        "200":
+          description: Current user info
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CurrentUserResponse" }
+
+  /products:
+    get:
+      operationId: listProducts
+      tags: [products]
+      summary: List active products
+      parameters:
+        - in: query
+          name: category
+          required: false
+          schema: { $ref: "#/components/schemas/ProductCategory" }
+      responses:
+        "200":
+          description: Products
+          content:
+            application/json:
               schema:
-                $ref: "#/components/schemas/HealthStatus"
+                type: array
+                items: { $ref: "#/components/schemas/Product" }
+
+  /products/{slug}:
+    get:
+      operationId: getProductBySlug
+      tags: [products]
+      summary: Get a product by slug, with related products
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Product detail
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProductDetail" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /cart/quote:
+    post:
+      operationId: quoteCart
+      tags: [cart]
+      summary: Calculate full pricing breakdown for a cart (B2C or B2B)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CartQuoteBody" }
+      responses:
+        "200":
+          description: Pricing quote
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CartQuote" }
+        "400":
+          description: Invalid quote
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /orders/b2c:
+    post:
+      operationId: createB2cOrder
+      tags: [orders]
+      summary: Place a B2C order (auth required)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/B2cOrderInput" }
+      responses:
+        "201":
+          description: Order created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Order" }
+        "400":
+          description: Invalid
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /orders/b2b:
+    post:
+      operationId: createB2bOrder
+      tags: [orders]
+      summary: Place a B2B order (auth required, must be approved)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/B2bOrderInput" }
+      responses:
+        "201":
+          description: Order created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Order" }
+        "400":
+          description: Invalid (MOQ or minimum order)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403":
+          description: B2B not approved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /orders/{id}:
+    get:
+      operationId: getOrderById
+      tags: [orders]
+      summary: Get an order by id (auth required)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Order
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Order" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /account/orders:
+    get:
+      operationId: listMyOrders
+      tags: [account]
+      summary: List the current user's orders
+      responses:
+        "200":
+          description: Orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Order" }
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /account/profile:
+    get:
+      operationId: getMyProfile
+      tags: [account]
+      summary: Get the current user's profile
+      responses:
+        "200":
+          description: Profile
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UserProfile" }
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+    patch:
+      operationId: updateMyProfile
+      tags: [account]
+      summary: Update the current user's profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateProfileBody" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UserProfile" }
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /account/addresses:
+    get:
+      operationId: listMyAddresses
+      tags: [account]
+      summary: List my saved addresses
+      responses:
+        "200":
+          description: Addresses
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Address" }
+    post:
+      operationId: createMyAddress
+      tags: [account]
+      summary: Save a new shipping address
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateAddressBody" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Address" }
+
+  /invoices/{orderId}:
+    get:
+      operationId: getInvoiceForOrder
+      tags: [invoices]
+      summary: Get a JSON invoice for a paid order (used for client-side PDF render)
+      parameters:
+        - in: path
+          name: orderId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Invoice
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Invoice" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /admin/dashboard:
+    get:
+      operationId: getAdminDashboard
+      tags: [admin]
+      summary: Admin KPI dashboard
+      responses:
+        "200":
+          description: Dashboard
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminDashboard" }
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /admin/products:
+    get:
+      operationId: listAdminProducts
+      tags: [admin]
+      summary: List all products (admin)
+      responses:
+        "200":
+          description: Products
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Product" }
+    post:
+      operationId: createAdminProduct
+      tags: [admin]
+      summary: Create a product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateProductBody" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Product" }
+
+  /admin/products/{id}:
+    patch:
+      operationId: updateAdminProduct
+      tags: [admin]
+      summary: Update a product (stock, status, prices, etc.)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateProductBody" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Product" }
+
+  /admin/customers:
+    get:
+      operationId: listAdminCustomers
+      tags: [admin]
+      summary: List customers
+      parameters:
+        - in: query
+          name: type
+          required: false
+          schema:
+            type: string
+            enum: [b2c, b2b]
+      responses:
+        "200":
+          description: Customers
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AdminCustomer" }
+
+  /admin/customers/{id}:
+    patch:
+      operationId: updateAdminCustomerStatus
+      tags: [admin]
+      summary: Approve/reject a B2B customer
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateCustomerStatusBody" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminCustomer" }
+
+  /admin/orders:
+    get:
+      operationId: listAdminOrders
+      tags: [admin]
+      summary: List all orders (admin)
+      parameters:
+        - in: query
+          name: orderType
+          required: false
+          schema: { $ref: "#/components/schemas/OrderType" }
+      responses:
+        "200":
+          description: Orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Order" }
+
+  /admin/orders/{id}/status:
+    patch:
+      operationId: updateAdminOrderStatus
+      tags: [admin]
+      summary: Update order status
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateOrderStatusBody" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Order" }
+
+  /admin/payments:
+    get:
+      operationId: listAdminPayments
+      tags: [admin]
+      summary: List payments (pending and received)
+      responses:
+        "200":
+          description: Payments
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AdminPayment" }
+
+  /admin/payments/{orderId}/confirm:
+    patch:
+      operationId: confirmAdminPayment
+      tags: [admin]
+      summary: Mark a payment as received (creates invoice + confirms order)
+      parameters:
+        - in: path
+          name: orderId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ConfirmPaymentBody" }
+      responses:
+        "200":
+          description: Confirmed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Order" }
+
 components:
   schemas:
     HealthStatus:
       type: object
       properties:
-        status:
-          type: string
-      required:
-        - status
+        status: { type: string }
+      required: [status]
 
+    SuccessResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+      required: [success]
+
+    ErrorResponse:
+      type: object
+      properties:
+        error: { type: string }
+      required: [error]
+
+    UserRole:
+      type: string
+      enum: [b2c_customer, b2b_customer, super_admin]
+
+    CustomerType:
+      type: string
+      enum: [retail, kirana, modern_retail, gym, pharmacy, cafe, corporate]
+
+    B2bStatus:
+      type: string
+      enum: [pending, approved, rejected]
+
+    ProductCategory:
+      type: string
+      enum: [healthy_chips, makhana, superpuffs]
+
+    ProductStatus:
+      type: string
+      enum: [active, inactive, out_of_stock]
+
+    OrderType:
+      type: string
+      enum: [b2c, b2b]
+
+    OrderStatus:
+      type: string
+      enum: [pending, confirmed, dispatched, delivered, cancelled]
+
+    PaymentMethod:
+      type: string
+      enum: [upi, bank_transfer, payment_link]
+
+    PaymentStatus:
+      type: string
+      enum: [pending, received, failed, refunded]
+
+    AuthUser:
+      type: object
+      properties:
+        id: { type: string }
+        email: { type: string }
+        fullName: { type: string }
+        role: { $ref: "#/components/schemas/UserRole" }
+        phone: { type: ["string", "null"] }
+        b2bStatus:
+          oneOf:
+            - { $ref: "#/components/schemas/B2bStatus" }
+            - { type: "null" }
+      required: [id, email, fullName, role, phone, b2bStatus]
+
+    CurrentUserResponse:
+      type: object
+      properties:
+        user:
+          oneOf:
+            - { $ref: "#/components/schemas/AuthUser" }
+            - { type: "null" }
+      required: [user]
+
+    RegisterBody:
+      type: object
+      properties:
+        email: { type: string }
+        password: { type: string, minLength: 6 }
+        fullName: { type: string }
+        phone: { type: ["string", "null"] }
+        accountType:
+          type: string
+          enum: [b2c, b2b]
+        businessName: { type: ["string", "null"] }
+        businessType:
+          oneOf:
+            - { $ref: "#/components/schemas/CustomerType" }
+            - { type: "null" }
+        gstNumber: { type: ["string", "null"] }
+        businessAddress: { type: ["string", "null"] }
+      required: [email, password, fullName, accountType]
+
+    LoginBody:
+      type: object
+      properties:
+        email: { type: string }
+        password: { type: string }
+      required: [email, password]
+
+    UserProfile:
+      type: object
+      properties:
+        id: { type: string }
+        email: { type: string }
+        fullName: { type: string }
+        phone: { type: ["string", "null"] }
+        role: { $ref: "#/components/schemas/UserRole" }
+        customerType:
+          oneOf:
+            - { $ref: "#/components/schemas/CustomerType" }
+            - { type: "null" }
+        businessName: { type: ["string", "null"] }
+        gstNumber: { type: ["string", "null"] }
+        businessAddress: { type: ["string", "null"] }
+        b2bStatus:
+          oneOf:
+            - { $ref: "#/components/schemas/B2bStatus" }
+            - { type: "null" }
+        ordersCount: { type: integer }
+      required: [id, email, fullName, phone, role, customerType, businessName, gstNumber, businessAddress, b2bStatus, ordersCount]
+
+    UpdateProfileBody:
+      type: object
+      properties:
+        fullName: { type: string }
+        phone: { type: ["string", "null"] }
+      required: [fullName]
+
+    Address:
+      type: object
+      properties:
+        id: { type: string }
+        fullName: { type: string }
+        phone: { type: string }
+        line1: { type: string }
+        line2: { type: ["string", "null"] }
+        city: { type: string }
+        state: { type: string }
+        pincode: { type: string }
+        isDefault: { type: boolean }
+      required: [id, fullName, phone, line1, line2, city, state, pincode, isDefault]
+
+    CreateAddressBody:
+      type: object
+      properties:
+        fullName: { type: string }
+        phone: { type: string }
+        line1: { type: string }
+        line2: { type: ["string", "null"] }
+        city: { type: string }
+        state: { type: string }
+        pincode: { type: string }
+      required: [fullName, phone, line1, city, state, pincode]
+
+    Product:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        slug: { type: string }
+        category: { $ref: "#/components/schemas/ProductCategory" }
+        variant: { type: ["string", "null"] }
+        b2cPrice: { type: number }
+        b2bPrice: { type: number }
+        moq: { type: integer }
+        cartonQty: { type: integer }
+        gstPercent: { type: number }
+        hsnCode: { type: string }
+        shelfLifeMonths: { type: integer }
+        weightGrams: { type: integer }
+        description: { type: ["string", "null"] }
+        stockQty: { type: integer }
+        status: { $ref: "#/components/schemas/ProductStatus" }
+        sortOrder: { type: integer }
+        imageUrl: { type: ["string", "null"] }
+      required: [id, name, slug, category, variant, b2cPrice, b2bPrice, moq, cartonQty, gstPercent, hsnCode, shelfLifeMonths, weightGrams, description, stockQty, status, sortOrder, imageUrl]
+
+    ProductDetail:
+      type: object
+      properties:
+        product: { $ref: "#/components/schemas/Product" }
+        related:
+          type: array
+          items: { $ref: "#/components/schemas/Product" }
+      required: [product, related]
+
+    CreateProductBody:
+      type: object
+      properties:
+        name: { type: string }
+        slug: { type: string }
+        category: { $ref: "#/components/schemas/ProductCategory" }
+        variant: { type: ["string", "null"] }
+        b2cPrice: { type: number }
+        b2bPrice: { type: number }
+        moq: { type: integer }
+        cartonQty: { type: integer }
+        gstPercent: { type: number }
+        hsnCode: { type: string }
+        shelfLifeMonths: { type: integer }
+        weightGrams: { type: integer }
+        description: { type: ["string", "null"] }
+        stockQty: { type: integer }
+      required: [name, slug, category, b2cPrice, b2bPrice, moq, cartonQty, gstPercent, hsnCode, shelfLifeMonths, weightGrams, stockQty]
+
+    UpdateProductBody:
+      type: object
+      properties:
+        name: { type: ["string", "null"] }
+        b2cPrice: { type: ["number", "null"] }
+        b2bPrice: { type: ["number", "null"] }
+        stockQty: { type: ["integer", "null"] }
+        status:
+          oneOf:
+            - { $ref: "#/components/schemas/ProductStatus" }
+            - { type: "null" }
+        description: { type: ["string", "null"] }
+
+    CartItemInput:
+      type: object
+      properties:
+        productId: { type: string }
+        quantity: { type: integer, minimum: 1 }
+      required: [productId, quantity]
+
+    CartQuoteBody:
+      type: object
+      properties:
+        orderType: { $ref: "#/components/schemas/OrderType" }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/CartItemInput" }
+      required: [orderType, items]
+
+    CartQuoteLine:
+      type: object
+      properties:
+        productId: { type: string }
+        productName: { type: string }
+        slug: { type: string }
+        quantity: { type: integer }
+        unitPrice: { type: number }
+        lineTotal: { type: number }
+        gstPercent: { type: number }
+        moq: { type: integer }
+        moqMet: { type: boolean }
+      required: [productId, productName, slug, quantity, unitPrice, lineTotal, gstPercent, moq, moqMet]
+
+    CartQuote:
+      type: object
+      properties:
+        orderType: { $ref: "#/components/schemas/OrderType" }
+        lines:
+          type: array
+          items: { $ref: "#/components/schemas/CartQuoteLine" }
+        subtotal: { type: number }
+        discountAmount: { type: number }
+        discountPercent: { type: number }
+        discountLabel: { type: ["string", "null"] }
+        gstAmount: { type: number }
+        shippingCharge: { type: number }
+        total: { type: number }
+        meetsMinimumOrder: { type: boolean }
+        minimumOrderValue: { type: number }
+        moqViolations:
+          type: array
+          items: { type: string }
+      required: [orderType, lines, subtotal, discountAmount, discountPercent, discountLabel, gstAmount, shippingCharge, total, meetsMinimumOrder, minimumOrderValue, moqViolations]
+
+    B2cOrderInput:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/CartItemInput" }
+        shippingAddress: { $ref: "#/components/schemas/CreateAddressBody" }
+        paymentMethod: { $ref: "#/components/schemas/PaymentMethod" }
+        paymentReference: { type: ["string", "null"] }
+        notes: { type: ["string", "null"] }
+      required: [items, shippingAddress, paymentMethod]
+
+    B2bOrderInput:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/CartItemInput" }
+        shippingAddress: { $ref: "#/components/schemas/CreateAddressBody" }
+        paymentMethod: { $ref: "#/components/schemas/PaymentMethod" }
+        notes: { type: ["string", "null"] }
+      required: [items, shippingAddress, paymentMethod]
+
+    OrderItemView:
+      type: object
+      properties:
+        id: { type: string }
+        productId: { type: string }
+        productName: { type: string }
+        slug: { type: string }
+        category: { $ref: "#/components/schemas/ProductCategory" }
+        quantity: { type: integer }
+        unitPrice: { type: number }
+        gstPercent: { type: number }
+        gstAmount: { type: number }
+        lineTotal: { type: number }
+        hsnCode: { type: string }
+      required: [id, productId, productName, slug, category, quantity, unitPrice, gstPercent, gstAmount, lineTotal, hsnCode]
+
+    Order:
+      type: object
+      properties:
+        id: { type: string }
+        orderNumber: { type: string }
+        userId: { type: string }
+        customerName: { type: string }
+        customerEmail: { type: string }
+        orderType: { $ref: "#/components/schemas/OrderType" }
+        status: { $ref: "#/components/schemas/OrderStatus" }
+        subtotal: { type: number }
+        discountAmount: { type: number }
+        discountPercent: { type: number }
+        gstAmount: { type: number }
+        shippingCharge: { type: number }
+        totalAmount: { type: number }
+        notes: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/OrderItemView" }
+        shippingAddress:
+          oneOf:
+            - { $ref: "#/components/schemas/Address" }
+            - { type: "null" }
+        payment:
+          oneOf:
+            - { $ref: "#/components/schemas/PaymentView" }
+            - { type: "null" }
+        invoiceNumber: { type: ["string", "null"] }
+      required: [id, orderNumber, userId, customerName, customerEmail, orderType, status, subtotal, discountAmount, discountPercent, gstAmount, shippingCharge, totalAmount, notes, createdAt, items, shippingAddress, payment, invoiceNumber]
+
+    PaymentView:
+      type: object
+      properties:
+        id: { type: string }
+        paymentMethod: { $ref: "#/components/schemas/PaymentMethod" }
+        paymentStatus: { $ref: "#/components/schemas/PaymentStatus" }
+        amount: { type: number }
+        referenceNumber: { type: ["string", "null"] }
+        paidAt: { type: ["string", "null"], format: date-time }
+      required: [id, paymentMethod, paymentStatus, amount, referenceNumber, paidAt]
+
+    Invoice:
+      type: object
+      properties:
+        invoiceNumber: { type: string }
+        order: { $ref: "#/components/schemas/Order" }
+        issuedAt: { type: string, format: date-time }
+        seller:
+          type: object
+          properties:
+            name: { type: string }
+            address: { type: string }
+            gstin: { type: string }
+            email: { type: string }
+          required: [name, address, gstin, email]
+      required: [invoiceNumber, order, issuedAt, seller]
+
+    AdminDashboard:
+      type: object
+      properties:
+        todayOrdersCount: { type: integer }
+        pendingPaymentsCount: { type: integer }
+        thisMonthRevenue: { type: number }
+        lowStockCount: { type: integer }
+        totalCustomers: { type: integer }
+        pendingB2bApplications: { type: integer }
+        recentOrders:
+          type: array
+          items: { $ref: "#/components/schemas/Order" }
+        ordersByCategory:
+          type: array
+          items:
+            type: object
+            properties:
+              category: { $ref: "#/components/schemas/ProductCategory" }
+              quantity: { type: integer }
+              revenue: { type: number }
+            required: [category, quantity, revenue]
+      required: [todayOrdersCount, pendingPaymentsCount, thisMonthRevenue, lowStockCount, totalCustomers, pendingB2bApplications, recentOrders, ordersByCategory]
+
+    AdminCustomer:
+      type: object
+      properties:
+        id: { type: string }
+        email: { type: string }
+        fullName: { type: string }
+        phone: { type: ["string", "null"] }
+        role: { $ref: "#/components/schemas/UserRole" }
+        customerType:
+          oneOf:
+            - { $ref: "#/components/schemas/CustomerType" }
+            - { type: "null" }
+        businessName: { type: ["string", "null"] }
+        gstNumber: { type: ["string", "null"] }
+        businessAddress: { type: ["string", "null"] }
+        b2bStatus:
+          oneOf:
+            - { $ref: "#/components/schemas/B2bStatus" }
+            - { type: "null" }
+        ordersCount: { type: integer }
+        createdAt: { type: string, format: date-time }
+      required: [id, email, fullName, phone, role, customerType, businessName, gstNumber, businessAddress, b2bStatus, ordersCount, createdAt]
+
+    UpdateCustomerStatusBody:
+      type: object
+      properties:
+        b2bStatus: { $ref: "#/components/schemas/B2bStatus" }
+      required: [b2bStatus]
+
+    UpdateOrderStatusBody:
+      type: object
+      properties:
+        status: { $ref: "#/components/schemas/OrderStatus" }
+      required: [status]
+
+    AdminPayment:
+      type: object
+      properties:
+        id: { type: string }
+        orderId: { type: string }
+        orderNumber: { type: string }
+        customerName: { type: string }
+        orderType: { $ref: "#/components/schemas/OrderType" }
+        paymentMethod: { $ref: "#/components/schemas/PaymentMethod" }
+        paymentStatus: { $ref: "#/components/schemas/PaymentStatus" }
+        amount: { type: number }
+        referenceNumber: { type: ["string", "null"] }
+        paidAt: { type: ["string", "null"], format: date-time }
+        createdAt: { type: string, format: date-time }
+      required: [id, orderId, orderNumber, customerName, orderType, paymentMethod, paymentStatus, amount, referenceNumber, paidAt, createdAt]
+
+    ConfirmPaymentBody:
+      type: object
+      properties:
+        referenceNumber: { type: string }
+      required: [referenceNumber]

@@ -117,13 +117,16 @@ type Product = typeof productsTable.$inferSelect;
 let _db: ReturnType<typeof drizzle> | null = null;
 function getDb() {
   if (_db) return _db;
-  const connectionString = process.env.DATABASE_URL!;
-  const client = postgres(connectionString, {
-    ssl: "prefer",
+  // Replace port 6543 (transaction pooler) with 5432 (direct/session pooler)
+  // Direct connections work more reliably with postgres.js
+  const url = (process.env.DATABASE_URL || "").replace(":6543/", ":5432/");
+  const client = postgres(url, {
+    ssl: { rejectUnauthorized: false },
     max: 1,
     idle_timeout: 20,
     connect_timeout: 30,
     prepare: false,
+    onnotice: () => {},
   });
   _db = drizzle(client);
   return _db;
@@ -237,7 +240,7 @@ export const handler: Handler = async (event: HandlerEvent, _context: HandlerCon
         const [row] = await db.select({ count: sql<number>`count(*)::int` }).from(productsTable);
         return ok({ status: "ok", db: !!process.env.DATABASE_URL, jwt: !!process.env.JWT_SECRET, productCount: row?.count ?? 0 });
       } catch (e: any) {
-        return ok({ status: "ok", db: !!process.env.DATABASE_URL, jwt: !!process.env.JWT_SECRET, dbError: e?.message, dbUrl: process.env.DATABASE_URL?.substring(0, 40) + "..." });
+        return ok({ status: "ok", db: !!process.env.DATABASE_URL, jwt: !!process.env.JWT_SECRET, dbError: e?.message, dbCause: e?.cause?.message ?? null, dbUrl: process.env.DATABASE_URL?.substring(0, 40) + "..." });
       }
     }
 

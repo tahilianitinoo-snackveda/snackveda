@@ -230,7 +230,13 @@ export const handler: Handler = async (event: HandlerEvent, _context: HandlerCon
   try {
     // ── HEALTH ──────────────────────────────────────────────────────────────
     if (path === "/health" && method === "GET") {
-      return ok({ status: "ok", db: !!process.env.DATABASE_URL, jwt: !!process.env.JWT_SECRET });
+      try {
+        const db = getDb();
+        const [row] = await db.select({ count: sql<number>`count(*)::int` }).from(productsTable);
+        return ok({ status: "ok", db: !!process.env.DATABASE_URL, jwt: !!process.env.JWT_SECRET, productCount: row?.count ?? 0 });
+      } catch (e: any) {
+        return ok({ status: "ok", db: !!process.env.DATABASE_URL, jwt: !!process.env.JWT_SECRET, dbError: e?.message });
+      }
     }
 
     // ── AUTH ─────────────────────────────────────────────────────────────────

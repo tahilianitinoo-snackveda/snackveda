@@ -3,14 +3,11 @@
   "version": "0.0.0",
   "private": true,
   "dependencies": {
+    "@netlify/functions": "^2.8.2",
     "bcryptjs": "^2.4.3",
-    "cookie-parser": "^1.4.7",
-    "cors": "^2.8.5",
     "drizzle-orm": "^0.45.2",
-    "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.16.0",
-    "serverless-http": "^3.2.0",
     "zod": "^3.25.76"
   }
 }

@@ -1,12 +1,11 @@
 [build]
-  # Build the React frontend
-  command = "pnpm install && pnpm run build:frontend"
+  command = "pnpm install --no-frozen-lockfile && pnpm run build:frontend"
   publish = "artifacts/snackveda/dist/public"
   functions = "netlify/functions"
 
 [build.environment]
   NODE_VERSION = "20"
-  PNPM_VERSION = "9"
+  PNPM_VERSION = "9.15.9"
 
 # Proxy all /api/* requests to the Netlify Function
 [[redirects]]

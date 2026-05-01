@@ -5,8 +5,8 @@ import type { Handler, HandlerEvent, HandlerContext } from "@netlify/functions";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
-import { drizzle } from "drizzle-orm/node-postgres";
-import pg from "pg";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import { pgTable, uuid, text, boolean, timestamp, integer, numeric } from "drizzle-orm/pg-core";
 import { eq, inArray, and, asc, desc, gte, like, sql } from "drizzle-orm";
 
@@ -117,14 +117,13 @@ type Product = typeof productsTable.$inferSelect;
 let _db: ReturnType<typeof drizzle> | null = null;
 function getDb() {
   if (_db) return _db;
-  const pool = new pg.Pool({
-    connectionString: process.env.DATABASE_URL!,
-    ssl: { rejectUnauthorized: false },
-    max: 2,
-    idleTimeoutMillis: 10000,
-    connectionTimeoutMillis: 8000,
+  const client = postgres(process.env.DATABASE_URL!, {
+    ssl: "require",
+    max: 3,
+    idle_timeout: 20,
+    connect_timeout: 10,
   });
-  _db = drizzle(pool);
+  _db = drizzle(client);
   return _db;
 }
 

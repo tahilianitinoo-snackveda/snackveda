@@ -1,6 +1,6 @@
 import { SiteShell } from "@/components/layout/site-shell";
 import { useRoute, Link, useLocation } from "wouter";
-import { useGetProductBySlug } from "@workspace/api-client-react";
+import { useGetProductBySlug, getGetProductBySlugQueryKey } from "@workspace/api-client-react";
 import { useCartStore } from "@/lib/store";
 import { useAuth } from "@/hooks/use-auth";
 import { Price } from "@/components/ui/price";
@@ -20,8 +20,9 @@ export default function ProductDetail() {
 
   const { data: productData, isLoading, error } = useGetProductBySlug(slug, {
     query: {
-      enabled: !!slug
-    }
+      queryKey: getGetProductBySlugQueryKey(slug),
+      enabled: !!slug,
+    },
   });
 
   const product = productData?.product;
@@ -124,8 +125,7 @@ export default function ProductDetail() {
             <div className="flex flex-col">
               <div className="mb-6 flex flex-wrap gap-2">
                 <Badge variant="secondary" className="capitalize text-sm px-3 py-1">{product.category}</Badge>
-                {product.isVegan && <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700 text-sm px-3 py-1">Vegan</Badge>}
-                {!product.isActive && <Badge variant="destructive" className="text-sm px-3 py-1">Out of Stock</Badge>}
+                {(product.status === 'out_of_stock' || product.stockQty === 0) && <Badge variant="destructive" className="text-sm px-3 py-1">Out of Stock</Badge>}
               </div>
 
               <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4 leading-tight">{product.name}</h1>
@@ -177,10 +177,10 @@ export default function ProductDetail() {
                   size="lg" 
                   className="flex-1 h-14 text-lg rounded-full shadow-sm"
                   onClick={handleAddToCart}
-                  disabled={!product.isActive}
+                  disabled={product.status !== 'active' || product.stockQty === 0}
                 >
                   <ShoppingBag className="w-5 h-5 mr-2" />
-                  {product.isActive ? 'Add to Cart' : 'Out of Stock'}
+                  {(product.status === 'active' && product.stockQty > 0) ? 'Add to Cart' : 'Out of Stock'}
                 </Button>
               </div>
 
@@ -200,7 +200,7 @@ export default function ProductDetail() {
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground mb-1">GST Rate</h4>
-                  <p className="font-medium">{product.gstRate}%</p>
+                  <p className="font-medium">{product.gstPercent}%</p>
                 </div>
                 {isB2BApproved && product.moq && (
                   <div className="col-span-2">

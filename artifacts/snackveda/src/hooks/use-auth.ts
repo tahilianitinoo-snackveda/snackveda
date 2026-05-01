@@ -5,6 +5,7 @@ import { useEffect } from "react";
 export function useAuth() {
   const query = useGetCurrentUser({
     query: {
+      queryKey: ["currentUser"],
       retry: false,
       staleTime: 30_000,
     },
@@ -15,12 +16,10 @@ export function useAuth() {
   const user = data ?? null;
 
   useEffect(() => {
-    if (user && user.role === 'b2b_customer' && user.b2bStatus === 'approved') {
-      setOrderType('b2b');
-    } else if (user) {
-      setOrderType('b2c');
+    if (user && user.role === "b2b_customer" && user.b2bStatus === "approved") {
+      setOrderType("b2b");
     } else {
-      setOrderType('b2c');
+      setOrderType("b2c");
     }
   }, [user, setOrderType]);
 
@@ -29,7 +28,7 @@ export function useAuth() {
     isLoading,
     error,
     refetch,
-    isAdmin: user?.role === 'super_admin',
-    isB2BApproved: user?.role === 'b2b_customer' && user.b2bStatus === 'approved',
+    isAdmin: user?.role === "super_admin",
+    isB2BApproved: user?.role === "b2b_customer" && user.b2bStatus === "approved",
   };
 }

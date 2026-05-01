@@ -22,11 +22,11 @@ function PaymentsInner() {
   const [openDialog, setOpenDialog] = useState<string | null>(null);
   const [refNum, setRefNum] = useState("");
 
-  const pending = payments?.filter(p => p.status === 'pending') || [];
-  const paid = payments?.filter(p => p.status === 'paid') || [];
+  const pending = payments?.filter(p => p.paymentStatus === 'pending') || [];
+  const paid = payments?.filter(p => p.paymentStatus === 'received') || [];
 
   const handleConfirm = (id: string) => {
-    confirmPayment.mutate({ id, data: { referenceNumber: refNum || undefined } }, {
+    confirmPayment.mutate({ orderId: id, data: { referenceNumber: refNum || "" } }, {
       onSuccess: () => {
         toast.success("Payment marked as received");
         setOpenDialog(null);

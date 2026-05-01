@@ -170,7 +170,7 @@ router.post("/orders/b2b", requireAuth, async (req, res) => {
     paymentMethod: body.paymentMethod,
     paymentStatus: "pending",
     amount: String(quote.total),
-    referenceNumber: body.paymentReference ?? null,
+    referenceNumber: null,
   });
 
   await db
@@ -184,7 +184,7 @@ router.post("/orders/b2b", requireAuth, async (req, res) => {
 });
 
 router.get("/orders/:id", requireAuth, async (req, res) => {
-  const out = await serializeOrder(req.params.id);
+  const out = await serializeOrder(String(req.params.id));
   if (!out) return res.status(404).json({ message: "Order not found", code: "NOT_FOUND" });
   if (req.user!.role !== "super_admin" && out.user?.id !== req.user!.id) {
     return res.status(403).json({ message: "Not your order", code: "FORBIDDEN" });
@@ -212,7 +212,7 @@ router.get("/account/orders", requireAuth, async (req, res) => {
 });
 
 router.get("/orders/:orderId/invoice", requireAuth, async (req, res) => {
-  const order = await serializeOrder(req.params.orderId);
+  const order = await serializeOrder(String(req.params.orderId));
   if (!order) return res.status(404).json({ message: "Order not found", code: "NOT_FOUND" });
   if (req.user!.role !== "super_admin" && order.user?.id !== req.user!.id) {
     return res.status(403).json({ message: "Not your order", code: "FORBIDDEN" });

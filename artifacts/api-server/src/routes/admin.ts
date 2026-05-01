@@ -9,14 +9,52 @@ import {
   paymentsTable,
 } from "@workspace/db";
 import {
-  CreateAdminProductBody,
-  UpdateAdminProductBody,
   UpdateAdminCustomerStatusBody,
   UpdateAdminOrderStatusBody,
   ConfirmAdminPaymentBody,
 } from "@workspace/api-zod";
+import { z } from "zod";
 import { requireAdmin } from "../lib/auth";
 import { serializeOrder } from "../lib/orderSerializer";
+
+const AdminCreateProductSchema = z.object({
+  name: z.string(),
+  slug: z.string(),
+  category: z.enum(["healthy_chips", "makhana", "superpuffs"]),
+  variant: z.string().nullish(),
+  b2cPrice: z.number(),
+  b2bPrice: z.number(),
+  moq: z.number().default(1),
+  cartonQty: z.number().default(1),
+  gstPercent: z.number().default(5),
+  hsnCode: z.string().default("2106"),
+  shelfLifeMonths: z.number().default(6),
+  weightGrams: z.number().default(60),
+  description: z.string().nullish(),
+  stockQty: z.number().default(100),
+  status: z.enum(["active", "inactive", "out_of_stock"]).default("active"),
+  sortOrder: z.number().default(0),
+  imageUrl: z.string().nullish(),
+});
+
+const AdminUpdateProductSchema = z.object({
+  name: z.string().optional(),
+  variant: z.string().nullish(),
+  b2cPrice: z.number().optional(),
+  b2bPrice: z.number().optional(),
+  moq: z.number().optional(),
+  cartonQty: z.number().optional(),
+  gstPercent: z.number().optional(),
+  hsnCode: z.string().optional(),
+  shelfLifeMonths: z.number().optional(),
+  weightGrams: z.number().optional(),
+  description: z.string().nullish(),
+  stockQty: z.number().optional(),
+  status: z.enum(["active", "inactive", "out_of_stock"]).optional(),
+  sortOrder: z.number().optional(),
+  imageUrl: z.string().nullish(),
+});
+
 
 const router: IRouter = Router();
 router.use(requireAdmin);
@@ -141,7 +179,7 @@ router.get("/admin/products", async (_req, res) => {
 });
 
 router.post("/admin/products", async (req, res) => {
-  const parsed = CreateAdminProductBody.safeParse(req.body);
+  const parsed = AdminCreateProductSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ message: "Invalid product data", code: "VALIDATION_ERROR" });
   }
@@ -172,7 +210,7 @@ router.post("/admin/products", async (req, res) => {
 });
 
 router.patch("/admin/products/:id", async (req, res) => {
-  const parsed = UpdateAdminProductBody.safeParse(req.body);
+  const parsed = AdminUpdateProductSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ message: "Invalid product update", code: "VALIDATION_ERROR" });
   }

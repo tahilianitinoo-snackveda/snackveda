@@ -9,7 +9,7 @@ interface CategoryTabsProps {
 export function CategoryTabs({ activeCategory, onChange }: CategoryTabsProps) {
   const categories: { id: ProductCategory | "all"; label: string }[] = [
     { id: "all", label: "All Products" },
-    { id: "chips", label: "Healthy Chips" },
+    { id: "healthy_chips", label: "Healthy Chips" },
     { id: "makhana", label: "Makhana" },
     { id: "superpuffs", label: "Superpuffs" },
   ];

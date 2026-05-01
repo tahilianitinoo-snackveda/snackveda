@@ -11,7 +11,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { Loader2, Plus, Edit2 } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Price } from "@/components/ui/price";
@@ -20,18 +20,18 @@ import { useState } from "react";
 const productSchema = z.object({
   name: z.string().min(2),
   slug: z.string().min(2),
-  description: z.string(),
-  category: z.enum(["chips", "makhana", "superpuffs"]),
+  description: z.string().optional(),
+  category: z.enum(["healthy_chips", "makhana", "superpuffs"]),
   b2cPrice: z.coerce.number().min(1),
   b2bPrice: z.coerce.number().optional(),
   moq: z.coerce.number().optional(),
   weightGrams: z.coerce.number().min(1),
-  stockQuantity: z.coerce.number().min(0),
-  isActive: z.boolean(),
-  isVegan: z.boolean(),
-  gstRate: z.coerce.number().min(0).max(100),
-  hsnCode: z.string().optional()
+  stockQty: z.coerce.number().min(0),
+  gstPercent: z.coerce.number().min(0).max(100),
+  hsnCode: z.string().optional(),
 });
+
+type ProductFormValues = z.infer<typeof productSchema>;
 
 function ProductsInner() {
   const { data: products, isLoading } = useListAdminProducts();
@@ -40,17 +40,32 @@ function ProductsInner() {
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
 
-  const form = useForm<z.infer<typeof productSchema>>({
+  const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: {
-      name: "", slug: "", description: "", category: "chips", b2cPrice: 0,
-      weightGrams: 0, stockQuantity: 100, isActive: true, isVegan: true,
-      gstRate: 12, hsnCode: "210690"
+      name: "", slug: "", description: "", category: "healthy_chips", b2cPrice: 0,
+      weightGrams: 60, stockQty: 100, gstPercent: 5, hsnCode: "210690"
     }
   });
 
-  const onSubmit = (values: z.infer<typeof productSchema>) => {
-    createProduct.mutate({ data: values }, {
+  const onSubmit = (values: ProductFormValues) => {
+    createProduct.mutate({
+      data: {
+        name: values.name,
+        slug: values.slug,
+        category: values.category,
+        description: values.description ?? null,
+        b2cPrice: values.b2cPrice,
+        b2bPrice: values.b2bPrice ?? values.b2cPrice * 0.8,
+        moq: values.moq ?? 1,
+        cartonQty: 1,
+        weightGrams: values.weightGrams,
+        stockQty: values.stockQty,
+        gstPercent: values.gstPercent,
+        hsnCode: values.hsnCode ?? "210690",
+        shelfLifeMonths: 6,
+      }
+    }, {
       onSuccess: () => {
         toast.success("Product created successfully");
         setIsOpen(false);
@@ -61,12 +76,14 @@ function ProductsInner() {
     });
   };
 
-  const toggleStatus = (id: string, current: boolean) => {
-    updateProduct.mutate({ id, data: { isActive: !current } }, {
+  const toggleStatus = (id: string, currentStatus: string) => {
+    const newStatus = currentStatus === "active" ? "inactive" : "active";
+    updateProduct.mutate({ id, data: { status: newStatus } }, {
       onSuccess: () => {
         toast.success("Status updated");
         queryClient.invalidateQueries({ queryKey: getListAdminProductsQueryKey() });
-      }
+      },
+      onError: (err) => toast.error(err.message || "Failed to update status"),
     });
   };
 
@@ -90,16 +107,16 @@ function ProductsInner() {
                 <FormField control={form.control} name="name" render={({ field }) => (
                   <FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} onChange={e => {
                     field.onChange(e);
-                    if (!form.getValues('slug')) {
-                      form.setValue('slug', e.target.value.toLowerCase().replace(/\s+/g, '-'));
+                    if (!form.getValues("slug")) {
+                      form.setValue("slug", e.target.value.toLowerCase().replace(/\s+/g, "-"));
                     }
-                  }}/></FormControl><FormMessage/></FormItem>
+                  }} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="slug" render={({ field }) => (
-                  <FormItem><FormLabel>Slug</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage/></FormItem>
+                  <FormItem><FormLabel>Slug</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="description" render={({ field }) => (
-                  <FormItem><FormLabel>Description</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage/></FormItem>
+                  <FormItem><FormLabel>Description</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <div className="grid grid-cols-2 gap-4">
                   <FormField control={form.control} name="category" render={({ field }) => (
@@ -107,46 +124,40 @@ function ProductsInner() {
                       <FormLabel>Category</FormLabel>
                       <FormControl>
                         <select className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background" {...field}>
-                          <option value="chips">Chips</option>
+                          <option value="healthy_chips">Healthy Chips</option>
                           <option value="makhana">Makhana</option>
                           <option value="superpuffs">Superpuffs</option>
                         </select>
                       </FormControl>
-                      <FormMessage/>
+                      <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="weightGrams" render={({ field }) => (
-                    <FormItem><FormLabel>Weight (g)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage/></FormItem>
+                    <FormItem><FormLabel>Weight (g)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <FormField control={form.control} name="b2cPrice" render={({ field }) => (
-                    <FormItem><FormLabel>B2C Price (₹)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage/></FormItem>
+                    <FormItem><FormLabel>B2C Price (₹)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
-                  <FormField control={form.control} name="stockQuantity" render={({ field }) => (
-                    <FormItem><FormLabel>Stock Qty</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage/></FormItem>
+                  <FormField control={form.control} name="stockQty" render={({ field }) => (
+                    <FormItem><FormLabel>Stock Qty</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <FormField control={form.control} name="b2bPrice" render={({ field }) => (
-                    <FormItem><FormLabel>B2B Price (₹) (Opt)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage/></FormItem>
+                    <FormItem><FormLabel>B2B Price (₹) (Opt)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                   <FormField control={form.control} name="moq" render={({ field }) => (
-                    <FormItem><FormLabel>MOQ (Opt)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage/></FormItem>
+                    <FormItem><FormLabel>MOQ (Opt)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                 </div>
-                <div className="flex gap-6 py-4">
-                  <FormField control={form.control} name="isActive" render={({ field }) => (
-                    <FormItem className="flex items-center gap-2 space-y-0">
-                      <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                      <FormLabel>Active</FormLabel>
-                    </FormItem>
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField control={form.control} name="gstPercent" render={({ field }) => (
+                    <FormItem><FormLabel>GST %</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
-                  <FormField control={form.control} name="isVegan" render={({ field }) => (
-                    <FormItem className="flex items-center gap-2 space-y-0">
-                      <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                      <FormLabel>Vegan</FormLabel>
-                    </FormItem>
+                  <FormField control={form.control} name="hsnCode" render={({ field }) => (
+                    <FormItem><FormLabel>HSN Code</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                 </div>
                 <Button type="submit" className="w-full" disabled={createProduct.isPending}>
@@ -166,26 +177,31 @@ function ProductsInner() {
               <TableHead>Category</TableHead>
               <TableHead className="text-right">Price</TableHead>
               <TableHead className="text-right">Stock</TableHead>
-              <TableHead className="text-center">Status</TableHead>
+              <TableHead className="text-center">Active</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow><TableCell colSpan={5} className="text-center py-8"><Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" /></TableCell></TableRow>
-            ) : products?.map(p => (
+            ) : products?.map((p) => (
               <TableRow key={p.id}>
                 <TableCell>
                   <div className="font-medium">{p.name}</div>
                   <div className="text-xs text-muted-foreground">{p.weightGrams}g</div>
                 </TableCell>
-                <TableCell className="capitalize text-muted-foreground">{p.category}</TableCell>
+                <TableCell>
+                  <Badge variant="secondary" className="capitalize">{p.category.replace("_", " ")}</Badge>
+                </TableCell>
                 <TableCell className="text-right">
                   <div className="font-medium"><Price amount={p.b2cPrice} /></div>
                   {p.b2bPrice && <div className="text-xs text-amber-600">B2B: <Price amount={p.b2bPrice} /></div>}
                 </TableCell>
-                <TableCell className="text-right">{p.stockQuantity}</TableCell>
+                <TableCell className="text-right">{p.stockQty}</TableCell>
                 <TableCell className="text-center">
-                  <Switch checked={p.isActive} onCheckedChange={() => toggleStatus(p.id, p.isActive)} />
+                  <Switch
+                    checked={p.status === "active"}
+                    onCheckedChange={() => toggleStatus(p.id, p.status)}
+                  />
                 </TableCell>
               </TableRow>
             ))}

@@ -29,7 +29,6 @@ import type {
   ConfirmPaymentBody,
   CreateAddressBody,
   CreateProductBody,
-  CurrentUserResponse,
   ErrorResponse,
   HealthStatus,
   Invoice,
@@ -387,7 +386,7 @@ export const useLogoutUser = <
 };
 
 /**
- * @summary Get the current logged-in user (or null)
+ * @summary Get the current logged-in user profile
  */
 export const getGetCurrentUserUrl = () => {
   return `/api/auth/me`;
@@ -395,8 +394,8 @@ export const getGetCurrentUserUrl = () => {
 
 export const getCurrentUser = async (
   options?: RequestInit,
-): Promise<CurrentUserResponse> => {
-  return customFetch<CurrentUserResponse>(getGetCurrentUserUrl(), {
+): Promise<UserProfile> => {
+  return customFetch<UserProfile>(getGetCurrentUserUrl(), {
     ...options,
     method: "GET",
   });
@@ -438,7 +437,7 @@ export type GetCurrentUserQueryResult = NonNullable<
 export type GetCurrentUserQueryError = ErrorType<unknown>;
 
 /**
- * @summary Get the current logged-in user (or null)
+ * @summary Get the current logged-in user profile
  */
 
 export function useGetCurrentUser<

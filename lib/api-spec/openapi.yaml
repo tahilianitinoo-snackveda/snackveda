@@ -91,13 +91,13 @@ paths:
     get:
       operationId: getCurrentUser
       tags: [auth]
-      summary: Get the current logged-in user (or null)
+      summary: Get the current logged-in user profile
       responses:
         "200":
-          description: Current user info
+          description: Current user profile
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/CurrentUserResponse" }
+              schema: { $ref: "#/components/schemas/UserProfile" }
 
   /products:
     get:

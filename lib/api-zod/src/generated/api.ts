@@ -72,23 +72,34 @@ export const LogoutUserResponse = zod.object({
 });
 
 /**
- * @summary Get the current logged-in user (or null)
+ * @summary Get the current logged-in user profile
  */
 export const GetCurrentUserResponse = zod.object({
-  user: zod.union([
-    zod.object({
-      id: zod.string(),
-      email: zod.string(),
-      fullName: zod.string(),
-      role: zod.enum(["b2c_customer", "b2b_customer", "super_admin"]),
-      phone: zod.string().nullable(),
-      b2bStatus: zod.union([
-        zod.enum(["pending", "approved", "rejected"]),
-        zod.null(),
-      ]),
-    }),
+  id: zod.string(),
+  email: zod.string(),
+  fullName: zod.string(),
+  phone: zod.string().nullable(),
+  role: zod.enum(["b2c_customer", "b2b_customer", "super_admin"]),
+  customerType: zod.union([
+    zod.enum([
+      "retail",
+      "kirana",
+      "modern_retail",
+      "gym",
+      "pharmacy",
+      "cafe",
+      "corporate",
+    ]),
     zod.null(),
   ]),
+  businessName: zod.string().nullable(),
+  gstNumber: zod.string().nullable(),
+  businessAddress: zod.string().nullable(),
+  b2bStatus: zod.union([
+    zod.enum(["pending", "approved", "rejected"]),
+    zod.null(),
+  ]),
+  ordersCount: zod.number(),
 });
 
 /**

@@ -18,7 +18,7 @@ function CustomersInner() {
   const { data: b2bCustomers, isLoading: b2bLoading } = useListAdminCustomers({ type: 'b2b' });
 
   const handleApprove = (id: string, status: 'approved' | 'rejected') => {
-    updateStatus.mutate({ id, data: { status } }, {
+    updateStatus.mutate({ id, data: { b2bStatus: status } }, {
       onSuccess: () => {
         toast.success(`Customer ${status}`);
         queryClient.invalidateQueries({ queryKey: getListAdminCustomersQueryKey({ type: 'b2b' }) });
@@ -59,14 +59,14 @@ function CustomersInner() {
                 ) : b2bCustomers?.map(c => (
                   <TableRow key={c.id}>
                     <TableCell className="font-medium">
-                      {c.b2bCompanyName}
-                      {c.b2bGstNumber && <div className="text-xs font-normal text-muted-foreground font-mono">GST: {c.b2bGstNumber}</div>}
+                      {c.businessName}
+                      {c.gstNumber && <div className="text-xs font-normal text-muted-foreground font-mono">GST: {c.gstNumber}</div>}
                     </TableCell>
                     <TableCell>
-                      {c.name}
-                      <div className="text-xs text-muted-foreground">{c.email} • {c.phone}</div>
+                      {c.fullName}
+                      <div className="text-xs text-muted-foreground">{c.email} &bull; {c.phone}</div>
                     </TableCell>
-                    <TableCell className="capitalize text-muted-foreground">{c.b2bCustomerType?.replace('_', ' ')}</TableCell>
+                    <TableCell className="capitalize text-muted-foreground">{c.customerType?.replace("_", " ")}</TableCell>
                     <TableCell className="text-muted-foreground">{formatDate(c.createdAt)}</TableCell>
                     <TableCell>
                       <Badge variant={c.b2bStatus === 'approved' ? 'outline' : c.b2bStatus === 'rejected' ? 'destructive' : 'secondary'} 
@@ -109,7 +109,7 @@ function CustomersInner() {
                   <TableRow><TableCell colSpan={4} className="text-center py-8"><Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" /></TableCell></TableRow>
                 ) : b2cCustomers?.map(c => (
                   <TableRow key={c.id}>
-                    <TableCell className="font-medium">{c.name}</TableCell>
+                    <TableCell className="font-medium">{c.fullName}</TableCell>
                     <TableCell>
                       {c.email}
                       <div className="text-xs text-muted-foreground">{c.phone}</div>

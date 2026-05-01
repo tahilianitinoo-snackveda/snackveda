@@ -1,12 +1,12 @@
 import { SiteShell } from "@/components/layout/site-shell";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { useRoute, Link } from "wouter";
-import { useGetOrderById, useGetInvoiceForOrder } from "@workspace/api-client-react";
+import { useGetOrderById, getInvoiceForOrder, getGetOrderByIdQueryKey } from "@workspace/api-client-react";
 import { Price } from "@/components/ui/price";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/format";
 import { generateInvoicePdf } from "@/lib/pdf";
-import { ArrowLeft, CheckCircle2, Package, Truck, Receipt, Loader2, Download } from "lucide-react";
+import { ArrowLeft, Package, Truck, Receipt, Loader2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -14,51 +14,45 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 function OrderDetailInner() {
   const [, params] = useRoute("/account/orders/:id");
-  const id = params?.id || "";
+  const id = params?.id ?? "";
 
-  const { data: order, isLoading } = useGetOrderById(id, { query: { enabled: !!id } });
-  const getInvoice = useGetInvoiceForOrder();
+  const { data: order, isLoading } = useGetOrderById(id, {
+    query: { queryKey: getGetOrderByIdQueryKey(id), enabled: !!id },
+  });
   const [downloading, setDownloading] = useState(false);
 
-  const handleDownloadInvoice = () => {
+  const handleDownloadInvoice = async () => {
     setDownloading(true);
-    getInvoice.mutate(
-      { orderId: id },
-      {
-        onSuccess: (data) => {
-          try {
-            generateInvoicePdf(data);
-          } catch (e) {
-            toast.error("Failed to generate PDF");
-          }
-          setDownloading(false);
-        },
-        onError: () => {
-          toast.error("Failed to fetch invoice data");
-          setDownloading(false);
-        }
-      }
-    );
+    try {
+      const invoice = await getInvoiceForOrder(id);
+      generateInvoicePdf(invoice);
+    } catch {
+      toast.error("Failed to fetch invoice data");
+    } finally {
+      setDownloading(false);
+    }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'pending': return <Badge variant="secondary">Pending</Badge>;
-      case 'processing': return <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">Processing</Badge>;
-      case 'shipped': return <Badge variant="outline" className="border-indigo-200 bg-indigo-50 text-indigo-700">Shipped</Badge>;
-      case 'delivered': return <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700">Delivered</Badge>;
-      case 'cancelled': return <Badge variant="destructive">Cancelled</Badge>;
+      case "pending": return <Badge variant="secondary">Pending</Badge>;
+      case "confirmed": return <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">Confirmed</Badge>;
+      case "dispatched": return <Badge variant="outline" className="border-indigo-200 bg-indigo-50 text-indigo-700">Dispatched</Badge>;
+      case "delivered": return <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700">Delivered</Badge>;
+      case "cancelled": return <Badge variant="destructive">Cancelled</Badge>;
       default: return <Badge variant="outline">{status}</Badge>;
     }
   };
 
   const getPaymentStatusBadge = (status: string) => {
     switch (status) {
-      case 'paid': return <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700">Paid</Badge>;
-      case 'failed': return <Badge variant="destructive">Failed</Badge>;
+      case "received": return <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700">Paid</Badge>;
+      case "failed": return <Badge variant="destructive">Failed</Badge>;
       default: return <Badge variant="secondary">Pending</Badge>;
     }
   };
+
+  const paymentReceived = order?.payment?.paymentStatus === "received";
 
   return (
     <SiteShell>
@@ -89,11 +83,12 @@ function OrderDetailInner() {
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 {getStatusBadge(order.status)}
-                {getPaymentStatusBadge(order.paymentStatus)}
-                <Button 
-                  variant="outline" 
+                {getPaymentStatusBadge(order.payment?.paymentStatus ?? "pending")}
+                <Button
+                  variant="outline"
                   onClick={handleDownloadInvoice}
-                  disabled={order.paymentStatus !== 'paid' || downloading}
+                  disabled={!paymentReceived || downloading}
+                  title={!paymentReceived ? "Invoice available after payment is confirmed" : "Download Invoice"}
                 >
                   {downloading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
                   Download Invoice
@@ -112,10 +107,10 @@ function OrderDetailInner() {
                       <div key={item.id} className="flex justify-between items-center py-2 border-b last:border-0 last:pb-0">
                         <div>
                           <p className="font-medium">{item.productName}</p>
-                          <p className="text-sm text-muted-foreground">{item.quantity} × <Price amount={item.unitPrice} /></p>
+                          <p className="text-sm text-muted-foreground">{item.quantity} &times; <Price amount={item.unitPrice} /></p>
                         </div>
                         <div className="font-medium">
-                          <Price amount={item.totalAmount} />
+                          <Price amount={item.lineTotal} />
                         </div>
                       </div>
                     ))}
@@ -123,29 +118,33 @@ function OrderDetailInner() {
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-6">
-                  <div className="bg-card border rounded-2xl p-6 shadow-sm">
-                    <h3 className="font-bold mb-4 flex items-center gap-2 border-b pb-4">
-                      <Truck className="w-5 h-5 text-primary" /> Shipping To
-                    </h3>
-                    <div className="text-sm text-muted-foreground space-y-1">
-                      <p className="font-medium text-foreground">{order.shippingAddress.name}</p>
-                      <p>{order.shippingAddress.line1}</p>
-                      {order.shippingAddress.line2 && <p>{order.shippingAddress.line2}</p>}
-                      <p>{order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.pincode}</p>
-                      <p className="pt-2">Phone: {order.shippingAddress.phone}</p>
+                  {order.shippingAddress && (
+                    <div className="bg-card border rounded-2xl p-6 shadow-sm">
+                      <h3 className="font-bold mb-4 flex items-center gap-2 border-b pb-4">
+                        <Truck className="w-5 h-5 text-primary" /> Shipping To
+                      </h3>
+                      <div className="text-sm text-muted-foreground space-y-1">
+                        <p className="font-medium text-foreground">{order.shippingAddress.fullName}</p>
+                        <p>{order.shippingAddress.line1}</p>
+                        {order.shippingAddress.line2 && <p>{order.shippingAddress.line2}</p>}
+                        <p>{order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.pincode}</p>
+                        <p className="pt-2">Phone: {order.shippingAddress.phone}</p>
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div className="bg-card border rounded-2xl p-6 shadow-sm">
-                    <h3 className="font-bold mb-4 flex items-center gap-2 border-b pb-4">
-                      <Receipt className="w-5 h-5 text-primary" /> Payment Method
-                    </h3>
-                    <div className="text-sm text-muted-foreground space-y-1">
-                      <p className="font-medium text-foreground capitalize">{order.paymentMethod.replace('_', ' ')}</p>
-                      {order.paymentReference && <p>Ref: {order.paymentReference}</p>}
-                      {order.orderType === 'b2b' && <p className="mt-2 text-xs bg-muted p-2 rounded">B2B Trade Order</p>}
+                  )}
+
+                  {order.payment && (
+                    <div className="bg-card border rounded-2xl p-6 shadow-sm">
+                      <h3 className="font-bold mb-4 flex items-center gap-2 border-b pb-4">
+                        <Receipt className="w-5 h-5 text-primary" /> Payment Method
+                      </h3>
+                      <div className="text-sm text-muted-foreground space-y-1">
+                        <p className="font-medium text-foreground capitalize">{order.payment.paymentMethod.replace("_", " ")}</p>
+                        {order.payment.referenceNumber && <p>Ref: {order.payment.referenceNumber}</p>}
+                        {order.orderType === "b2b" && <p className="mt-2 text-xs bg-muted p-2 rounded">B2B Trade Order</p>}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
 
@@ -165,11 +164,11 @@ function OrderDetailInner() {
                     )}
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Total GST</span>
-                      <Price amount={order.taxTotal} />
+                      <Price amount={order.gstAmount} />
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Shipping</span>
-                      {order.shippingAmount > 0 ? <Price amount={order.shippingAmount} /> : <span className="text-green-600">Free</span>}
+                      {order.shippingCharge > 0 ? <Price amount={order.shippingCharge} /> : <span className="text-green-600">Free</span>}
                     </div>
                     <div className="pt-3 border-t flex justify-between font-bold text-lg">
                       <span>Total</span>

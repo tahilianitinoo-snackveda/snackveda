@@ -1,7 +1,7 @@
 import { SiteShell } from "@/components/layout/site-shell";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { useAuth } from "@/hooks/use-auth";
-import { useListMyOrders, useGetMyProfile, useLogoutUser, useGetInvoiceForOrder } from "@workspace/api-client-react";
+import { useListMyOrders, useGetMyProfile, useLogoutUser, getInvoiceForOrder } from "@workspace/api-client-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -20,46 +20,36 @@ function AccountInner() {
   const { data: profile, isLoading: profileLoading } = useGetMyProfile();
   const { data: orders, isLoading: ordersLoading } = useListMyOrders();
   const logout = useLogoutUser();
-  const getInvoice = useGetInvoiceForOrder();
 
   const [downloadingOrderId, setDownloadingOrderId] = useState<string | null>(null);
 
-  const handleDownloadInvoice = (orderId: string) => {
+  const handleDownloadInvoice = async (orderId: string) => {
     setDownloadingOrderId(orderId);
-    getInvoice.mutate(
-      { orderId },
-      {
-        onSuccess: (data) => {
-          try {
-            generateInvoicePdf(data);
-          } catch (e) {
-            toast.error("Failed to generate PDF");
-          }
-          setDownloadingOrderId(null);
-        },
-        onError: () => {
-          toast.error("Failed to fetch invoice data");
-          setDownloadingOrderId(null);
-        }
-      }
-    );
+    try {
+      const invoice = await getInvoiceForOrder(orderId);
+      generateInvoicePdf(invoice);
+    } catch {
+      toast.error("Failed to fetch invoice data");
+    } finally {
+      setDownloadingOrderId(null);
+    }
   };
 
   const handleLogout = () => {
     logout.mutate(undefined, {
       onSuccess: () => {
         window.location.href = "/login";
-      }
+      },
     });
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'pending': return <Badge variant="secondary">Pending</Badge>;
-      case 'processing': return <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">Processing</Badge>;
-      case 'shipped': return <Badge variant="outline" className="border-indigo-200 bg-indigo-50 text-indigo-700">Shipped</Badge>;
-      case 'delivered': return <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700">Delivered</Badge>;
-      case 'cancelled': return <Badge variant="destructive">Cancelled</Badge>;
+      case "pending": return <Badge variant="secondary">Pending</Badge>;
+      case "confirmed": return <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">Confirmed</Badge>;
+      case "dispatched": return <Badge variant="outline" className="border-indigo-200 bg-indigo-50 text-indigo-700">Dispatched</Badge>;
+      case "delivered": return <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700">Delivered</Badge>;
+      case "cancelled": return <Badge variant="destructive">Cancelled</Badge>;
       default: return <Badge variant="outline">{status}</Badge>;
     }
   };
@@ -70,10 +60,10 @@ function AccountInner() {
         <div className="container mx-auto px-4 flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
             <h1 className="text-3xl font-serif font-bold mb-2">My Account</h1>
-            <p className="text-muted-foreground">Welcome back, {user?.name}</p>
+            <p className="text-muted-foreground">Welcome back, {user?.fullName}</p>
           </div>
           <div className="flex items-center gap-3">
-            {user?.role === 'b2b_customer' && (
+            {user?.role === "b2b_customer" && (
               <Badge variant={isB2BApproved ? "outline" : "secondary"} className={isB2BApproved ? "border-green-200 bg-green-50 text-green-700" : ""}>
                 {isB2BApproved ? "B2B Approved" : "B2B Pending"}
               </Badge>
@@ -98,11 +88,11 @@ function AccountInner() {
 
           <TabsContent value="orders" className="space-y-6">
             <h2 className="text-2xl font-serif font-bold">Order History</h2>
-            
+
             {ordersLoading ? (
               <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>
             ) : !orders || orders.length === 0 ? (
-              <EmptyState 
+              <EmptyState
                 icon={<Package className="w-12 h-12" />}
                 title="No orders yet"
                 description="You haven't placed any orders with us."
@@ -122,29 +112,32 @@ function AccountInner() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {orders.map((order) => (
-                      <TableRow key={order.id}>
-                        <TableCell className="font-medium">{order.orderNumber}</TableCell>
-                        <TableCell>{formatDate(order.createdAt)}</TableCell>
-                        <TableCell>{getStatusBadge(order.status)}</TableCell>
-                        <TableCell><Price amount={order.totalAmount} className="font-medium" /></TableCell>
-                        <TableCell className="text-right space-x-2">
-                          <Button variant="ghost" size="sm" asChild>
-                            <Link href={`/account/orders/${order.id}`}>View</Link>
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => handleDownloadInvoice(order.id)}
-                            disabled={order.paymentStatus !== 'paid' || downloadingOrderId === order.id}
-                            title={order.paymentStatus !== 'paid' ? "Invoice available after payment" : "Download Invoice"}
-                          >
-                            {downloadingOrderId === order.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
-                            Invoice
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {orders.map((order) => {
+                      const paymentReceived = order.payment?.paymentStatus === "received";
+                      return (
+                        <TableRow key={order.id}>
+                          <TableCell className="font-medium">{order.orderNumber}</TableCell>
+                          <TableCell>{formatDate(order.createdAt)}</TableCell>
+                          <TableCell>{getStatusBadge(order.status)}</TableCell>
+                          <TableCell><Price amount={order.totalAmount} className="font-medium" /></TableCell>
+                          <TableCell className="text-right space-x-2">
+                            <Button variant="ghost" size="sm" asChild>
+                              <Link href={`/account/orders/${order.id}`}>View</Link>
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDownloadInvoice(order.id)}
+                              disabled={!paymentReceived || downloadingOrderId === order.id}
+                              title={!paymentReceived ? "Invoice available after payment is confirmed" : "Download Invoice"}
+                            >
+                              {downloadingOrderId === order.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
+                              Invoice
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
@@ -153,7 +146,7 @@ function AccountInner() {
 
           <TabsContent value="profile" className="space-y-6">
             <h2 className="text-2xl font-serif font-bold">Profile Details</h2>
-            
+
             {profileLoading ? (
               <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>
             ) : profile ? (
@@ -164,7 +157,7 @@ function AccountInner() {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Full Name</p>
-                    <p className="font-medium">{profile.name}</p>
+                    <p className="font-medium">{profile.fullName}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Email</p>
@@ -172,26 +165,26 @@ function AccountInner() {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Phone</p>
-                    <p className="font-medium">{profile.phone}</p>
+                    <p className="font-medium">{profile.phone ?? "N/A"}</p>
                   </div>
                 </div>
 
-                {user?.role === 'b2b_customer' && (
+                {user?.role === "b2b_customer" && (
                   <div className="bg-card border rounded-xl p-6 shadow-sm space-y-4">
                     <div className="flex items-center gap-3 border-b pb-4 mb-4 text-lg font-medium">
                       <MapPin className="w-5 h-5 text-primary" /> Business Information
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">Company Name</p>
-                      <p className="font-medium">{profile.b2bCompanyName || 'N/A'}</p>
+                      <p className="font-medium">{profile.businessName ?? "N/A"}</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">Business Type</p>
-                      <p className="font-medium capitalize">{profile.b2bCustomerType?.replace('_', ' ') || 'N/A'}</p>
+                      <p className="font-medium capitalize">{profile.customerType?.replace("_", " ") ?? "N/A"}</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">GST Number</p>
-                      <p className="font-medium">{profile.b2bGstNumber || 'N/A'}</p>
+                      <p className="font-medium">{profile.gstNumber ?? "N/A"}</p>
                     </div>
                   </div>
                 )}

@@ -12,21 +12,21 @@ import { formatDate } from "@/lib/format";
 
 function DashboardInner() {
   const { data: dashboard, isLoading } = useGetAdminDashboard();
-  const { data: pendingB2b } = useListAdminCustomers({ type: 'b2b' });
+  const { data: pendingB2b } = useListAdminCustomers({ type: "b2b" });
   const updateStatus = useUpdateAdminCustomerStatus();
   const queryClient = useQueryClient();
 
-  const handleApprove = (id: string, status: 'approved' | 'rejected') => {
-    updateStatus.mutate({ id, data: { status } }, {
+  const handleApprove = (id: string, status: "approved" | "rejected") => {
+    updateStatus.mutate({ id, data: { b2bStatus: status } }, {
       onSuccess: () => {
         toast.success(`Customer ${status}`);
-        queryClient.invalidateQueries({ queryKey: ['/api/admin/customers'] });
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/customers"] });
       },
-      onError: (err) => toast.error(err.message || "Failed to update status")
+      onError: (err) => toast.error(err.message || "Failed to update status"),
     });
   };
 
-  const pendingList = pendingB2b?.filter(c => c.b2bStatus === 'pending') || [];
+  const pendingList = pendingB2b?.filter((c) => c.b2bStatus === "pending") || [];
 
   if (isLoading || !dashboard) {
     return (
@@ -46,20 +46,20 @@ function DashboardInner() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium">Revenue (This Month)</CardTitle>
             <IndianRupee className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold"><Price amount={dashboard.totalRevenue} /></div>
+            <div className="text-2xl font-bold"><Price amount={dashboard.thisMonthRevenue} /></div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Orders</CardTitle>
+            <CardTitle className="text-sm font-medium">Orders Today</CardTitle>
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{dashboard.totalOrders}</div>
+            <div className="text-2xl font-bold">{dashboard.todayOrdersCount}</div>
           </CardContent>
         </Card>
         <Card>
@@ -73,11 +73,11 @@ function DashboardInner() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Products</CardTitle>
+            <CardTitle className="text-sm font-medium">Low Stock Items</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{dashboard.totalProducts}</div>
+            <div className="text-2xl font-bold">{dashboard.lowStockCount}</div>
           </CardContent>
         </Card>
       </div>
@@ -95,8 +95,8 @@ function DashboardInner() {
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                     <XAxis dataKey="category" axisLine={false} tickLine={false} className="capitalize" />
                     <YAxis axisLine={false} tickLine={false} />
-                    <Tooltip cursor={{ fill: 'transparent' }} />
-                    <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                    <Tooltip cursor={{ fill: "transparent" }} />
+                    <Bar dataKey="quantity" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -119,19 +119,19 @@ function DashboardInner() {
                 <div className="text-center py-8 text-muted-foreground text-sm">No pending approvals.</div>
               ) : (
                 <div className="space-y-4">
-                  {pendingList.map(c => (
+                  {pendingList.map((c) => (
                     <div key={c.id} className="p-4 border rounded-xl bg-muted/30">
-                      <div className="font-bold text-sm mb-1">{c.b2bCompanyName}</div>
+                      <div className="font-bold text-sm mb-1">{c.businessName}</div>
                       <div className="text-xs text-muted-foreground mb-3">
-                        {c.name} • {c.b2bCustomerType}
-                        <br/>
+                        {c.fullName} &bull; {c.customerType}
+                        <br />
                         {formatDate(c.createdAt)}
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" className="flex-1" onClick={() => handleApprove(c.id, 'approved')}>
+                        <Button size="sm" className="flex-1" onClick={() => handleApprove(c.id, "approved")}>
                           <Check className="w-4 h-4 mr-1" /> Approve
                         </Button>
-                        <Button size="sm" variant="outline" className="flex-1 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleApprove(c.id, 'rejected')}>
+                        <Button size="sm" variant="outline" className="flex-1 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleApprove(c.id, "rejected")}>
                           <X className="w-4 h-4 mr-1" /> Reject
                         </Button>
                       </div>

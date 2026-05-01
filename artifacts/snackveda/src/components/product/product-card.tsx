@@ -98,7 +98,7 @@ export function ProductCard({ product }: ProductCardProps) {
           <Button 
             size="sm" 
             onClick={handleAddToCart}
-            disabled={!product.isActive}
+            disabled={product.status !== "active" || product.stockQty === 0}
             className="rounded-full"
           >
             Add to Cart

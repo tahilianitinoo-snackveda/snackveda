@@ -48,7 +48,7 @@ function CheckoutInner() {
         }
       }, {
         onSuccess: (data) => {
-          if (data.b2bViolations) setB2bViolations(data.b2bViolations);
+          if (data.moqViolations) setB2bViolations(data.moqViolations);
         }
       });
     }
@@ -87,7 +87,7 @@ function CheckoutInner() {
         data: {
           items: orderItems,
           shippingAddress: {
-            name: values.shippingName,
+            fullName: values.shippingName,
             phone: values.shippingPhone,
             line1: values.shippingAddressLine1,
             line2: values.shippingAddressLine2,
@@ -114,7 +114,7 @@ function CheckoutInner() {
         data: {
           items: orderItems,
           shippingAddress: {
-            name: values.shippingName,
+            fullName: values.shippingName,
             phone: values.shippingPhone,
             line1: values.shippingAddressLine1,
             line2: values.shippingAddressLine2,
@@ -122,6 +122,7 @@ function CheckoutInner() {
             state: values.shippingState,
             pincode: values.shippingPincode
           },
+          paymentMethod: values.paymentMethod as "upi" | "bank_transfer" | "payment_link",
           paymentReference: values.paymentReference
         }
       }, {

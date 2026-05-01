@@ -1,17 +1,26 @@
 import { Router, type IRouter } from "express";
 import { eq, desc } from "drizzle-orm";
 import { db, usersTable, addressesTable } from "@workspace/db";
-import { UpdateMyProfileBody, CreateMyAddressBody } from "@workspace/api-zod";
+import { CreateMyAddressBody } from "@workspace/api-zod";
 import { profileUser, requireAuth } from "../lib/auth";
+import { z } from "zod";
 
 const router: IRouter = Router();
+
+const UpdateProfileBodyLocal = z.object({
+  fullName: z.string(),
+  phone: z.string().nullish(),
+  businessName: z.string().nullish(),
+  gstNumber: z.string().nullish(),
+  businessAddress: z.string().nullish(),
+});
 
 router.get("/account/me", requireAuth, (req, res) => {
   res.json(profileUser(req.user!));
 });
 
 router.patch("/account/me", requireAuth, async (req, res) => {
-  const parsed = UpdateMyProfileBody.safeParse(req.body);
+  const parsed = UpdateProfileBodyLocal.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ message: "Invalid profile data", code: "VALIDATION_ERROR" });
   }
@@ -68,7 +77,7 @@ router.post("/account/addresses", requireAuth, async (req, res) => {
       city: body.city,
       state: body.state,
       pincode: body.pincode,
-      isDefault: body.isDefault ?? false,
+      isDefault: false,
     })
     .returning();
   res.status(201).json({

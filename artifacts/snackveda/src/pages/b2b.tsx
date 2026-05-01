@@ -17,10 +17,10 @@ export default function B2B() {
         <div className="container mx-auto px-4 max-w-4xl">
           <h1 className="text-4xl md:text-6xl font-serif font-bold mb-6">Grow Your Business with SnackVeda</h1>
           <p className="text-lg md:text-xl text-primary-foreground/90 mb-10">
-            Premium snacks, competitive trade pricing, and dedicated support for modern retail partners.
+            Premium snacks, competitive wholesale pricing, and dedicated support for modern retail partners.
           </p>
           <Button size="lg" variant="secondary" className="rounded-full px-10 h-14 text-lg" asChild>
-            <Link href="/register?type=b2b">Apply for Trade Account</Link>
+            <Link href="/register?type=b2b">Apply for Wholesale Account</Link>
           </Button>
         </div>
       </section>
@@ -63,7 +63,7 @@ export default function B2B() {
           
           <div className="grid md:grid-cols-5 gap-6 divide-y md:divide-y-0 md:divide-x divide-border max-w-6xl mx-auto">
             {[
-              { title: "Trade Pricing", icon: TrendingUp, desc: "Attractive margins for your business." },
+              { title: "Wholesale Pricing", icon: TrendingUp, desc: "Attractive margins for your business." },
               { title: "MOQ System", icon: Package, desc: "Flexible case-wise ordering." },
               { title: "Advance Payment", icon: FileText, desc: "Simple bank transfer & UPI options." },
               { title: "Bulk Dispatch", icon: Truck, desc: "Fast, secure nationwide shipping." },

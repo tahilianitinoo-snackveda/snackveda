@@ -55,7 +55,7 @@ export default function Contact() {
 
         <div className="bg-muted rounded-2xl p-8 md:p-12 text-center">
           <h2 className="text-2xl font-serif font-bold mb-4">Looking to stock SnackVeda?</h2>
-          <p className="text-muted-foreground mb-8 max-w-xl mx-auto">We offer competitive trade pricing and dedicated support for our retail partners across India.</p>
+          <p className="text-muted-foreground mb-8 max-w-xl mx-auto">We offer competitive wholesale pricing and dedicated support for our retail partners across India.</p>
           <Button size="lg" className="rounded-full" asChild>
             <a href="/b2b">Explore B2B Opportunities</a>
           </Button>

@@ -8,10 +8,64 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ProductCard } from "@/components/product/product-card";
 import { ProductGrid } from "@/components/product/product-grid";
-import { Minus, Plus, ShoppingBag, ArrowLeft, Info } from "lucide-react";
+import { Minus, Plus, ShoppingBag, ArrowLeft, Info, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+
+// Image gallery component with thumbnail strip
+function ProductImageGallery({ product, getCategoryGradient }: { product: any; getCategoryGradient: (c: string) => string }) {
+  const images = product.images?.length > 0 ? product.images : (product.imageUrl ? [{ id: "main", url: product.imageUrl, altText: product.name, isPrimary: true }] : []);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const active = images[activeIdx];
+
+  if (images.length === 0) {
+    return (
+      <div className={`aspect-square rounded-3xl overflow-hidden bg-muted border bg-gradient-to-br ${getCategoryGradient(product.category)} flex items-center justify-center p-12 text-center`}>
+        <span className="font-serif text-4xl md:text-5xl font-bold text-white drop-shadow-lg leading-tight">{product.name}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {/* Main image */}
+      <div className="aspect-square rounded-3xl overflow-hidden bg-muted border relative group">
+        <img src={active.url} alt={active.altText || product.name} className="w-full h-full object-cover" />
+        {images.length > 1 && (
+          <>
+            <button
+              onClick={() => setActiveIdx((activeIdx - 1 + images.length) % images.length)}
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setActiveIdx((activeIdx + 1) % images.length)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </>
+        )}
+      </div>
+      {/* Thumbnails */}
+      {images.length > 1 && (
+        <div className="flex gap-2">
+          {images.map((img: any, i: number) => (
+            <button
+              key={img.id}
+              onClick={() => setActiveIdx(i)}
+              className={`w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${i === activeIdx ? "border-primary shadow-sm" : "border-transparent opacity-60 hover:opacity-100"}`}
+            >
+              <img src={img.url} alt={img.altText || ""} className="w-full h-full object-cover" />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function ProductDetail() {
   const [, params] = useRoute("/shop/:slug");
@@ -114,14 +168,8 @@ export default function ProductDetail() {
         ) : (
           <div className="grid md:grid-cols-2 gap-12 mb-24">
             {/* Image Gallery */}
-            <div className="aspect-square rounded-3xl overflow-hidden bg-muted border sticky top-24">
-              {product.imageUrl ? (
-                <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
-              ) : (
-                <div className={`w-full h-full bg-gradient-to-br ${getCategoryGradient(product.category)} flex items-center justify-center p-12 text-center`}>
-                  <span className="font-serif text-4xl md:text-5xl font-bold text-white drop-shadow-lg leading-tight">{product.name}</span>
-                </div>
-              )}
+            <div className="sticky top-24">
+              <ProductImageGallery product={product} getCategoryGradient={getCategoryGradient} />
             </div>
 
             {/* Product Info */}

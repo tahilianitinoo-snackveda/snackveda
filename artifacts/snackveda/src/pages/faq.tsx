@@ -25,7 +25,7 @@ export default function FAQ() {
     },
     {
       q: "How can I become a B2B partner or retailer?",
-      a: "We'd love to partner with you! Please visit our B2B page to view our wholesale terms and apply for a trade account. Once approved, you'll get access to special pricing and bulk ordering."
+      a: "We'd love to partner with you! Please visit our B2B page to view our wholesale terms and apply for a wholesale account. Once approved, you'll get access to special pricing and bulk ordering."
     },
     {
       q: "What is your return policy?",

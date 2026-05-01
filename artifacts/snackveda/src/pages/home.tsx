@@ -150,7 +150,7 @@ export default function Home() {
         <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="max-w-2xl text-center md:text-left">
             <h2 className="text-3xl font-serif font-bold mb-4">Stock SnackVeda in Your Store</h2>
-            <p className="text-primary-foreground/90 text-lg">Partner with us to bring premium, healthy snacking to your customers. Enjoy trade pricing, dedicated support, and easy ordering.</p>
+            <p className="text-primary-foreground/90 text-lg">Partner with us to bring premium, healthy snacking to your customers. Enjoy wholesale pricing, dedicated support, and easy ordering.</p>
           </div>
           <Button size="lg" variant="secondary" className="shrink-0 rounded-full px-8" asChild>
             <Link href="/b2b">Become a Retailer</Link>

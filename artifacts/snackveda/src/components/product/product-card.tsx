@@ -15,31 +15,34 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   const addItem = useCartStore((state) => state.addItem);
   const { user } = useAuth();
-  
-  // Calculate B2C discount correctly using the ladder (15/10/5%)
+
+  const isB2B = user?.role === "b2b_customer" && user.b2bStatus === "approved";
   const ordersCount = user?.ordersCount ?? 0;
-  const discountPercent = user?.role === 'b2c_customer'
+
+  // B2C discount ladder — applied on top of b2cPrice
+  const discountPercent = !isB2B && user?.role === "b2c_customer"
     ? ordersCount === 0 ? 15 : ordersCount === 1 ? 10 : 5
     : 0;
-  const isB2B = user?.role === 'b2b_customer' && user.b2bStatus === 'approved';
-  
-  const displayPrice = isB2B && product.b2bPrice 
-    ? product.b2bPrice 
+
+  // B2B users pay b2bPrice, B2C users pay b2cPrice (with discount if applicable)
+  const unitPrice = isB2B
+    ? product.b2bPrice
     : product.b2cPrice * (1 - discountPercent / 100);
 
-  const originalPrice = product.b2cPrice;
   const showStrikethrough = discountPercent > 0 && !isB2B && !!user;
 
   const handleAddToCart = () => {
+    // B2B: start at MOQ, must be multiple of MOQ
+    const defaultQty = isB2B ? (product.moq ?? 5) : 1;
     addItem({
       productId: product.id,
       name: product.name,
       slug: product.slug,
       category: product.category,
       weightGrams: product.weightGrams,
-      imageUrl: product.imageUrl,
-      unitPrice: displayPrice,
-      quantity: isB2B && product.moq ? product.moq : 1,
+      imageUrl: product.imageUrl ?? null,
+      unitPrice,
+      quantity: defaultQty,
       moq: product.moq ?? 1,
     });
     toast.success(`${product.name} added to cart`);
@@ -47,23 +50,25 @@ export function ProductCard({ product }: ProductCardProps) {
 
   const getCategoryGradient = (category: string) => {
     switch (category) {
-      case 'healthy_chips': return 'from-amber-200 to-amber-500';
-      case 'makhana': return 'from-teal-200 to-teal-500';
-      case 'superpuffs': return 'from-orange-200 to-orange-500';
-      default: return 'from-gray-200 to-gray-500';
+      case "healthy_chips": return "from-amber-200 to-amber-500";
+      case "makhana": return "from-teal-200 to-teal-500";
+      case "superpuffs": return "from-orange-200 to-orange-500";
+      default: return "from-gray-200 to-gray-500";
     }
   };
 
+  const isOutOfStock = product.status !== "active" || product.stockQty === 0;
+
   return (
-    <motion.div 
+    <motion.div
       whileHover={{ y: -4 }}
       className="group relative flex flex-col bg-card rounded-xl overflow-hidden border shadow-sm hover:shadow-md transition-all"
     >
       <Link href={`/shop/${product.slug}`} className="block relative aspect-square overflow-hidden bg-muted">
         {product.imageUrl ? (
-          <img 
-            src={product.imageUrl} 
-            alt={product.name} 
+          <img
+            src={product.imageUrl}
+            alt={product.name}
             className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
           />
         ) : (
@@ -71,13 +76,18 @@ export function ProductCard({ product }: ProductCardProps) {
             <span className="font-serif text-2xl font-bold text-white drop-shadow-md">{product.name}</span>
           </div>
         )}
-        {(product.status === "out_of_stock" || product.stockQty === 0) && (
+        {isOutOfStock && (
           <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center">
             <Badge variant="secondary">Out of Stock</Badge>
           </div>
         )}
+        {isB2B && (
+          <div className="absolute top-2 left-2">
+            <Badge className="bg-amber-500 text-white text-[10px]">Wholesale</Badge>
+          </div>
+        )}
       </Link>
-      
+
       <div className="p-4 flex flex-col flex-1">
         <div className="flex items-start justify-between gap-2 mb-2">
           <Link href={`/shop/${product.slug}`} className="font-medium hover:text-primary transition-colors line-clamp-2 flex-1">
@@ -85,23 +95,29 @@ export function ProductCard({ product }: ProductCardProps) {
           </Link>
           <Badge variant="outline" className="shrink-0 text-xs text-muted-foreground">{product.weightGrams}g</Badge>
         </div>
-        
+
         <div className="mt-auto pt-4 flex items-center justify-between">
           <div className="flex flex-col">
             {showStrikethrough && (
               <span className="text-xs text-muted-foreground line-through">
-                <Price amount={originalPrice} />
+                <Price amount={product.b2cPrice} />
               </span>
             )}
-            <Price amount={displayPrice} className="font-semibold text-lg" />
-            {isB2B && product.moq && (
-              <span className="text-[10px] text-muted-foreground uppercase">MOQ: {product.moq}</span>
+            <div className="flex items-baseline gap-1">
+              <Price amount={unitPrice} className="font-semibold text-lg" />
+              <span className="text-[10px] text-muted-foreground">excl. GST</span>
+            </div>
+            {isB2B && (
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wide">MOQ: {product.moq}</span>
+            )}
+            {discountPercent > 0 && !isB2B && !!user && (
+              <span className="text-[10px] text-green-600 font-medium">{discountPercent}% off</span>
             )}
           </div>
-          <Button 
-            size="sm" 
+          <Button
+            size="sm"
             onClick={handleAddToCart}
-            disabled={product.status !== "active" || product.stockQty === 0}
+            disabled={isOutOfStock}
             className="rounded-full"
           >
             Add to Cart

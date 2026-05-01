@@ -110,6 +110,16 @@ const invoicesTable = pgTable("invoices", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+const productImagesTable = pgTable("product_images", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  productId: uuid("product_id").notNull(),
+  url: text("url").notNull(),
+  altText: text("alt_text"),
+  isPrimary: boolean("is_primary").notNull().default(false),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 type User = typeof usersTable.$inferSelect;
 type Product = typeof productsTable.$inferSelect;
 
@@ -155,8 +165,13 @@ const err = (msg: string, code: string, status: number) => ok({ message: msg, co
 function profileUser(u: User) {
   return { id: u.id, email: u.email, fullName: u.fullName, phone: u.phone, role: u.role, b2bStatus: u.b2bStatus, customerType: u.customerType, businessName: u.businessName, gstNumber: u.gstNumber, businessAddress: u.businessAddress, ordersCount: u.ordersCount };
 }
-function serializeProduct(p: typeof productsTable.$inferSelect) {
-  return { id: p.id, name: p.name, slug: p.slug, category: p.category, variant: p.variant, b2cPrice: Number(p.b2cPrice), b2bPrice: Number(p.b2bPrice), moq: p.moq, cartonQty: p.cartonQty, gstPercent: Number(p.gstPercent), hsnCode: p.hsnCode, shelfLifeMonths: p.shelfLifeMonths, weightGrams: p.weightGrams, description: p.description, stockQty: p.stockQty, status: p.status, sortOrder: p.sortOrder, imageUrl: p.imageUrl };
+async function getProductImages(productId: string) {
+  const db = getDb();
+  const images = await db.select().from(productImagesTable).where(eq(productImagesTable.productId, productId)).orderBy(asc(productImagesTable.sortOrder));
+  return images.map(i => ({ id: i.id, url: i.url, altText: i.altText, isPrimary: i.isPrimary, sortOrder: i.sortOrder }));
+}
+function serializeProduct(p: typeof productsTable.$inferSelect, images?: any[]) {
+  return { id: p.id, name: p.name, slug: p.slug, category: p.category, variant: p.variant, b2cPrice: Number(p.b2cPrice), b2bPrice: Number(p.b2bPrice), moq: p.moq, cartonQty: p.cartonQty, gstPercent: Number(p.gstPercent), hsnCode: p.hsnCode, shelfLifeMonths: p.shelfLifeMonths, weightGrams: p.weightGrams, description: p.description, stockQty: p.stockQty, status: p.status, sortOrder: p.sortOrder, imageUrl: p.imageUrl, images: images ?? [] };
 }
 
 // ─── PRICING ──────────────────────────────────────────────────────────────────
@@ -170,7 +185,8 @@ function computeQuote(items: {productId:string;quantity:number}[], products: Pro
     const lineSubtotal = +(unitPrice * qty).toFixed(2);
     const gstPct = Number(p.gstPercent);
     const lineGst = +(lineSubtotal * gstPct / 100).toFixed(2);
-    lines.push({ productId: p.id, name: p.name, slug: p.slug, category: p.category, quantity: qty, unitPrice, gstPercent: gstPct, lineSubtotal, lineGst, lineTotal: +(lineSubtotal + lineGst).toFixed(2), moq: p.moq, meetsMoq: orderType === "b2b" ? qty >= p.moq : true });
+    const meetsMoq = orderType === "b2b" ? (qty >= p.moq && qty % p.moq === 0) : true;
+    lines.push({ productId: p.id, name: p.name, slug: p.slug, category: p.category, quantity: qty, unitPrice, gstPercent: gstPct, lineSubtotal, lineGst, lineTotal: +(lineSubtotal + lineGst).toFixed(2), moq: p.moq, meetsMoq });
   }
   const subtotal = +lines.reduce((s,l) => s + l.lineSubtotal, 0).toFixed(2);
   let discountPercent = 0, discountLabel = "No discount";
@@ -187,7 +203,7 @@ function computeQuote(items: {productId:string;quantity:number}[], products: Pro
     : +lines.reduce((s,l) => { const r = subtotal > 0 ? l.lineSubtotal/subtotal : 0; return s + afterDiscount*r*l.gstPercent/100; }, 0).toFixed(2);
   const shippingCharge = orderType === "b2c" ? (afterDiscount >= 999 ? 0 : 60) : 0;
   const total = +(afterDiscount + gstAmount + shippingCharge).toFixed(2);
-  return { orderType, lines, subtotal, discountAmount, discountPercent, discountLabel, gstAmount, shippingCharge, total, meetsMinimumOrder: orderType === "b2b" ? subtotal >= 3000 : true, minimumOrderValue: orderType === "b2b" ? 3000 : 0, moqViolations: orderType === "b2b" ? lines.filter(l => !l.meetsMoq).map(l => `${l.name} requires min ${l.moq} units (you have ${l.quantity}).`) : [] };
+  return { orderType, lines, subtotal, discountAmount, discountPercent, discountLabel, gstAmount, shippingCharge, total, meetsMinimumOrder: orderType === "b2b" ? subtotal >= 5000 : true, minimumOrderValue: orderType === "b2b" ? 5000 : 0, moqViolations: orderType === "b2b" ? lines.filter(l => !l.meetsMoq).map(l => `${l.name} requires quantity in multiples of ${l.moq} (you have ${l.quantity}).`) : [] };
 }
 
 async function generateOrderNumber(type: "b2c"|"b2b") {
@@ -291,7 +307,9 @@ export const handler: Handler = async (event: HandlerEvent, _context: HandlerCon
       const [p] = await db.select().from(productsTable).where(eq(productsTable.slug, productSlugMatch[1])).limit(1);
       if (!p) return err("Product not found", "NOT_FOUND", 404);
       const related = await db.select().from(productsTable).where(and(eq(productsTable.category, p.category), eq(productsTable.status, "active"))).orderBy(asc(productsTable.sortOrder)).limit(4);
-      return ok({ product: serializeProduct(p), related: related.filter(r => r.id !== p.id).slice(0,3).map(serializeProduct) });
+      const images = await getProductImages(p.id);
+      const relatedWithImages = await Promise.all(related.filter(r => r.id !== p.id).slice(0,3).map(async r => serializeProduct(r, await getProductImages(r.id))));
+      return ok({ product: serializeProduct(p, images), related: relatedWithImages });
     }
 
     // ── CART QUOTE ───────────────────────────────────────────────────────────
@@ -300,7 +318,7 @@ export const handler: Handler = async (event: HandlerEvent, _context: HandlerCon
       if (!b.success) return err("Invalid quote request", "VALIDATION_ERROR", 400);
       const { items, orderType } = b.data;
       const user = await getUser(authHeader);
-      if (!items.length) return ok({ orderType, lines: [], subtotal: 0, discountAmount: 0, discountPercent: 0, discountLabel: "No items", gstAmount: 0, shippingCharge: 0, total: 0, meetsMinimumOrder: orderType === "b2c", minimumOrderValue: orderType === "b2b" ? 3000 : 0, moqViolations: [] });
+      if (!items.length) return ok({ orderType, lines: [], subtotal: 0, discountAmount: 0, discountPercent: 0, discountLabel: "No items", gstAmount: 0, shippingCharge: 0, total: 0, meetsMinimumOrder: orderType === "b2c", minimumOrderValue: orderType === "b2b" ? 5000 : 0, moqViolations: [] });
       const db = getDb();
       const products = await db.select().from(productsTable).where(inArray(productsTable.id, items.map(i => i.productId)));
       return ok(computeQuote(items, products, orderType, user));
@@ -442,7 +460,49 @@ export const handler: Handler = async (event: HandlerEvent, _context: HandlerCon
         if (update.b2bPrice !== undefined) update.b2bPrice = String(update.b2bPrice);
         const [row] = await db.update(productsTable).set(update).where(eq(productsTable.id, adminProductMatch[1])).returning();
         if (!row) return err("Product not found", "NOT_FOUND", 404);
-        return ok(serializeProduct(row));
+        const images = await getProductImages(row.id);
+        return ok(serializeProduct(row, images));
+      }
+
+      // Product images — GET all images for a product
+      const adminProductImagesMatch = path.match(/^\/admin\/products\/([^/]+)\/images$/);
+      if (adminProductImagesMatch && method === "GET") {
+        const images = await getProductImages(adminProductImagesMatch[1]);
+        return ok(images);
+      }
+      // Product images — POST add image
+      if (adminProductImagesMatch && method === "POST") {
+        const b = z.object({ url: z.string().url(), altText: z.string().nullish(), isPrimary: z.boolean().default(false), sortOrder: z.number().default(0) }).safeParse(parsedBody);
+        if (!b.success) return err("Invalid image data", "VALIDATION_ERROR", 400);
+        const productId = adminProductImagesMatch[1];
+        // Max 4 images per product
+        const existing = await getProductImages(productId);
+        if (existing.length >= 4) return err("Maximum 4 images allowed per product", "MAX_IMAGES", 400);
+        // If isPrimary, unset others
+        if (b.data.isPrimary) {
+          await db.update(productImagesTable).set({ isPrimary: false }).where(eq(productImagesTable.productId, productId));
+          // Also update main imageUrl on product
+          await db.update(productsTable).set({ imageUrl: b.data.url }).where(eq(productsTable.id, productId));
+        }
+        const [img] = await db.insert(productImagesTable).values({ productId, url: b.data.url, altText: b.data.altText ?? null, isPrimary: b.data.isPrimary, sortOrder: b.data.sortOrder }).returning();
+        return ok({ id: img.id, url: img.url, altText: img.altText, isPrimary: img.isPrimary, sortOrder: img.sortOrder }, 201);
+      }
+      // Product images — DELETE single image
+      const adminImageDeleteMatch = path.match(/^\/admin\/products\/([^/]+)\/images\/([^/]+)$/);
+      if (adminImageDeleteMatch && method === "DELETE") {
+        const [deleted] = await db.delete(productImagesTable).where(and(eq(productImagesTable.id, adminImageDeleteMatch[2]), eq(productImagesTable.productId, adminImageDeleteMatch[1]))).returning();
+        if (!deleted) return err("Image not found", "NOT_FOUND", 404);
+        // If we deleted the primary, set the first remaining as primary
+        if (deleted.isPrimary) {
+          const remaining = await getProductImages(adminImageDeleteMatch[1]);
+          if (remaining.length > 0) {
+            await db.update(productImagesTable).set({ isPrimary: true }).where(eq(productImagesTable.id, remaining[0].id));
+            await db.update(productsTable).set({ imageUrl: remaining[0].url }).where(eq(productsTable.id, adminImageDeleteMatch[1]));
+          } else {
+            await db.update(productsTable).set({ imageUrl: null }).where(eq(productsTable.id, adminImageDeleteMatch[1]));
+          }
+        }
+        return ok({ deleted: true });
       }
       if (path === "/admin/customers" && method === "GET") {
         const rows = await db.select().from(usersTable).where(params.role ? eq(usersTable.role, params.role) : undefined).orderBy(desc(usersTable.createdAt));

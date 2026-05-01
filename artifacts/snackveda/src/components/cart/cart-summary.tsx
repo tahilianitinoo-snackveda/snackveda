@@ -48,7 +48,7 @@ export function CartSummary() {
       ) : q ? (
         <div className="space-y-4">
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Subtotal</span>
+            <span className="text-muted-foreground">Subtotal <span className="text-[10px]">(excl. GST)</span></span>
             <Price amount={q.subtotal} />
           </div>
           
@@ -74,6 +74,13 @@ export function CartSummary() {
             <Price amount={q.total} />
           </div>
           
+          {orderType === 'b2b' && !q.meetsMinimumOrder && (
+            <div className="mt-2 p-3 bg-amber-50 text-amber-700 text-sm rounded-md flex gap-2">
+              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+              <span>Minimum wholesale order is ₹5,000. Current: <Price amount={q.subtotal} className="inline font-semibold" /></span>
+            </div>
+          )}
+
           {orderType === 'b2b' && q.moqViolations && q.moqViolations.length > 0 && (
             <div className="mt-4 p-3 bg-destructive/10 text-destructive text-sm rounded-md flex gap-2">
               <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
@@ -92,7 +99,7 @@ export function CartSummary() {
             <Button 
               className="w-full" 
               size="lg" 
-              disabled={orderType === 'b2b' && q.moqViolations && q.moqViolations.length > 0}
+              disabled={orderType === 'b2b' && (!q.meetsMinimumOrder || (q.moqViolations && q.moqViolations.length > 0))}
               asChild
             >
               <Link href="/checkout">

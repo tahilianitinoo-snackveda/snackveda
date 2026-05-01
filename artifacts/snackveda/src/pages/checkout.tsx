@@ -219,15 +219,29 @@ function CheckoutInner() {
                   
                   {orderType === 'b2c' ? (
                     <div className="space-y-6 bg-card border rounded-2xl p-6">
-                      <p className="text-muted-foreground text-sm">Please scan the QR code to pay via any UPI app (GPay, PhonePe, Paytm). Enter the UTR/Reference number below after payment.</p>
+                      <p className="text-muted-foreground text-sm">Please scan the QR code or use the UPI ID below to pay via any UPI app (GPay, PhonePe, Paytm). Enter the UTR/Reference number after payment.</p>
                       
                       <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
-                        <div className="w-48 h-48 bg-gradient-to-br from-primary/20 to-accent/20 rounded-xl border-2 border-primary/20 flex flex-col items-center justify-center p-4">
-                          <QrCode className="w-16 h-16 text-primary mb-2 opacity-50" />
-                          <span className="text-xs font-bold text-center">UPI ID:<br/>snackveda@upi</span>
+                        <div className="w-52 h-52 bg-white rounded-xl border-2 border-primary/20 flex flex-col items-center justify-center p-4 shadow-sm">
+                          <img
+                            src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=upi://pay?pa=9898477151@pthdfc%26pn=Narayani+Distributors%26cu=INR`}
+                            alt="UPI QR Code"
+                            className="w-40 h-40"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                          />
                         </div>
                         
                         <div className="flex-1 w-full space-y-4">
+                          <div className="bg-muted rounded-xl p-4 space-y-2 text-sm border">
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Account Name</span>
+                              <span className="font-semibold">Narayani Distributors</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">UPI ID</span>
+                              <span className="font-mono font-semibold text-primary">9898477151@pthdfc</span>
+                            </div>
+                          </div>
                           <FormField control={form.control} name="paymentReference" render={({ field }) => (
                             <FormItem>
                               <FormLabel>UPI Reference Number (UTR)</FormLabel>
@@ -235,7 +249,7 @@ function CheckoutInner() {
                               <FormMessage />
                             </FormItem>
                           )} />
-                          <div className="text-xs text-muted-foreground">Your order will be processed after payment verification.</div>
+                          <div className="text-xs text-muted-foreground">Your order will be confirmed after payment verification.</div>
                         </div>
                       </div>
                     </div>
@@ -269,16 +283,21 @@ function CheckoutInner() {
                         </FormItem>
                       )} />
 
-                      {paymentMethod === 'bank_transfer' && (
+                      {(paymentMethod === 'bank_transfer' || paymentMethod === 'upi') && (
                         <div className="bg-muted p-4 rounded-xl text-sm space-y-2 border">
-                          <p className="font-medium mb-3 text-foreground">Bank Details for Transfer:</p>
+                          <p className="font-medium mb-3 text-foreground">Payment Details — Narayani Distributors</p>
                           <div className="grid grid-cols-3 gap-2 text-muted-foreground">
                             <span>Account Name:</span><span className="col-span-2 font-mono text-foreground">Narayani Distributors</span>
-                            <span>Bank:</span><span className="col-span-2 font-mono text-foreground">HDFC Bank</span>
-                            <span>Account No:</span><span className="col-span-2 font-mono text-foreground">50200012345678</span>
-                            <span>IFSC Code:</span><span className="col-span-2 font-mono text-foreground">HDFC0001234</span>
+                            {paymentMethod === 'upi' && <><span>UPI ID:</span><span className="col-span-2 font-mono text-primary font-semibold">9898477151@pthdfc</span></>}
+                            {paymentMethod === 'bank_transfer' && (
+                              <>
+                                <span>Bank:</span><span className="col-span-2 font-mono text-foreground">HDFC Bank</span>
+                                <span>Account No:</span><span className="col-span-2 font-mono text-foreground">50200012345678</span>
+                                <span>IFSC Code:</span><span className="col-span-2 font-mono text-foreground">HDFC0001234</span>
+                              </>
+                            )}
                           </div>
-                          <p className="pt-2 text-xs">Note: After placing the order, you will receive an invoice. Please transfer the amount and our team will verify and dispatch your order.</p>
+                          <p className="pt-2 text-xs">After placing the order, transfer the amount and share the UTR. Our team will verify and dispatch your order.</p>
                         </div>
                       )}
                     </div>

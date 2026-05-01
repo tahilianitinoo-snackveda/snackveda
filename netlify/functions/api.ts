@@ -117,11 +117,13 @@ type Product = typeof productsTable.$inferSelect;
 let _db: ReturnType<typeof drizzle> | null = null;
 function getDb() {
   if (_db) return _db;
-  const client = postgres(process.env.DATABASE_URL!, {
-    ssl: "require",
-    max: 3,
+  const connectionString = process.env.DATABASE_URL!;
+  const client = postgres(connectionString, {
+    ssl: "prefer",
+    max: 1,
     idle_timeout: 20,
-    connect_timeout: 10,
+    connect_timeout: 30,
+    prepare: false,
   });
   _db = drizzle(client);
   return _db;
@@ -235,7 +237,7 @@ export const handler: Handler = async (event: HandlerEvent, _context: HandlerCon
         const [row] = await db.select({ count: sql<number>`count(*)::int` }).from(productsTable);
         return ok({ status: "ok", db: !!process.env.DATABASE_URL, jwt: !!process.env.JWT_SECRET, productCount: row?.count ?? 0 });
       } catch (e: any) {
-        return ok({ status: "ok", db: !!process.env.DATABASE_URL, jwt: !!process.env.JWT_SECRET, dbError: e?.message });
+        return ok({ status: "ok", db: !!process.env.DATABASE_URL, jwt: !!process.env.JWT_SECRET, dbError: e?.message, dbUrl: process.env.DATABASE_URL?.substring(0, 40) + "..." });
       }
     }
 

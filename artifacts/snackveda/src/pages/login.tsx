@@ -28,10 +28,15 @@ export default function Login() {
 
   const onSubmit = (values: z.infer<typeof loginSchema>) => {
     loginMutation.mutate({ data: values }, {
-      onSuccess: (user) => {
+      onSuccess: (data: any) => {
+        // Save JWT token for all future API requests
+        if (data?.token) {
+          localStorage.setItem("snackveda_token", data.token);
+        }
         toast.success("Welcome back!");
         queryClient.invalidateQueries({ queryKey: getGetCurrentUserQueryKey() });
-        if (user.role === 'super_admin') {
+        const user = data?.user ?? data;
+        if (user?.role === 'super_admin') {
           setLocation('/admin');
         } else {
           setLocation('/account');

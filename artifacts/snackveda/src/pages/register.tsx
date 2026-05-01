@@ -66,7 +66,10 @@ export default function Register() {
     }
 
     registerMutation.mutate({ data: payload }, {
-      onSuccess: () => {
+      onSuccess: (data: any) => {
+        if (data?.token) {
+          localStorage.setItem("snackveda_token", data.token);
+        }
         toast.success(values.accountType === "b2b" ? "B2B Application submitted successfully" : "Registration successful");
         queryClient.invalidateQueries({ queryKey: getGetCurrentUserQueryKey() });
         setLocation('/account');

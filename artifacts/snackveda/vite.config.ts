@@ -24,6 +24,13 @@ export default defineConfig({
     port: Number(process.env.PORT) || 3000,
     host: "0.0.0.0",
     allowedHosts: true,
+    proxy: {
+      // In local dev, proxy /api to the Express server on port 3001
+      "/api": {
+        target: "http://localhost:3001",
+        changeOrigin: true,
+      },
+    },
   },
   preview: {
     port: Number(process.env.PORT) || 3000,

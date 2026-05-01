@@ -48,7 +48,7 @@ export function AdminShell({ children }: AdminShellProps) {
           <Button
             variant="ghost"
             className="w-full justify-start text-muted-foreground hover:text-destructive"
-            onClick={() => logout.mutate(undefined, { onSuccess: () => window.location.href = "/" })}
+            onClick={() => { localStorage.removeItem("snackveda_token"); logout.mutate(undefined, { onSuccess: () => window.location.href = "/" }); }}
           >
             <LogOut className="mr-2 h-4 w-4" />
             Logout

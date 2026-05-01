@@ -1,5 +1,4 @@
 packages:
-  - netlify/functions
   - artifacts/*
   - lib/*
   - lib/integrations/*

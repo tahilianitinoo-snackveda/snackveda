@@ -16,5 +16,13 @@
     "prettier": "^3.8.1",
     "tsx": "catalog:",
     "typescript": "~5.9.2"
+  },
+  "dependencies": {
+    "@netlify/functions": "^2.8.2",
+    "bcryptjs": "^2.4.3",
+    "drizzle-orm": "^0.45.2",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.16.0",
+    "zod": "^3.25.76"
   }
 }

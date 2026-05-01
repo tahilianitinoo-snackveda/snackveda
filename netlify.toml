@@ -21,6 +21,3 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
   external_node_modules = ["pg"]
-
-[[plugins]]
-  package = "@netlify/plugin-functions-install-core"

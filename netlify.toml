@@ -7,13 +7,11 @@
   NODE_VERSION = "20"
   PNPM_VERSION = "9.15.9"
 
-# Proxy all /api/* requests to the Netlify Function
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"
   status = 200
 
-# SPA fallback — all non-file routes serve index.html
 [[redirects]]
   from = "/*"
   to = "/index.html"
@@ -22,4 +20,8 @@
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
-  external_node_modules = ["pg", "bcryptjs"]
+  external_node_modules = ["pg", "bcryptjs", "drizzle-orm", "express", "jsonwebtoken", "serverless-http", "cors", "cookie-parser", "zod"]
+  included_files = ["netlify/functions/**"]
+
+[[plugins]]
+  package = "@netlify/plugin-functions-install-core"

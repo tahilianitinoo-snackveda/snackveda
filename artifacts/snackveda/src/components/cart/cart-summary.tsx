@@ -52,21 +52,21 @@ export function CartSummary() {
             <Price amount={q.subtotal} />
           </div>
           
-          {q.discount > 0 && (
+          {q.discountAmount > 0 && (
             <div className="flex justify-between text-sm text-green-600">
               <span>Discount {q.discountLabel ? `(${q.discountLabel})` : ''}</span>
-              <span>-<Price amount={q.discount} /></span>
+              <span>-<Price amount={q.discountAmount} /></span>
             </div>
           )}
           
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">GST (18%)</span>
-            <Price amount={q.taxTotal} />
+            <span className="text-muted-foreground">GST (5%)</span>
+            <Price amount={q.gstAmount} />
           </div>
           
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Shipping</span>
-            {q.shipping > 0 ? <Price amount={q.shipping} /> : <span className="text-green-600">Free</span>}
+            {q.shippingCharge > 0 ? <Price amount={q.shippingCharge} /> : <span className="text-green-600">Free</span>}
           </div>
           
           <div className="pt-4 border-t flex justify-between font-bold text-lg">
@@ -74,13 +74,13 @@ export function CartSummary() {
             <Price amount={q.total} />
           </div>
           
-          {orderType === 'b2b' && q.b2bViolations && q.b2bViolations.length > 0 && (
+          {orderType === 'b2b' && q.moqViolations && q.moqViolations.length > 0 && (
             <div className="mt-4 p-3 bg-destructive/10 text-destructive text-sm rounded-md flex gap-2">
               <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
               <div className="flex flex-col gap-1">
                 <span className="font-semibold">B2B Requirements not met:</span>
                 <ul className="list-disc pl-4 space-y-1">
-                  {q.b2bViolations.map((v: string, i: number) => (
+                  {q.moqViolations.map((v: string, i: number) => (
                     <li key={i}>{v}</li>
                   ))}
                 </ul>
@@ -92,7 +92,7 @@ export function CartSummary() {
             <Button 
               className="w-full" 
               size="lg" 
-              disabled={orderType === 'b2b' && q.b2bViolations && q.b2bViolations.length > 0}
+              disabled={orderType === 'b2b' && q.moqViolations && q.moqViolations.length > 0}
               asChild
             >
               <Link href="/checkout">

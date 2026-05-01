@@ -24,7 +24,7 @@ const checkoutSchema = z.object({
   shippingCity: z.string().min(2, "City is required"),
   shippingState: z.string().min(2, "State is required"),
   shippingPincode: z.string().min(6, "Valid pincode is required"),
-  paymentMethod: z.enum(["upi", "bank_transfer", "request_link"]).default("upi"),
+  paymentMethod: z.enum(["upi", "bank_transfer", "payment_link"]).default("upi"),
   paymentReference: z.string().optional()
 });
 
@@ -95,7 +95,7 @@ function CheckoutInner() {
             state: values.shippingState,
             pincode: values.shippingPincode
           },
-          paymentMethod: values.paymentMethod as any
+          paymentMethod: values.paymentMethod as "upi" | "bank_transfer" | "payment_link"
         }
       }, {
         onSuccess: (order) => {
@@ -258,7 +258,7 @@ function CheckoutInner() {
                                 </FormLabel>
                               </FormItem>
                               <FormItem className="flex items-center space-x-3 space-y-0 bg-card border rounded-xl p-4 cursor-pointer hover:bg-muted/50 transition-colors">
-                                <FormControl><RadioGroupItem value="request_link" /></FormControl>
+                                <FormControl><RadioGroupItem value="payment_link" /></FormControl>
                                 <FormLabel className="font-medium flex items-center cursor-pointer w-full">
                                   Request Payment Link on WhatsApp/Email
                                 </FormLabel>

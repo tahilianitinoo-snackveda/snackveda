@@ -31,17 +31,20 @@ export default function ProductDetail() {
   const addItem = useCartStore((state) => state.addItem);
   const { user, isB2BApproved } = useAuth();
 
-  const b2cDiscount = user?.role === 'b2c_customer' && (user.ordersCount ?? 0) > 0 ? 0.1 : 0;
+  const ordersCount = user?.ordersCount ?? 0;
+  const discountPercent = user?.role === 'b2c_customer'
+    ? ordersCount === 0 ? 15 : ordersCount === 1 ? 10 : 5
+    : 0;
   
   const originalPrice = product?.b2cPrice || 0;
   const displayPrice = isB2BApproved && product?.b2bPrice 
     ? product.b2bPrice 
-    : originalPrice * (1 - b2cDiscount);
+    : originalPrice * (1 - discountPercent / 100);
 
   const minQty = isB2BApproved && product?.moq ? product.moq : 1;
   const [quantity, setQuantity] = useState(minQty);
 
-  const showStrikethrough = b2cDiscount > 0 && !isB2BApproved;
+  const showStrikethrough = discountPercent > 0 && !isB2BApproved && !!user;
 
   // Reset quantity if product changes
   if (product && isB2BApproved && product.moq && quantity < product.moq) {
@@ -79,7 +82,7 @@ export default function ProductDetail() {
 
   const getCategoryGradient = (category: string) => {
     switch (category) {
-      case 'chips': return 'from-amber-200 to-amber-500';
+      case 'healthy_chips': return 'from-amber-200 to-amber-500';
       case 'makhana': return 'from-teal-200 to-teal-500';
       case 'superpuffs': return 'from-orange-200 to-orange-500';
       default: return 'from-gray-200 to-gray-500';

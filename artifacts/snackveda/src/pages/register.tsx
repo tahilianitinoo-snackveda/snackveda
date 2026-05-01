@@ -13,22 +13,22 @@ import { Loader2, Store, User } from "lucide-react";
 import { useState } from "react";
 
 const registerSchema = z.object({
-  name: z.string().min(2, "Name is required"),
+  fullName: z.string().min(2, "Name is required"),
   email: z.string().email("Invalid email address"),
   phone: z.string().min(10, "Valid phone number required"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   accountType: z.enum(["b2c", "b2b"]),
-  b2bCompanyName: z.string().optional(),
-  b2bGstNumber: z.string().optional(),
-  b2bCustomerType: z.enum(["kirana", "modern_retail", "cafe_restaurant", "pharmacy", "gym_wellness", "corporate", "other"]).optional()
+  businessName: z.string().optional(),
+  gstNumber: z.string().optional(),
+  businessType: z.enum(["kirana", "modern_retail", "gym", "pharmacy", "cafe", "corporate", "retail"]).optional()
 }).refine((data) => {
   if (data.accountType === "b2b") {
-    return !!data.b2bCompanyName && !!data.b2bCustomerType;
+    return !!data.businessName && !!data.businessType;
   }
   return true;
 }, {
   message: "Company Name and Business Type are required for B2B accounts",
-  path: ["b2bCompanyName"] // Attach error loosely, we'll handle visual cues
+  path: ["businessName"]
 });
 
 export default function Register() {
@@ -44,8 +44,8 @@ export default function Register() {
     resolver: zodResolver(registerSchema),
     defaultValues: { 
       accountType: initialType,
-      name: "", email: "", phone: "", password: "",
-      b2bCompanyName: "", b2bGstNumber: "", b2bCustomerType: "kirana"
+      fullName: "", email: "", phone: "", password: "",
+      businessName: "", gstNumber: "", businessType: "kirana" as const
     },
   });
 
@@ -54,15 +54,15 @@ export default function Register() {
   const onSubmit = (values: z.infer<typeof registerSchema>) => {
     const payload: any = {
       accountType: values.accountType,
-      name: values.name,
+      fullName: values.fullName,
       email: values.email,
       phone: values.phone,
       password: values.password
     };
     if (values.accountType === "b2b") {
-      payload.b2bCompanyName = values.b2bCompanyName;
-      payload.b2bGstNumber = values.b2bGstNumber || undefined;
-      payload.b2bCustomerType = values.b2bCustomerType;
+      payload.businessName = values.businessName;
+      payload.gstNumber = values.gstNumber || undefined;
+      payload.businessType = values.businessType;
     }
 
     registerMutation.mutate({ data: payload }, {
@@ -141,7 +141,7 @@ export default function Register() {
                   </div>
 
                   <div className="grid md:grid-cols-2 gap-4">
-                    <FormField control={form.control} name="name" render={({ field }) => (
+                    <FormField control={form.control} name="fullName" render={({ field }) => (
                       <FormItem>
                         <FormLabel>Full Name</FormLabel>
                         <FormControl><Input placeholder="John Doe" {...field} /></FormControl>
@@ -175,14 +175,14 @@ export default function Register() {
                     <div className="pt-6 mt-6 border-t space-y-6">
                       <h3 className="font-serif font-bold text-xl">Business Information</h3>
                       <div className="grid md:grid-cols-2 gap-4">
-                        <FormField control={form.control} name="b2bCompanyName" render={({ field }) => (
+                        <FormField control={form.control} name="businessName" render={({ field }) => (
                           <FormItem className="md:col-span-2">
                             <FormLabel>Company / Store Name</FormLabel>
                             <FormControl><Input placeholder="Your Business Name" {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
-                        <FormField control={form.control} name="b2bCustomerType" render={({ field }) => (
+                        <FormField control={form.control} name="businessType" render={({ field }) => (
                           <FormItem>
                             <FormLabel>Business Type</FormLabel>
                             <FormControl>
@@ -193,16 +193,15 @@ export default function Register() {
                                 <option value="kirana">Kirana / Local Store</option>
                                 <option value="modern_retail">Supermarket / Retail Chain</option>
                                 <option value="pharmacy">Pharmacy / Health Store</option>
-                                <option value="gym_wellness">Gym / Fitness Center</option>
-                                <option value="cafe_restaurant">Cafe / Restaurant</option>
+                                <option value="gym">Gym / Fitness Center</option>
+                                <option value="cafe">Cafe / Restaurant</option>
                                 <option value="corporate">Corporate Office</option>
-                                <option value="other">Other</option>
                               </select>
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
-                        <FormField control={form.control} name="b2bGstNumber" render={({ field }) => (
+                        <FormField control={form.control} name="gstNumber" render={({ field }) => (
                           <FormItem>
                             <FormLabel>GST Number (Optional)</FormLabel>
                             <FormControl><Input placeholder="e.g. 22AAAAA0000A1Z5" {...field} /></FormControl>

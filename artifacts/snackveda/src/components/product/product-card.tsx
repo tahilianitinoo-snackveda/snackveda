@@ -19,17 +19,20 @@ export function ProductCard({ product }: ProductCardProps) {
   const isB2B = user?.role === "b2b_customer" && user.b2bStatus === "approved";
   const ordersCount = user?.ordersCount ?? 0;
 
-  // B2C discount ladder — applied on top of b2cPrice
   const discountPercent = !isB2B && user?.role === "b2c_customer"
     ? ordersCount === 0 ? 15 : ordersCount === 1 ? 10 : 5
     : 0;
 
-  // B2B users pay b2bPrice, B2C users pay b2cPrice (with discount if applicable)
   const unitPrice = isB2B
     ? product.b2bPrice
     : product.b2cPrice * (1 - discountPercent / 100);
 
   const showStrikethrough = discountPercent > 0 && !isB2B && !!user;
+
+  // Use primary image from images array, fallback to imageUrl, then gradient
+  const primaryImage = (product as any).images?.find((i: any) => i.isPrimary)?.url
+    ?? (product as any).images?.[0]?.url
+    ?? product.imageUrl;
 
   const handleAddToCart = () => {
     // B2B: start at MOQ, must be multiple of MOQ
@@ -40,7 +43,7 @@ export function ProductCard({ product }: ProductCardProps) {
       slug: product.slug,
       category: product.category,
       weightGrams: product.weightGrams,
-      imageUrl: product.imageUrl ?? null,
+      imageUrl: primaryImage ?? null,
       unitPrice,
       quantity: defaultQty,
       moq: product.moq ?? 1,
@@ -65,9 +68,9 @@ export function ProductCard({ product }: ProductCardProps) {
       className="group relative flex flex-col bg-card rounded-xl overflow-hidden border shadow-sm hover:shadow-md transition-all"
     >
       <Link href={`/shop/${product.slug}`} className="block relative aspect-square overflow-hidden bg-muted">
-        {product.imageUrl ? (
+        {primaryImage ? (
           <img
-            src={product.imageUrl}
+            src={primaryImage}
             alt={product.name}
             className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
           />

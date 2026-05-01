@@ -298,7 +298,12 @@ export const handler: Handler = async (event: HandlerEvent, _context: HandlerCon
       const conds: any[] = [eq(productsTable.status, "active")];
       if (params.category) conds.push(eq(productsTable.category, params.category));
       const rows = await db.select().from(productsTable).where(and(...conds)).orderBy(asc(productsTable.sortOrder));
-      return ok(rows.map(serializeProduct));
+      // Include primary image for each product
+      const withImages = await Promise.all(rows.map(async (p) => {
+        const images = await getProductImages(p.id);
+        return serializeProduct(p, images);
+      }));
+      return ok(withImages);
     }
 
     const productSlugMatch = path.match(/^\/products\/([^/]+)$/);

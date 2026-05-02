@@ -299,10 +299,9 @@ export const handler: Handler = async (event: HandlerEvent, _context: HandlerCon
     // ── PRODUCTS ─────────────────────────────────────────────────────────────
     if (path === "/products" && method === "GET") {
       const db = getDb();
-      const conds: any[] = [eq(productsTable.status, "active")];
-      if (params.category) conds.push(eq(productsTable.category, params.category));
-      const rows = await db.select().from(productsTable).where(and(...conds)).orderBy(asc(productsTable.sortOrder));
-      // Batch fetch all images in one query
+      const rows = params.category
+        ? await db.select().from(productsTable).where(and(eq(productsTable.status, "active"), eq(productsTable.category, params.category))).orderBy(asc(productsTable.sortOrder))
+        : await db.select().from(productsTable).where(eq(productsTable.status, "active")).orderBy(asc(productsTable.sortOrder));
       let allImages: any[] = [];
       try {
         if (rows.length > 0) {
@@ -452,11 +451,15 @@ export const handler: Handler = async (event: HandlerEvent, _context: HandlerCon
         const [mr] = await db.select({ total: sql<number>`coalesce(sum(total_amount::numeric),0)::float` }).from(ordersTable).where(and(gte(ordersTable.createdAt, monthStart), eq(ordersTable.status, "confirmed")));
         const [ls] = await db.select({ c: sql<number>`count(*)::int` }).from(productsTable).where(sql`stock_qty < 20`);
         const recent = await db.select().from(ordersTable).orderBy(desc(ordersTable.createdAt)).limit(10);
-        return ok({ todayOrders: tc.c, pendingPayments: pp.c, monthRevenue: mr.total, lowStockItems: ls.c, recentOrders: recent.map(o => ({ id: o.id, orderNumber: o.orderNumber, orderType: o.orderType, status: o.status, totalAmount: Number(o.totalAmount), createdAt: o.createdAt.toISOString() })) });
+        const [cu] = await db.select({ c: sql<number>`count(*)::int` }).from(usersTable).where(eq(usersTable.role, "b2c_customer"));
+        const catData = [{ name: "Chips", orders: 0 }, { name: "Makhana", orders: 0 }, { name: "Superpuffs", orders: 0 }];
+        return ok({ thisMonthRevenue: mr.total, todayOrdersCount: tc.c, totalCustomers: cu.c, lowStockCount: ls.c, pendingPayments: pp.c, recentOrders: recent.map(o => ({ id: o.id, orderNumber: o.orderNumber, orderType: o.orderType, status: o.status, totalAmount: Number(o.totalAmount), createdAt: o.createdAt.toISOString() })), ordersByCategory: catData });
       }
       if (path === "/admin/products" && method === "GET") {
         const rows = await db.select().from(productsTable).orderBy(asc(productsTable.sortOrder));
-        return ok(rows.map(serializeProduct));
+        let allImages: any[] = [];
+        try { if (rows.length > 0) allImages = await db.select().from(productImagesTable).where(inArray(productImagesTable.productId, rows.map(r => r.id))).orderBy(asc(productImagesTable.sortOrder)); } catch { allImages = []; }
+        return ok(rows.map(p => serializeProduct(p, allImages.filter(i => i.productId === p.id).map(i => ({ id: i.id, url: i.url, altText: i.altText, isPrimary: i.isPrimary, sortOrder: i.sortOrder })))));
       }
       if (path === "/admin/products" && method === "POST") {
         const b = z.object({ name: z.string(), slug: z.string(), category: z.string(), variant: z.string().nullish(), b2cPrice: z.number(), b2bPrice: z.number(), moq: z.number().default(1), cartonQty: z.number().default(1), gstPercent: z.number().default(5), hsnCode: z.string().default("21069099"), shelfLifeMonths: z.number().default(6), weightGrams: z.number().default(60), description: z.string().nullish(), stockQty: z.number().default(100), status: z.string().default("active"), sortOrder: z.number().default(0), imageUrl: z.string().nullish() }).safeParse(parsedBody);

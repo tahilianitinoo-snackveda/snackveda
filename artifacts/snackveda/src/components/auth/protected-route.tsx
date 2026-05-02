@@ -1,15 +1,22 @@
 import { useAuth } from "@/hooks/use-auth";
-import { Redirect, Route, RouteProps } from "wouter";
+import { Redirect } from "wouter";
+import { ReactNode } from "react";
+import { Loader2 } from "lucide-react";
 
-interface ProtectedRouteProps extends RouteProps {
+interface ProtectedRouteProps {
   adminOnly?: boolean;
+  children: ReactNode;
 }
 
-export function ProtectedRoute({ adminOnly, ...props }: ProtectedRouteProps) {
+export function ProtectedRoute({ adminOnly, children }: ProtectedRouteProps) {
   const { user, isLoading, isAdmin } = useAuth();
 
   if (isLoading) {
-    return <div className="flex h-[50vh] items-center justify-center">Loading...</div>;
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
   }
 
   if (!user) {
@@ -20,5 +27,5 @@ export function ProtectedRoute({ adminOnly, ...props }: ProtectedRouteProps) {
     return <Redirect to="/" />;
   }
 
-  return <Route {...props} />;
+  return <>{children}</>;
 }

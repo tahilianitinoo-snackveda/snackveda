@@ -166,9 +166,13 @@ function profileUser(u: User) {
   return { id: u.id, email: u.email, fullName: u.fullName, phone: u.phone, role: u.role, b2bStatus: u.b2bStatus, customerType: u.customerType, businessName: u.businessName, gstNumber: u.gstNumber, businessAddress: u.businessAddress, ordersCount: u.ordersCount };
 }
 async function getProductImages(productId: string) {
-  const db = getDb();
-  const images = await db.select().from(productImagesTable).where(eq(productImagesTable.productId, productId)).orderBy(asc(productImagesTable.sortOrder));
-  return images.map(i => ({ id: i.id, url: i.url, altText: i.altText, isPrimary: i.isPrimary, sortOrder: i.sortOrder }));
+  try {
+    const db = getDb();
+    const images = await db.select().from(productImagesTable).where(eq(productImagesTable.productId, productId)).orderBy(asc(productImagesTable.sortOrder));
+    return images.map(i => ({ id: i.id, url: i.url, altText: i.altText, isPrimary: i.isPrimary, sortOrder: i.sortOrder }));
+  } catch {
+    return [];
+  }
 }
 function serializeProduct(p: typeof productsTable.$inferSelect, images?: any[]) {
   return { id: p.id, name: p.name, slug: p.slug, category: p.category, variant: p.variant, b2cPrice: Number(p.b2cPrice), b2bPrice: Number(p.b2bPrice), moq: p.moq, cartonQty: p.cartonQty, gstPercent: Number(p.gstPercent), hsnCode: p.hsnCode, shelfLifeMonths: p.shelfLifeMonths, weightGrams: p.weightGrams, description: p.description, stockQty: p.stockQty, status: p.status, sortOrder: p.sortOrder, imageUrl: p.imageUrl, images: images ?? [] };
@@ -298,12 +302,17 @@ export const handler: Handler = async (event: HandlerEvent, _context: HandlerCon
       const conds: any[] = [eq(productsTable.status, "active")];
       if (params.category) conds.push(eq(productsTable.category, params.category));
       const rows = await db.select().from(productsTable).where(and(...conds)).orderBy(asc(productsTable.sortOrder));
-      // Include primary image for each product
-      const withImages = await Promise.all(rows.map(async (p) => {
-        const images = await getProductImages(p.id);
+      // Batch fetch all images in one query
+      let allImages: any[] = [];
+      try {
+        if (rows.length > 0) {
+          allImages = await db.select().from(productImagesTable).where(inArray(productImagesTable.productId, rows.map(r => r.id))).orderBy(asc(productImagesTable.sortOrder));
+        }
+      } catch { allImages = []; }
+      return ok(rows.map(p => {
+        const images = allImages.filter(i => i.productId === p.id).map(i => ({ id: i.id, url: i.url, altText: i.altText, isPrimary: i.isPrimary, sortOrder: i.sortOrder }));
         return serializeProduct(p, images);
       }));
-      return ok(withImages);
     }
 
     const productSlugMatch = path.match(/^\/products\/([^/]+)$/);

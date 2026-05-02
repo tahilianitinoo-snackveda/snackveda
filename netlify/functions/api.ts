@@ -274,7 +274,7 @@ export const handler: Handler = async (event: HandlerEvent, _context: HandlerCon
       if (existing.length) return err("Email already exists", "EMAIL_TAKEN", 400);
       const hash = await bcrypt.hash(d.password, 10);
       const isB2b = d.accountType === "b2b";
-      const [user] = await db.insert(usersTable).values({ email: d.email.toLowerCase(), passwordHash: hash, fullName: d.fullName, phone: d.phone ?? null, role: isB2b ? "b2b_customer" : "b2c_customer", customerType: isB2b ? (d.businessType ?? "kirana") : "retail", businessName: d.businessName ?? null, gstNumber: d.gstNumber ?? null, businessAddress: d.businessAddress ?? null, b2bStatus: isB2b ? "pending" : null }).returning();
+      const [user] = await db.insert(usersTable).values({ email: d.email.toLowerCase(), passwordHash: hash, fullName: d.fullName, phone: d.phone ?? null, role: isB2b ? "b2b_customer" : "b2c_customer", customerType: isB2b ? (d.businessType ?? "kirana") : "retail", businessName: d.businessName ?? null, gstNumber: d.gstNumber ?? null, businessAddress: d.businessAddress ?? null, b2bStatus: isB2b ? "approved" : null }).returning();
       return ok({ token: signToken(user.id), user: profileUser(user) }, 201);
     }
 
@@ -361,7 +361,7 @@ export const handler: Handler = async (event: HandlerEvent, _context: HandlerCon
     if (path === "/orders/b2b" && method === "POST") {
       const user = await getUser(authHeader);
       if (!user) return err("Authentication required", "UNAUTHORIZED", 401);
-      if (user.role !== "b2b_customer" || user.b2bStatus !== "approved") return err("Approved B2B account required", "FORBIDDEN", 403);
+      if (user.role !== "b2b_customer") return err("Wholesale account required", "FORBIDDEN", 403);
       const b = B2bOrderBody.safeParse(parsedBody);
       if (!b.success) return err("Invalid order data", "VALIDATION_ERROR", 400);
       const d = b.data;

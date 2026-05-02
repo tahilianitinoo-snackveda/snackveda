@@ -16,7 +16,7 @@ export function useAuth() {
   const user = data ?? null;
 
   useEffect(() => {
-    if (user && user.role === "b2b_customer" && user.b2bStatus === "approved") {
+    if (user && user.role === "b2b_customer") {
       setOrderType("b2b");
     } else {
       setOrderType("b2c");
@@ -29,6 +29,6 @@ export function useAuth() {
     error,
     refetch,
     isAdmin: user?.role === "super_admin",
-    isB2BApproved: user?.role === "b2b_customer" && user.b2bStatus === "approved",
+    isB2BApproved: user?.role === "b2b_customer",
   };
 }

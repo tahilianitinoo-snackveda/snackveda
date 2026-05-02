@@ -81,7 +81,7 @@ export default function Register() {
         if (data?.token) {
           localStorage.setItem("snackveda_token", data.token);
         }
-        toast.success(values.accountType === "b2b" ? "B2B Application submitted successfully" : "Registration successful");
+        toast.success(values.accountType === "b2b" ? "Wholesale account created! Welcome to SnackVeda." : "Registration successful! Welcome.");
         queryClient.invalidateQueries({ queryKey: getGetCurrentUserQueryKey() });
         setLocation('/account');
       },

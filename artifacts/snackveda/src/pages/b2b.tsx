@@ -1,7 +1,7 @@
 import { SiteShell } from "@/components/layout/site-shell";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Store, TrendingUp, Truck, FileText, BadgeCheck, Shield } from "lucide-react";
+import { Store, TrendingUp, Truck, FileText, BadgeCheck, Shield, Package } from "lucide-react";
 
 export default function B2B() {
   return (

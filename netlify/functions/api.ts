@@ -163,7 +163,7 @@ const ok = (body: any, status = 200) => ({ statusCode: status, headers: { "Conte
 const err = (msg: string, code: string, status: number) => ok({ message: msg, code }, status);
 
 function profileUser(u: User) {
-  return { id: u.id, email: u.email, fullName: u.fullName, phone: u.phone, role: u.role, b2bStatus: u.b2bStatus, customerType: u.customerType, businessName: u.businessName, gstNumber: u.gstNumber, businessAddress: u.businessAddress, ordersCount: u.ordersCount };
+  return { id: u.id, email: u.email, fullName: u.fullName, phone: u.phone, role: u.role, b2bStatus: u.b2bStatus, customerType: u.customerType, businessName: u.businessName, gstNumber: u.gstNumber, businessAddress: u.businessAddress, ordersCount: u.ordersCount, createdAt: u.createdAt.toISOString() };
 }
 async function getProductImages(productId: string) {
   try {
@@ -522,7 +522,10 @@ export const handler: Handler = async (event: HandlerEvent, _context: HandlerCon
         return ok({ deleted: true });
       }
       if (path === "/admin/customers" && method === "GET") {
-        const rows = await db.select().from(usersTable).where(params.role ? eq(usersTable.role, params.role) : undefined).orderBy(desc(usersTable.createdAt));
+        // API client sends ?type=b2c or ?type=b2b, map to role
+        const typeParam = params.type as string | undefined;
+        const roleFilter = typeParam === "b2c" ? "b2c_customer" : typeParam === "b2b" ? "b2b_customer" : undefined;
+        const rows = await db.select().from(usersTable).where(roleFilter ? eq(usersTable.role, roleFilter) : undefined).orderBy(desc(usersTable.createdAt));
         return ok(rows.map(profileUser));
       }
       const adminCustMatch = path.match(/^\/admin\/customers\/([^/]+)\/status$/);

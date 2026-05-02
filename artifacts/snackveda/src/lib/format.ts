@@ -8,6 +8,11 @@ export function formatINR(amount: number): string {
   }).format(amount);
 }
 
-export function formatDate(date: string | Date): string {
-  return format(new Date(date), 'dd MMM yyyy');
+export function formatDate(date: string | Date | undefined | null): string {
+  if (!date) return "—";
+  try {
+    return format(new Date(date), 'dd MMM yyyy');
+  } catch {
+    return "—";
+  }
 }

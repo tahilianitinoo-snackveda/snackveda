@@ -31,10 +31,21 @@ const registerSchema = z.object({
   path: ["businessName"]
 });
 
+import { useAuth } from "@/hooks/use-auth";
+import { useEffect } from "react";
+
 export default function Register() {
   const [location, setLocation] = useLocation();
   const searchParams = new URLSearchParams(window.location.search);
   const initialType = searchParams.get("type") === "b2b" ? "b2b" : "b2c";
+  const { user, isLoading } = useAuth();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!isLoading && user) {
+      setLocation("/account");
+    }
+  }, [user, isLoading]);
   
   const [step, setStep] = useState(1);
   const queryClient = useQueryClient();

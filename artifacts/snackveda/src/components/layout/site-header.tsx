@@ -81,12 +81,28 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href={user ? "/account" : "/login"}>
-              <User className="h-5 w-5" />
-              <span className="sr-only">Account</span>
-            </Link>
-          </Button>
+          {user ? (
+            <Button variant="ghost" size="icon" asChild title={user.fullName || "My Account"}>
+              <Link href={user.role === "super_admin" ? "/admin" : "/account"}>
+                <User className="h-5 w-5" />
+                <span className="sr-only">My Account</span>
+              </Link>
+            </Button>
+          ) : (
+            <>
+              <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex">
+                <Link href="/login">Login</Link>
+              </Button>
+              <Button size="sm" asChild className="hidden md:inline-flex">
+                <Link href="/register">Register</Link>
+              </Button>
+              <Button variant="ghost" size="icon" asChild className="md:hidden">
+                <Link href="/login">
+                  <User className="h-5 w-5" />
+                </Link>
+              </Button>
+            </>
+          )}
           <Button variant="ghost" size="icon" className="relative" asChild>
             <Link href="/cart">
               <ShoppingBag className="h-5 w-5" />

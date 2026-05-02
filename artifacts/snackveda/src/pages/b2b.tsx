@@ -1,15 +1,9 @@
 import { SiteShell } from "@/components/layout/site-shell";
 import { Link } from "wouter";
-import { useListProducts } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Store, TrendingUp, Truck, FileText, BadgeCheck, Shield } from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Price } from "@/components/ui/price";
-import { Badge } from "@/components/ui/badge";
 
 export default function B2B() {
-  const { data: products, isLoading } = useListProducts();
-
   return (
     <SiteShell>
       {/* Hero */}
@@ -79,87 +73,21 @@ export default function B2B() {
         </div>
       </section>
 
-      {/* Product Table */}
+      {/* CTA Section */}
       <section className="py-20 bg-muted/20">
-        <div className="container mx-auto px-4 max-w-5xl">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-serif font-bold mb-4">Our Wholesale Portfolio</h2>
-            <p className="text-muted-foreground">Log in to your approved B2B account to place bulk orders.</p>
-          </div>
-
-          <div className="bg-card border rounded-xl overflow-hidden shadow-sm">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader className="bg-muted/50">
-                  <TableRow>
-                    <TableHead>SKU</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead className="text-right">Weight</TableHead>
-                    <TableHead className="text-right">MRP</TableHead>
-                    <TableHead className="text-right">Trade Price (B2B)</TableHead>
-                    <TableHead className="text-right">Carton Size (MOQ)</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Loading portfolio...</TableCell>
-                    </TableRow>
-                  ) : products && products.length > 0 ? (
-                    products.map((p) => (
-                      <TableRow key={p.id}>
-                        <TableCell className="font-medium">{p.name}</TableCell>
-                        <TableCell className="capitalize text-muted-foreground">{p.category}</TableCell>
-                        <TableCell className="text-right">{p.weightGrams}g</TableCell>
-                        <TableCell className="text-right text-muted-foreground"><Price amount={p.b2cPrice} /></TableCell>
-                        <TableCell className="text-right font-medium text-primary">
-                          {p.b2bPrice ? <Price amount={p.b2bPrice} /> : 'N/A'}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Badge variant="outline">{p.moq || 1} units</Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8">No products available</TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
-          
-          <div className="mt-12 text-center">
+        <div className="container mx-auto px-4 max-w-2xl text-center">
+          <h2 className="text-3xl font-serif font-bold mb-4">Ready to Partner with SnackVeda?</h2>
+          <p className="text-muted-foreground mb-8">Apply for a wholesale account today. Get access to trade pricing, bulk ordering, and dedicated support once approved.</p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" className="rounded-full px-10 h-14 text-lg" asChild>
-              <Link href="/register?type=b2b">Apply Now</Link>
+              <Link href="/register?type=b2b">Apply for Wholesale Account</Link>
+            </Button>
+            <Button size="lg" variant="outline" className="rounded-full px-10 h-14 text-lg" asChild>
+              <Link href="/shop">Browse Products</Link>
             </Button>
           </div>
         </div>
       </section>
     </SiteShell>
-  );
-}
-
-// Adding missing lucide icon
-function Package(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="m7.5 4.27 9 5.15" />
-      <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
-      <path d="m3.3 7 8.7 5 8.7-5" />
-      <path d="M12 22V12" />
-    </svg>
   );
 }

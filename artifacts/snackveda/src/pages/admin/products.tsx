@@ -159,6 +159,7 @@ function ProductsInner() {
   const updateProduct = useUpdateAdminProduct();
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any>(null);
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
@@ -168,32 +169,67 @@ function ProductsInner() {
     }
   });
 
-  const onSubmit = (values: ProductFormValues) => {
-    createProduct.mutate({
-      data: {
-        name: values.name,
-        slug: values.slug,
-        category: values.category,
-        description: values.description ?? null,
-        b2cPrice: values.b2cPrice,
-        b2bPrice: values.b2bPrice ?? values.b2cPrice * 0.8,
-        moq: values.moq ?? 1,
-        cartonQty: 1,
-        weightGrams: values.weightGrams,
-        stockQty: values.stockQty,
-        gstPercent: values.gstPercent,
-        hsnCode: values.hsnCode ?? "210690",
-        shelfLifeMonths: 6,
-      }
-    }, {
-      onSuccess: () => {
-        toast.success("Product created successfully");
-        setIsOpen(false);
-        form.reset();
-        queryClient.invalidateQueries({ queryKey: getListAdminProductsQueryKey() });
-      },
-      onError: (err) => toast.error(err.message || "Failed to create product")
+  const openEdit = (p: any) => {
+    setEditingProduct(p);
+    form.reset({
+      name: p.name,
+      slug: p.slug,
+      description: p.description ?? "",
+      category: p.category,
+      b2cPrice: p.b2cPrice,
+      b2bPrice: p.b2bPrice,
+      moq: p.moq,
+      weightGrams: p.weightGrams,
+      stockQty: p.stockQty,
+      gstPercent: p.gstPercent,
+      hsnCode: p.hsnCode ?? "210690",
     });
+    setIsOpen(true);
+  };
+
+  const openCreate = () => {
+    setEditingProduct(null);
+    form.reset({ name: "", slug: "", description: "", category: "healthy_chips", b2cPrice: 0, weightGrams: 60, stockQty: 100, gstPercent: 5, hsnCode: "210690" });
+    setIsOpen(true);
+  };
+
+  const onSubmit = (values: ProductFormValues) => {
+    const data = {
+      name: values.name,
+      slug: values.slug,
+      category: values.category,
+      description: values.description ?? null,
+      b2cPrice: values.b2cPrice,
+      b2bPrice: values.b2bPrice ?? values.b2cPrice * 0.75,
+      moq: values.moq ?? 1,
+      cartonQty: 1,
+      weightGrams: values.weightGrams,
+      stockQty: values.stockQty,
+      gstPercent: values.gstPercent,
+      hsnCode: values.hsnCode ?? "210690",
+      shelfLifeMonths: 6,
+    };
+
+    if (editingProduct) {
+      updateProduct.mutate({ id: editingProduct.id, data }, {
+        onSuccess: () => {
+          toast.success("Product updated");
+          setIsOpen(false);
+          queryClient.invalidateQueries({ queryKey: getListAdminProductsQueryKey() });
+        },
+        onError: (err) => toast.error(err.message || "Failed to update product")
+      });
+    } else {
+      createProduct.mutate({ data }, {
+        onSuccess: () => {
+          toast.success("Product created");
+          setIsOpen(false);
+          form.reset();
+          queryClient.invalidateQueries({ queryKey: getListAdminProductsQueryKey() });
+        },
+        onError: (err) => toast.error(err.message || "Failed to create product")
+      });
+    }
   };
 
   const toggleStatus = (id: string, currentStatus: string) => {
@@ -215,12 +251,10 @@ function ProductsInner() {
           <p className="text-muted-foreground">Manage your product catalog</p>
         </div>
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
-          <SheetTrigger asChild>
-            <Button><Plus className="w-4 h-4 mr-2" /> Add Product</Button>
-          </SheetTrigger>
+          <Button onClick={openCreate}><Plus className="w-4 h-4 mr-2" /> Add Product</Button>
           <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
             <SheetHeader className="mb-6">
-              <SheetTitle>Add New Product</SheetTitle>
+              <SheetTitle>{editingProduct ? "Edit Product" : "Add New Product"}</SheetTitle>
             </SheetHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -280,8 +314,8 @@ function ProductsInner() {
                     <FormItem><FormLabel>HSN Code</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                 </div>
-                <Button type="submit" className="w-full" disabled={createProduct.isPending}>
-                  {createProduct.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Save Product
+                <Button type="submit" className="w-full" disabled={createProduct.isPending || updateProduct.isPending}>
+                  {(createProduct.isPending || updateProduct.isPending) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} {editingProduct ? "Save Changes" : "Create Product"}
                 </Button>
               </form>
             </Form>
@@ -332,6 +366,7 @@ function ProductsInner() {
                   <ProductImageManager productId={p.id} productName={p.name} />
                 </TableCell>
                 <TableCell className="text-center">
+                  <Button variant="outline" size="sm" onClick={() => openEdit(p)} className="mr-2">Edit</Button>
                   <Switch
                     checked={p.status === "active"}
                     onCheckedChange={() => toggleStatus(p.id, p.status)}

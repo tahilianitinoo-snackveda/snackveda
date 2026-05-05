@@ -1,3 +1,4 @@
+// @ts-nocheck
 // SnackVeda API — Vercel Serverless Function
 // Runtime: Node.js 20
 

@@ -14,7 +14,10 @@
   "devDependencies": {
     "prettier": "^3.8.1",
     "tsx": "catalog:",
-    "typescript": "~5.9.2"
+    "typescript": "~5.9.2",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/node": "^20.0.0"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

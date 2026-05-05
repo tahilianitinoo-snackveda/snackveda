@@ -253,7 +253,7 @@ export default async function handler(req: Request): Promise<Response> {
     return new Response(null, { status: 204, headers: corsHeaders });
   }
 
-  const url = new URL(req.url);
+  const url = new URL(req.url, "http://localhost");
   const rawPath = url.pathname;
   const path = rawPath.replace(/^\/api/, "") || "/";
   const method = req.method;

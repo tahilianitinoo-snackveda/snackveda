@@ -1,5 +1,13 @@
 // @ts-nocheck
 // SnackVeda API — Vercel Serverless Function
+
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: "1mb",
+    },
+  },
+};
 // Runtime: Node.js 20
 
 import bcrypt from "bcryptjs";
@@ -235,40 +243,38 @@ async function serializeOrder(orderId: string) {
 
 // ─── MAIN HANDLER ─────────────────────────────────────────────────────────────
 // ─── VERCEL HANDLER ───────────────────────────────────────────────────────────
-export default async function handler(req: Request): Promise<Response> {
+export default async function handler(req, res) {
   const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
-    "Content-Type": "application/json",
   };
 
-  const ok = (body: any, status = 200) =>
-    new Response(JSON.stringify(body), { status, headers: corsHeaders });
-  const err = (msg: string, code: string, status: number) =>
-    ok({ message: msg, code }, status);
+  const send = (body, status = 200) => {
+    res.status(status).set({ ...corsHeaders, "Content-Type": "application/json" }).end(JSON.stringify(body));
+  };
+  const ok = (body, status = 200) => send(body, status);
+  const err = (msg, code, status) => send({ message: msg, code }, status);
 
-  // CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: corsHeaders });
+    res.status(204).set(corsHeaders).end();
+    return;
   }
 
-  const url = new URL(req.url, "http://localhost");
-  const rawPath = url.pathname;
-  const path = rawPath.replace(/^\/api/, "") || "/";
+  const rawPath = req.url || "/";
+  const [pathPart, queryPart] = rawPath.split("?");
+  const path = pathPart.replace(/^\/api/, "") || "/";
   const method = req.method;
-  const params: Record<string, string> = {};
-  url.searchParams.forEach((v, k) => { params[k] = v; });
+  const params = Object.fromEntries(new URLSearchParams(queryPart || ""));
 
-  let parsedBody: any = null;
+  let parsedBody = null;
   try {
-    if (method !== "GET" && method !== "HEAD") {
-      const text = await req.text();
-      if (text) parsedBody = JSON.parse(text);
+    if (method !== "GET" && method !== "HEAD" && req.body) {
+      parsedBody = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
     }
   } catch {}
 
-  const authHeader = req.headers.get("authorization") || req.headers.get("Authorization") || undefined;
+  const authHeader = req.headers?.authorization || req.headers?.Authorization;
 
   try {
     // ── HEALTH ──────────────────────────────────────────────────────────────

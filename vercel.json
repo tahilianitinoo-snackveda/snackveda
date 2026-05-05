@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "buildCommand": "pnpm install --no-frozen-lockfile && pnpm run build:frontend",
+  "outputDirectory": "artifacts/snackveda/dist/public",
+  "installCommand": "pnpm install --no-frozen-lockfile",
+  "framework": null,
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "/api/index" }
+  ],
+  "functions": {
+    "api/index.ts": {
+      "runtime": "nodejs20.x",
+      "maxDuration": 30
+    }
+  }
+}

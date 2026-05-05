@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "buildCommand": "pnpm install --no-frozen-lockfile && pnpm run build:frontend",
+  "buildCommand": "pnpm run build:frontend",
   "outputDirectory": "artifacts/snackveda/dist/public",
-  "installCommand": "corepack enable && corepack prepare pnpm@9.15.9 --activate && pnpm install --no-frozen-lockfile",
+  "installCommand": "pnpm install --no-frozen-lockfile",
   "framework": null,
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/index" }

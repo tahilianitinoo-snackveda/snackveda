@@ -251,13 +251,18 @@ export default async function handler(req, res) {
   };
 
   const send = (body, status = 200) => {
-    res.status(status).set({ ...corsHeaders, "Content-Type": "application/json" }).end(JSON.stringify(body));
+    Object.entries(corsHeaders).forEach(([k, v]) => res.setHeader(k, v));
+    res.setHeader("Content-Type", "application/json");
+    res.statusCode = status;
+    res.end(JSON.stringify(body));
   };
   const ok = (body, status = 200) => send(body, status);
   const err = (msg, code, status) => send({ message: msg, code }, status);
 
   if (req.method === "OPTIONS") {
-    res.status(204).set(corsHeaders).end();
+    Object.entries(corsHeaders).forEach(([k, v]) => res.setHeader(k, v));
+    res.statusCode = 204;
+    res.end();
     return;
   }
 

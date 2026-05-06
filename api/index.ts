@@ -647,7 +647,6 @@ export default async function handler(req, res) {
         await db.insert(invoicesTable).values({ orderId: payment.orderId, invoiceNumber }).onConflictDoNothing();
         return ok({ ok: true, paymentId: payment.id, orderId: payment.orderId, invoiceNumber });
       }
-    }
 
       // Shipping notification — admin marks order as dispatched with tracking
       const adminShipMatch = path.match(/^\/admin\/orders\/([^/]+)\/ship$/);
@@ -655,10 +654,8 @@ export default async function handler(req, res) {
         const b = z.object({ courier: z.string(), trackingNumber: z.string(), trackingLink: z.string() }).safeParse(parsedBody);
         if (!b.success) return err("Invalid shipping data", "VALIDATION_ERROR", 400);
         const { courier, trackingNumber, trackingLink } = b.data;
-        // Update order status to dispatched
         const [updatedOrder] = await db.update(ordersTable).set({ status: "dispatched" }).where(eq(ordersTable.id, adminShipMatch[1])).returning();
         if (!updatedOrder) return err("Order not found", "NOT_FOUND", 404);
-        // Get customer
         const [customer] = await db.select().from(usersTable).where(eq(usersTable.id, updatedOrder.userId)).limit(1);
         if (customer) {
           notifyShipping(updatedOrder, customer, courier, trackingNumber, trackingLink).catch(() => {});

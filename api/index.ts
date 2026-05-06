@@ -3,11 +3,62 @@
 
 export const config = {
   api: {
-    bodyParser: {
-      sizeLimit: "1mb",
-    },
+    bodyParser: { sizeLimit: "1mb" },
   },
 };
+
+// ─── NOTIFICATION HELPERS (inline to avoid import issues) ────────────────────
+const RESEND_KEY = () => process.env.RESEND_API_KEY;
+const FAST2SMS_KEY = () => process.env.FAST2SMS_API_KEY;
+const FROM_EMAIL = "support@snackveda.co.in";
+const ADMIN_EMAIL = "support@snackveda.co.in";
+
+async function sendEmail(to, subject, html) {
+  if (!RESEND_KEY()) return;
+  try {
+    await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${RESEND_KEY()}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: `SnackVeda <${FROM_EMAIL}>`, to, subject, html }),
+    });
+  } catch (e) { console.error("Email error:", e?.message); }
+}
+
+async function sendSMS(phone, message) {
+  if (!FAST2SMS_KEY() || !phone) return;
+  try {
+    const clean = String(phone).replace(/\D/g,"").replace(/^91/,"").slice(-10);
+    if (clean.length !== 10) return;
+    await fetch(`https://www.fast2sms.com/dev/bulkV2?authorization=${FAST2SMS_KEY()}&sender_id=SNKVDA&message=${encodeURIComponent(message)}&language=english&route=dlt&numbers=${clean}`, { method: "GET" });
+  } catch (e) { console.error("SMS error:", e?.message); }
+}
+
+function emailBase(content) {
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:Arial,sans-serif;background:#f9f9f7;margin:0}.wrap{max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)}.hdr{background:#0F766E;padding:24px 32px}.hdr h1{color:#fff;margin:0;font-size:22px}.hdr p{color:#99F6E4;margin:4px 0 0;font-size:12px}.bdy{padding:32px;color:#1E293B}.bdy h2{color:#0F766E;margin-top:0}.box{background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:16px 20px;margin:16px 0}.row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #E2E8F0;font-size:13px}.row:last-child{border-bottom:none}.lbl{color:#64748B}.val{font-weight:600}.btn{display:inline-block;background:#0F766E;color:#fff!important;text-decoration:none;padding:11px 24px;border-radius:8px;font-weight:600;margin:12px 0}table{width:100%;border-collapse:collapse;margin:12px 0}th{background:#0F766E;color:#fff;padding:8px 12px;text-align:left;font-size:12px}td{padding:8px 12px;font-size:13px;border-bottom:1px solid #F1F5F9}.ftr{background:#F8FAFC;padding:16px 32px;text-align:center;font-size:11px;color:#94A3B8;border-top:1px solid #E2E8F0}</style></head><body><div class="wrap"><div class="hdr"><h1>SnackVeda</h1><p>By Narayani Distributors</p></div><div class="bdy">${content}</div><div class="ftr">&copy; 2025 SnackVeda | Narayani Distributors | <a href="https://snackveda.co.in" style="color:#0F766E">snackveda.co.in</a></div></div></body></html>`;
+}
+
+async function notifyRegistration(user, isB2B) {
+  const subject = isB2B ? "Welcome to SnackVeda Wholesale!" : "Welcome to SnackVeda!";
+  const html = emailBase(`<h2>Welcome, ${user.fullName}!</h2><p>${isB2B ? "Your wholesale account is active. You can now place bulk orders at trade pricing." : "You're now part of SnackVeda! Your first order gets <strong>15% off</strong>."}</p>${isB2B ? `<div class="box"><div class="row"><span class="lbl">Account</span><span class="val">Wholesale (B2B)</span></div><div class="row"><span class="lbl">Min Order</span><span class="val">₹5,000</span></div></div>` : ""}<a href="https://snackveda.co.in/shop" class="btn">Shop Now</a>`);
+  await sendEmail(user.email, subject, html);
+  if (user.phone) await sendSMS(user.phone, isB2B ? `Welcome to SnackVeda Wholesale! Your account is active. Order at snackveda.co.in` : `Welcome to SnackVeda! Get 15% off your first order. Shop at snackveda.co.in`);
+}
+
+async function notifyOrderPlaced(order, user) {
+  const itemsHtml = (order.items||[]).map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.quantity}</td><td style="text-align:right">₹${Number(i.lineTotal).toFixed(2)}</td></tr>`).join("");
+  const html = emailBase(`<h2>Order Confirmed!</h2><p>Hi ${user.fullName}, your order is placed.</p><div class="box"><div class="row"><span class="lbl">Order No</span><span class="val">${order.orderNumber}</span></div><div class="row"><span class="lbl">Total</span><span class="val">₹${Number(order.totalAmount).toFixed(2)}</span></div><div class="row"><span class="lbl">Pay to UPI</span><span class="val">9898477151@pthdfc</span></div></div><table><thead><tr><th>Product</th><th>Qty</th><th>Amount</th></tr></thead><tbody>${itemsHtml}</tbody></table><a href="https://snackveda.co.in/account" class="btn">View Order</a>`);
+  await sendEmail(user.email, `Order Confirmed — ${order.orderNumber}`, html);
+  if (user.phone) await sendSMS(user.phone, `SnackVeda: Order ${order.orderNumber} confirmed. Pay Rs.${Number(order.totalAmount).toFixed(0)} to UPI: 9898477151@pthdfc. View: snackveda.co.in/account`);
+  // Admin alert
+  const adminHtml = emailBase(`<h2>New Order: ${order.orderNumber}</h2><div class="box"><div class="row"><span class="lbl">Customer</span><span class="val">${user.fullName}</span></div><div class="row"><span class="lbl">Email</span><span class="val">${user.email}</span></div><div class="row"><span class="lbl">Phone</span><span class="val">${user.phone||"N/A"}</span></div><div class="row"><span class="lbl">Type</span><span class="val">${order.orderType==="b2b"?"Wholesale":"Retail"}</span></div><div class="row"><span class="lbl">Amount</span><span class="val">₹${Number(order.totalAmount).toFixed(2)}</span></div></div><a href="https://snackveda.co.in/admin/orders" class="btn">View in Admin</a>`);
+  await sendEmail(ADMIN_EMAIL, `New ${order.orderType.toUpperCase()} Order — ${order.orderNumber}`, adminHtml);
+}
+
+async function notifyShipping(order, user, courier, trackingNumber, trackingLink) {
+  const html = emailBase(`<h2>Your Order is Shipped!</h2><p>Hi ${user.fullName}, your SnackVeda order is on the way!</p><div class="box"><div class="row"><span class="lbl">Order No</span><span class="val">${order.orderNumber}</span></div><div class="row"><span class="lbl">Courier</span><span class="val">${courier}</span></div><div class="row"><span class="lbl">AWB / Tracking No</span><span class="val">${trackingNumber}</span></div></div><a href="${trackingLink}" class="btn">Track Your Order</a><p style="color:#64748B;font-size:12px">Estimated delivery: 3-7 business days.</p>`);
+  await sendEmail(user.email, `Your Order is Shipped — ${order.orderNumber}`, html);
+  if (user.phone) await sendSMS(user.phone, `SnackVeda: Order ${order.orderNumber} shipped via ${courier}. AWB: ${trackingNumber}. Track: ${trackingLink}`);
+}
 // Runtime: Node.js 20
 
 import bcrypt from "bcryptjs";
@@ -304,6 +355,8 @@ export default async function handler(req, res) {
       const hash = await bcrypt.hash(d.password, 10);
       const isB2b = d.accountType === "b2b";
       const [user] = await db.insert(usersTable).values({ email: d.email.toLowerCase(), passwordHash: hash, fullName: d.fullName, phone: d.phone ?? null, role: isB2b ? "b2b_customer" : "b2c_customer", customerType: isB2b ? (d.businessType ?? "kirana") : "retail", businessName: d.businessName ?? null, gstNumber: d.gstNumber ?? null, businessAddress: d.businessAddress ?? null, b2bStatus: isB2b ? "approved" : null }).returning();
+      // Send welcome notification (non-blocking)
+      notifyRegistration(user, isB2b).catch(() => {});
       return ok({ token: signToken(user.id), user: profileUser(user) }, 201);
     }
 
@@ -383,7 +436,7 @@ export default async function handler(req, res) {
       await db.insert(orderItemsTable).values(quote.lines.map(l => ({ orderId: order.id, productId: l.productId, quantity: l.quantity, unitPrice: String(l.unitPrice), gstPercent: String(l.gstPercent), gstAmount: String(l.lineGst), lineTotal: String(l.lineTotal), hsnCode: products.find(p => p.id === l.productId)?.hsnCode ?? "21069099" })));
       await db.insert(paymentsTable).values({ orderId: order.id, paymentMethod: d.paymentMethod, paymentStatus: "pending", amount: String(quote.total), referenceNumber: d.paymentReference ?? null });
       await db.update(usersTable).set({ ordersCount: sql`${usersTable.ordersCount} + 1` }).where(eq(usersTable.id, user.id));
-      return ok(await serializeOrder(order.id), 201);
+      const serialized = await serializeOrder(order.id); notifyOrderPlaced({ ...serialized, orderNumber: order.orderNumber, totalAmount: order.totalAmount, orderType: order.orderType }, user).catch(() => {}); return ok(serialized, 201);
     }
 
     if (path === "/orders/b2b" && method === "POST") {
@@ -589,6 +642,24 @@ export default async function handler(req, res) {
         const invoiceNumber = await generateInvoiceNumber();
         await db.insert(invoicesTable).values({ orderId: payment.orderId, invoiceNumber }).onConflictDoNothing();
         return ok({ ok: true, paymentId: payment.id, orderId: payment.orderId, invoiceNumber });
+      }
+    }
+
+      // Shipping notification — admin marks order as dispatched with tracking
+      const adminShipMatch = path.match(/^\/admin\/orders\/([^/]+)\/ship$/);
+      if (adminShipMatch && method === "POST") {
+        const b = z.object({ courier: z.string(), trackingNumber: z.string(), trackingLink: z.string() }).safeParse(parsedBody);
+        if (!b.success) return err("Invalid shipping data", "VALIDATION_ERROR", 400);
+        const { courier, trackingNumber, trackingLink } = b.data;
+        // Update order status to dispatched
+        const [updatedOrder] = await db.update(ordersTable).set({ status: "dispatched" }).where(eq(ordersTable.id, adminShipMatch[1])).returning();
+        if (!updatedOrder) return err("Order not found", "NOT_FOUND", 404);
+        // Get customer
+        const [customer] = await db.select().from(usersTable).where(eq(usersTable.id, updatedOrder.userId)).limit(1);
+        if (customer) {
+          notifyShipping(updatedOrder, customer, courier, trackingNumber, trackingLink).catch(() => {});
+        }
+        return ok({ ok: true, status: "dispatched", orderId: updatedOrder.id });
       }
     }
 

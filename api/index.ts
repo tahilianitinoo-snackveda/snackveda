@@ -346,18 +346,22 @@ export default async function handler(req, res) {
 
     // ── AUTH ─────────────────────────────────────────────────────────────────
     if (path === "/auth/register" && method === "POST") {
-      const b = RegisterBody.safeParse(parsedBody);
-      if (!b.success) return err("Invalid registration data", "VALIDATION_ERROR", 400);
-      const d = b.data;
-      const db = getDb();
-      const existing = await db.select().from(usersTable).where(eq(usersTable.email, d.email.toLowerCase())).limit(1);
-      if (existing.length) return err("Email already exists", "EMAIL_TAKEN", 400);
-      const hash = await bcrypt.hash(d.password, 10);
-      const isB2b = d.accountType === "b2b";
-      const [user] = await db.insert(usersTable).values({ email: d.email.toLowerCase(), passwordHash: hash, fullName: d.fullName, phone: d.phone ?? null, role: isB2b ? "b2b_customer" : "b2c_customer", customerType: isB2b ? (d.businessType ?? "kirana") : "retail", businessName: d.businessName ?? null, gstNumber: d.gstNumber ?? null, businessAddress: d.businessAddress ?? null, b2bStatus: isB2b ? "approved" : null }).returning();
-      // Send welcome notification (non-blocking)
-      notifyRegistration(user, isB2b).catch(() => {});
-      return ok({ token: signToken(user.id), user: profileUser(user) }, 201);
+      try {
+        const b = RegisterBody.safeParse(parsedBody);
+        if (!b.success) return err("Invalid registration data", "VALIDATION_ERROR", 400);
+        const d = b.data;
+        const db = getDb();
+        const existing = await db.select().from(usersTable).where(eq(usersTable.email, d.email.toLowerCase())).limit(1);
+        if (existing.length) return err("Email already exists", "EMAIL_TAKEN", 400);
+        const hash = await bcrypt.hash(d.password, 10);
+        const isB2b = d.accountType === "b2b";
+        const [user] = await db.insert(usersTable).values({ email: d.email.toLowerCase(), passwordHash: hash, fullName: d.fullName, phone: d.phone ?? null, role: isB2b ? "b2b_customer" : "b2c_customer", customerType: isB2b ? (d.businessType ?? "kirana") : "retail", businessName: d.businessName ?? null, gstNumber: d.gstNumber ?? null, businessAddress: d.businessAddress ?? null, b2bStatus: isB2b ? "approved" : null }).returning();
+        notifyRegistration(user, isB2b).catch(() => {});
+        return ok({ token: signToken(user.id), user: profileUser(user) }, 201);
+      } catch (e: any) {
+        console.error("Registration error:", e?.message, e?.stack);
+        return err(e?.message || "Registration failed", "INTERNAL_ERROR", 500);
+      }
     }
 
     if (path === "/auth/login" && method === "POST") {

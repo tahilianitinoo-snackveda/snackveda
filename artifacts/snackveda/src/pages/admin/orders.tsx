@@ -43,25 +43,22 @@ function OrdersInner() {
           <TableRow>
             <TableHead>Order #</TableHead>
             <TableHead>Date</TableHead>
-            <TableHead>Customer</TableHead>
+            <TableHead>Type</TableHead>
             <TableHead>Total</TableHead>
-            <TableHead>Payment</TableHead>
             <TableHead>Status</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {isLoading ? (
-            <TableRow><TableCell colSpan={6} className="text-center py-8"><Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" /></TableCell></TableRow>
+            <TableRow><TableCell colSpan={5} className="text-center py-8"><Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" /></TableCell></TableRow>
+          ) : !orders?.length ? (
+            <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No orders yet</TableCell></TableRow>
           ) : orders?.map(o => (
             <TableRow key={o.id}>
-              <TableCell className="font-medium font-mono">{o.orderNumber}</TableCell>
-              <TableCell className="text-muted-foreground">{formatDate(o.createdAt)}</TableCell>
-              <TableCell>
-                {o.customerName}
-                <div className="text-xs text-muted-foreground capitalize">{o.paymentMethod.replace('_', ' ')}</div>
-              </TableCell>
+              <TableCell className="font-medium font-mono text-sm">{o.orderNumber}</TableCell>
+              <TableCell className="text-muted-foreground text-sm">{formatDate(o.createdAt)}</TableCell>
+              <TableCell><Badge variant="outline" className="capitalize">{o.orderType}</Badge></TableCell>
               <TableCell className="font-medium"><Price amount={o.totalAmount} /></TableCell>
-              <TableCell>{getPaymentBadge(o.paymentStatus)}</TableCell>
               <TableCell>
                 <Select defaultValue={o.status} onValueChange={(val) => handleStatusChange(o.id, val)}>
                   <SelectTrigger className="w-[130px] h-8 text-xs">
@@ -69,8 +66,8 @@ function OrdersInner() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="processing">Processing</SelectItem>
-                    <SelectItem value="shipped">Shipped</SelectItem>
+                    <SelectItem value="confirmed">Confirmed</SelectItem>
+                    <SelectItem value="dispatched">Dispatched</SelectItem>
                     <SelectItem value="delivered">Delivered</SelectItem>
                     <SelectItem value="cancelled">Cancelled</SelectItem>
                   </SelectContent>

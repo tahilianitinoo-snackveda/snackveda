@@ -166,9 +166,9 @@ export default function ProductDetail() {
             </div>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 gap-12 mb-24">
+          <div className="grid md:grid-cols-2 gap-8 mb-24">
             {/* Image Gallery */}
-            <div className="sticky top-24">
+            <div className="md:sticky md:top-24">
               <ProductImageGallery product={product} getCategoryGradient={getCategoryGradient} />
             </div>
 

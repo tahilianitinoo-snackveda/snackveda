@@ -374,7 +374,36 @@ export default async function handler(req, res) {
       return ok({ token: signToken(user.id), user: profileUser(user) });
     }
 
-    if (path === "/auth/logout" && method === "POST") return ok({ ok: true });
+    if (path === "/auth/forgot-password" && method === "POST") {
+      const b = z.object({ email: z.string().email() }).safeParse(parsedBody);
+      if (!b.success) return ok({ ok: true }); // don't reveal validation errors
+      try {
+        const db = getDb();
+        const [user] = await db.select().from(usersTable).where(eq(usersTable.email, b.data.email.toLowerCase())).limit(1);
+        if (user) {
+          // Generate a simple reset token (JWT with 1h expiry)
+          const token = jwt.sign({ userId: user.id, type: "password_reset" }, process.env.JWT_SECRET!, { expiresIn: "1h" });
+          const resetLink = `https://snackveda.co.in/reset-password?token=${token}`;
+          const html = `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#f9f9f7;margin:0"><div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)"><div style="background:#0F766E;padding:24px 32px"><h1 style="color:#fff;margin:0;font-size:22px">SnackVeda</h1></div><div style="padding:32px;color:#1E293B"><h2 style="color:#0F766E;margin-top:0">Reset Your Password</h2><p>Hi ${user.fullName}, we received a request to reset your password.</p><p>Click the button below to reset it. This link expires in 1 hour.</p><a href="${resetLink}" style="display:inline-block;background:#0F766E;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:600;margin:16px 0">Reset Password</a><p style="color:#64748B;font-size:13px;margin-top:16px">If you didn't request this, ignore this email. Your password won't change.</p></div><div style="background:#F8FAFC;padding:16px 32px;text-align:center;font-size:11px;color:#94A3B8;border-top:1px solid #E2E8F0">&copy; 2025 SnackVeda | Narayani Distributors</div></div></body></html>`;
+          await sendEmail(user.email, "Reset Your SnackVeda Password", html);
+        }
+      } catch (e) { console.error("Forgot password error:", e); }
+      return ok({ ok: true }); // always return ok
+    }
+
+    if (path === "/auth/reset-password" && method === "POST") {
+      const b = z.object({ token: z.string(), password: z.string().min(6) }).safeParse(parsedBody);
+      if (!b.success) return err("Invalid data", "VALIDATION_ERROR", 400);
+      try {
+        const payload = jwt.verify(b.data.token, process.env.JWT_SECRET!) as { userId: string; type: string };
+        if (payload.type !== "password_reset") return err("Invalid token", "INVALID_TOKEN", 400);
+        const hash = await bcrypt.hash(b.data.password, 10);
+        await getDb().update(usersTable).set({ passwordHash: hash }).where(eq(usersTable.id, payload.userId));
+        return ok({ ok: true });
+      } catch {
+        return err("Invalid or expired token", "INVALID_TOKEN", 400);
+      }
+    }
 
     if (path === "/auth/me" && method === "GET") {
       const user = await getUser(authHeader);
@@ -491,6 +520,11 @@ export default async function handler(req, res) {
 
     // ── ACCOUNT ──────────────────────────────────────────────────────────────
     if (path === "/account/me" && method === "GET") {
+      const user = await getUser(authHeader);
+      if (!user) return err("Authentication required", "UNAUTHORIZED", 401);
+      return ok(profileUser(user));
+    }
+    if (path === "/account/profile" && method === "GET") {
       const user = await getUser(authHeader);
       if (!user) return err("Authentication required", "UNAUTHORIZED", 401);
       return ok(profileUser(user));

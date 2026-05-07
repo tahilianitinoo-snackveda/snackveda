@@ -198,7 +198,7 @@ export default function ProductDetail() {
                     Wholesale price applied. Minimum Order Quantity (MOQ): {product.moq} units
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">Inclusive of all taxes</p>
+                  <p className="text-sm text-muted-foreground">Price excl. GST (5% added at checkout)</p>
                 )}
               </div>
 

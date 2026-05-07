@@ -78,7 +78,10 @@ export default function Login() {
               )} />
               <FormField control={form.control} name="password" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel className="flex items-center justify-between">
+                    Password
+                    <Link href="/forgot-password" className="text-xs text-primary hover:underline font-normal">Forgot password?</Link>
+                  </FormLabel>
                   <FormControl><Input placeholder="••••••••" type="password" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
@@ -93,12 +96,6 @@ export default function Login() {
 
           <div className="mt-8 text-center text-sm text-muted-foreground">
             Don't have an account? <Link href="/register" className="text-primary font-medium hover:underline">Register here</Link>
-          </div>
-
-          <div className="mt-8 p-4 bg-amber-50 text-amber-800 text-xs border border-amber-200 rounded-xl">
-            <p className="font-semibold mb-1">Demo Admin Credentials:</p>
-            <p className="font-mono">Email: admin@snackveda.com</p>
-            <p className="font-mono">Password: Admin@123</p>
           </div>
         </div>
       </div>

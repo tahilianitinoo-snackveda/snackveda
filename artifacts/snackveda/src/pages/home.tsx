@@ -83,7 +83,7 @@ export default function Home() {
           <p className="text-muted-foreground max-w-2xl mx-auto">Crafted with care to bring you the best of crunch, flavor, and health.</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <Link href="/shop?category=chips" className="group relative rounded-2xl overflow-hidden aspect-[4/3] block">
+          <Link href="/shop?category=healthy_chips" className="group relative rounded-2xl overflow-hidden aspect-[4/3] block">
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10 transition-opacity group-hover:opacity-90" />
             <img src={chipsImg} alt="Healthy Chips" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
             <div className="absolute bottom-0 left-0 p-8 z-20">

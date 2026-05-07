@@ -24,7 +24,7 @@ export function generateInvoicePdf(invoice: Invoice) {
   doc.text(seller.name, 196, 20, { align: "right" });
   doc.text(seller.address, 196, 25, { align: "right" });
   doc.text(seller.email, 196, 30, { align: "right" });
-  doc.text(`GSTIN: ${seller.gstin}`, 196, 35, { align: "right" });
+  doc.text(`GSTIN: ${seller.gstNumber}`, 196, 35, { align: "right" });
 
   doc.setDrawColor(226, 232, 240);
   doc.line(14, 42, 196, 42);
@@ -34,7 +34,8 @@ export function generateInvoicePdf(invoice: Invoice) {
   doc.text("INVOICE TO:", 14, 52);
 
   doc.setFont("helvetica", "normal");
-  doc.text(order.customerName, 14, 58);
+  const customerName = order.user?.fullName || order.customerName || "Customer";
+  doc.text(customerName, 14, 58);
   if (addr) {
     doc.text(addr.line1, 14, 63);
     let addrY = 68;
@@ -56,8 +57,8 @@ export function generateInvoicePdf(invoice: Invoice) {
   doc.text(order.orderNumber, 150, 58);
   doc.text(formatDate(invoice.issuedAt), 150, 64);
 
-  const tableData = order.items.map((item) => [
-    item.productName,
+  const tableData = order.items.map((item: any) => [
+    item.name || item.productName,
     item.hsnCode,
     item.quantity.toString(),
     formatINR(item.unitPrice),

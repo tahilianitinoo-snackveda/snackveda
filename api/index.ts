@@ -469,7 +469,14 @@ export default async function handler(req, res) {
       await db.insert(orderItemsTable).values(quote.lines.map(l => ({ orderId: order.id, productId: l.productId, quantity: l.quantity, unitPrice: String(l.unitPrice), gstPercent: String(l.gstPercent), gstAmount: String(l.lineGst), lineTotal: String(l.lineTotal), hsnCode: products.find(p => p.id === l.productId)?.hsnCode ?? "21069099" })));
       await db.insert(paymentsTable).values({ orderId: order.id, paymentMethod: d.paymentMethod, paymentStatus: "pending", amount: String(quote.total), referenceNumber: d.paymentReference ?? null });
       await db.update(usersTable).set({ ordersCount: sql`${usersTable.ordersCount} + 1` }).where(eq(usersTable.id, user.id));
-      const serialized = await serializeOrder(order.id); notifyOrderPlaced({ ...serialized, orderNumber: order.orderNumber, totalAmount: order.totalAmount, orderType: order.orderType }, user).catch(() => {}); return ok(serialized, 201);
+      const serialized = await serializeOrder(order.id);
+      // Only notify admin on order creation — customer gets confirmation when payment is confirmed
+      const adminOnlyNotify = async () => {
+        const adminHtml = emailBase(`<h2>New B2C Order: ${order.orderNumber}</h2><div class="box"><div class="row"><span class="lbl">Customer</span><span class="val">${user.fullName}</span></div><div class="row"><span class="lbl">Email</span><span class="val">${user.email}</span></div><div class="row"><span class="lbl">Phone</span><span class="val">${user.phone||"N/A"}</span></div><div class="row"><span class="lbl">Amount</span><span class="val">₹${Number(order.totalAmount).toFixed(2)}</span></div></div><a href="https://snackveda.co.in/admin/orders" class="btn">View in Admin</a>`);
+        await sendEmail("support@snackveda.co.in", `New B2C Order — ${order.orderNumber}`, adminHtml);
+      };
+      adminOnlyNotify().catch(() => {});
+      return ok(serialized, 201);
     }
 
     if (path === "/orders/b2b" && method === "POST") {
@@ -491,7 +498,9 @@ export default async function handler(req, res) {
       await db.insert(orderItemsTable).values(quote.lines.map(l => ({ orderId: order.id, productId: l.productId, quantity: l.quantity, unitPrice: String(l.unitPrice), gstPercent: String(l.gstPercent), gstAmount: String(l.lineGst), lineTotal: String(l.lineTotal), hsnCode: products.find(p => p.id === l.productId)?.hsnCode ?? "21069099" })));
       await db.insert(paymentsTable).values({ orderId: order.id, paymentMethod: d.paymentMethod, paymentStatus: "pending", amount: String(quote.total) });
       await db.update(usersTable).set({ ordersCount: sql`${usersTable.ordersCount} + 1` }).where(eq(usersTable.id, user.id));
-      return ok(await serializeOrder(order.id), 201);
+      const serializedB2b = await serializeOrder(order.id);
+      notifyOrderPlaced({ ...serializedB2b, orderNumber: order.orderNumber, totalAmount: order.totalAmount, orderType: order.orderType }, user).catch(() => {});
+      return ok(serializedB2b, 201);
     }
 
     const orderIdMatch = path.match(/^\/orders\/([^/]+)$/);
@@ -689,9 +698,14 @@ export default async function handler(req, res) {
         if (!b.success) return err("Invalid data", "VALIDATION_ERROR", 400);
         const [payment] = await db.update(paymentsTable).set({ paymentStatus: "received", paidAt: new Date(), markedById: user.id, ...(b.data.referenceNumber && { referenceNumber: b.data.referenceNumber }) }).where(eq(paymentsTable.id, adminPayMatch[1])).returning();
         if (!payment) return err("Payment not found", "NOT_FOUND", 404);
-        await db.update(ordersTable).set({ status: "confirmed" }).where(eq(ordersTable.id, payment.orderId));
+        if (!payment) return err("Payment not found", "NOT_FOUND", 404);
+        const [confirmedOrder] = await db.update(ordersTable).set({ status: "confirmed" }).where(eq(ordersTable.id, payment.orderId)).returning();
         const invoiceNumber = await generateInvoiceNumber();
         await db.insert(invoicesTable).values({ orderId: payment.orderId, invoiceNumber }).onConflictDoNothing();
+        try {
+          const [customer] = await db.select().from(usersTable).where(eq(usersTable.id, confirmedOrder.userId)).limit(1);
+          if (customer) { const orderForEmail = await serializeOrder(payment.orderId); if (orderForEmail) notifyOrderPlaced({ ...orderForEmail, orderNumber: confirmedOrder.orderNumber, totalAmount: confirmedOrder.totalAmount, orderType: confirmedOrder.orderType }, customer).catch(()=>{}); }
+        } catch(e) { console.error("Payment notify error:", e); }
         return ok({ ok: true, paymentId: payment.id, orderId: payment.orderId, invoiceNumber });
       }
 

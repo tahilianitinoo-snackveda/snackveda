@@ -37,11 +37,7 @@ function AccountInner() {
 
   const handleLogout = () => {
     localStorage.removeItem("snackveda_token");
-    logout.mutate(undefined, {
-      onSuccess: () => {
-        window.location.href = "/login";
-      },
-    });
+    window.location.href = "/login";
   };
 
   const getStatusBadge = (status: string) => {

@@ -1,32 +1,14 @@
 import { AdminShell } from "@/components/layout/admin-shell";
 import { ProtectedRoute } from "@/components/auth/protected-route";
-import { useGetAdminDashboard, useListAdminCustomers, useUpdateAdminCustomerStatus } from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useGetAdminDashboard } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Price } from "@/components/ui/price";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { Package, Users, ShoppingCart, IndianRupee, Check, X, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { Package, Users, ShoppingCart, IndianRupee, Loader2 } from "lucide-react";
 import { formatDate } from "@/lib/format";
 
 function DashboardInner() {
   const { data: dashboard, isLoading } = useGetAdminDashboard();
-  const { data: pendingB2b } = useListAdminCustomers({ type: "b2b" });
-  const updateStatus = useUpdateAdminCustomerStatus();
-  const queryClient = useQueryClient();
-
-  const handleApprove = (id: string, status: "approved" | "rejected") => {
-    updateStatus.mutate({ id, data: { b2bStatus: status } }, {
-      onSuccess: () => {
-        toast.success(`Customer ${status}`);
-        queryClient.invalidateQueries({ queryKey: ["/api/admin/customers"] });
-      },
-      onError: (err) => toast.error(err.message || "Failed to update status"),
-    });
-  };
-
-  const pendingList = pendingB2b?.filter((c) => c.b2bStatus === "pending") || [];
 
   if (isLoading || !dashboard) {
     return (
@@ -104,44 +86,6 @@ function DashboardInner() {
           </Card>
         </div>
 
-        <div className="lg:col-span-1">
-          <Card className="h-full flex flex-col">
-            <CardHeader>
-              <CardTitle className="flex justify-between items-center">
-                <span>Pending B2B Approvals</span>
-                {pendingList.length > 0 && (
-                  <span className="bg-destructive text-destructive-foreground text-xs px-2 py-1 rounded-full">{pendingList.length}</span>
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex-1 overflow-y-auto">
-              {pendingList.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground text-sm">No pending approvals.</div>
-              ) : (
-                <div className="space-y-4">
-                  {pendingList.map((c) => (
-                    <div key={c.id} className="p-4 border rounded-xl bg-muted/30">
-                      <div className="font-bold text-sm mb-1">{c.businessName}</div>
-                      <div className="text-xs text-muted-foreground mb-3">
-                        {c.fullName} &bull; {c.customerType}
-                        <br />
-                        {formatDate(c.createdAt)}
-                      </div>
-                      <div className="flex gap-2">
-                        <Button size="sm" className="flex-1" onClick={() => handleApprove(c.id, "approved")}>
-                          <Check className="w-4 h-4 mr-1" /> Approve
-                        </Button>
-                        <Button size="sm" variant="outline" className="flex-1 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleApprove(c.id, "rejected")}>
-                          <X className="w-4 h-4 mr-1" /> Reject
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
       </div>
     </AdminShell>
   );

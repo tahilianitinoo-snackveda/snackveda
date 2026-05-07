@@ -630,11 +630,24 @@ export default async function handler(req, res) {
         const b = z.object({ status: z.enum(["pending","confirmed","dispatched","delivered","cancelled"]) }).safeParse(parsedBody);
         if (!b.success) return err("Invalid status", "VALIDATION_ERROR", 400);
         const [updated] = await db.update(ordersTable).set({ status: b.data.status }).where(eq(ordersTable.id, adminOrderMatch[1])).returning();
+        // Send email to customer on status change
+        try {
+          const [customer] = await db.select().from(usersTable).where(eq(usersTable.id, updated.userId)).limit(1);
+          if (customer) {
+            const statusLabels: Record<string, string> = { confirmed: "Confirmed", dispatched: "Dispatched", delivered: "Delivered", cancelled: "Cancelled", pending: "Pending" };
+            const statusLabel = statusLabels[b.data.status] || b.data.status;
+            const html = `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#f9f9f7;margin:0"><div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)"><div style="background:#0F766E;padding:24px 32px"><h1 style="color:#fff;margin:0;font-size:22px">SnackVeda</h1><p style="color:#99F6E4;margin:4px 0 0;font-size:12px">By Narayani Distributors</p></div><div style="padding:32px;color:#1E293B"><h2 style="color:#0F766E;margin-top:0">Order Status Updated</h2><p>Hi ${customer.fullName}, your order status has been updated.</p><div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:16px 20px;margin:16px 0"><div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #E2E8F0;font-size:13px"><span style="color:#64748B">Order Number</span><span style="font-weight:600">${updated.orderNumber}</span></div><div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #E2E8F0;font-size:13px"><span style="color:#64748B">New Status</span><span style="font-weight:600;color:#0F766E">${statusLabel}</span></div><div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px"><span style="color:#64748B">Total Amount</span><span style="font-weight:600">₹${Number(updated.totalAmount).toFixed(2)}</span></div></div>${b.data.status === "confirmed" ? `<p style="font-size:13px">Your payment has been confirmed. We are preparing your order for dispatch.</p>` : ""}${b.data.status === "cancelled" ? `<p style="font-size:13px">Your order has been cancelled. For queries contact support@snackveda.co.in</p>` : ""}<a href="https://snackveda.co.in/account" style="display:inline-block;background:#0F766E;color:#fff;text-decoration:none;padding:11px 24px;border-radius:8px;font-weight:600;margin:12px 0">View Order</a></div><div style="background:#F8FAFC;padding:16px 32px;text-align:center;font-size:11px;color:#94A3B8;border-top:1px solid #E2E8F0">&copy; 2025 SnackVeda | Narayani Distributors</div></div></body></html>`;
+            await sendEmail(customer.email, `Order ${statusLabel} — ${updated.orderNumber}`, html);
+            if (customer.phone && (b.data.status === "confirmed" || b.data.status === "cancelled")) {
+              await sendSMS(customer.phone, `SnackVeda: Order ${updated.orderNumber} is now ${statusLabel}. View: snackveda.co.in/account`);
+            }
+          }
+        } catch (e) { console.error("Status notification error:", e); }
         return ok({ id: updated.id, status: updated.status });
       }
       if (path === "/admin/payments" && method === "GET") {
-        const rows = await db.select().from(paymentsTable).orderBy(desc(paymentsTable.createdAt));
-        return ok(rows.map(p => ({ id: p.id, orderId: p.orderId, paymentMethod: p.paymentMethod, paymentStatus: p.paymentStatus, amount: Number(p.amount), referenceNumber: p.referenceNumber, paidAt: p.paidAt?.toISOString() ?? null, createdAt: p.createdAt.toISOString() })));
+        const rows = await db.select({ id: paymentsTable.id, orderId: paymentsTable.orderId, orderNumber: ordersTable.orderNumber, paymentMethod: paymentsTable.paymentMethod, paymentStatus: paymentsTable.paymentStatus, amount: paymentsTable.amount, referenceNumber: paymentsTable.referenceNumber, paidAt: paymentsTable.paidAt, createdAt: paymentsTable.createdAt }).from(paymentsTable).leftJoin(ordersTable, eq(paymentsTable.orderId, ordersTable.id)).orderBy(desc(paymentsTable.createdAt));
+        return ok(rows.map(p => ({ id: p.id, orderId: p.orderId, orderNumber: p.orderNumber ?? p.orderId, paymentMethod: p.paymentMethod, paymentStatus: p.paymentStatus, amount: Number(p.amount), referenceNumber: p.referenceNumber, paidAt: p.paidAt?.toISOString() ?? null, createdAt: p.createdAt.toISOString() })));
       }
       const adminPayMatch = path.match(/^\/admin\/payments\/([^/]+)\/confirm$/);
       if (adminPayMatch && method === "PATCH") {

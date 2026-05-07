@@ -1,31 +1,15 @@
 import { AdminShell } from "@/components/layout/admin-shell";
 import { ProtectedRoute } from "@/components/auth/protected-route";
-import { useListAdminCustomers, useUpdateAdminCustomerStatus, getListAdminCustomersQueryKey } from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useListAdminCustomers } from "@workspace/api-client-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/format";
-import { toast } from "sonner";
-import { Check, X, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 function CustomersInner() {
-  const queryClient = useQueryClient();
-  const updateStatus = useUpdateAdminCustomerStatus();
-  
   const { data: b2cCustomers, isLoading: b2cLoading } = useListAdminCustomers({ type: 'b2c' });
   const { data: b2bCustomers, isLoading: b2bLoading } = useListAdminCustomers({ type: 'b2b' });
-
-  const handleApprove = (id: string, status: 'approved' | 'rejected') => {
-    updateStatus.mutate({ id, data: { b2bStatus: status } }, {
-      onSuccess: () => {
-        toast.success(`Customer ${status}`);
-        queryClient.invalidateQueries({ queryKey: getListAdminCustomersQueryKey({ type: 'b2b' }) });
-      },
-      onError: (err) => toast.error(err.message || "Failed to update status")
-    });
-  };
 
   return (
     <AdminShell>
@@ -50,7 +34,6 @@ function CustomersInner() {
                   <TableHead>Type</TableHead>
                   <TableHead>Joined</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -69,22 +52,7 @@ function CustomersInner() {
                     <TableCell className="capitalize text-muted-foreground">{c.customerType?.replace("_", " ")}</TableCell>
                     <TableCell className="text-muted-foreground">{formatDate(c.createdAt)}</TableCell>
                     <TableCell>
-                      <Badge variant={c.b2bStatus === 'approved' ? 'outline' : c.b2bStatus === 'rejected' ? 'destructive' : 'secondary'} 
-                             className={c.b2bStatus === 'approved' ? 'border-green-200 bg-green-50 text-green-700' : ''}>
-                        {c.b2bStatus}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {c.b2bStatus === 'pending' && (
-                        <div className="flex justify-end gap-2">
-                          <Button size="sm" variant="outline" className="border-green-200 text-green-700 hover:bg-green-50" onClick={() => handleApprove(c.id, 'approved')}>
-                            <Check className="w-4 h-4" />
-                          </Button>
-                          <Button size="sm" variant="outline" className="border-red-200 text-red-700 hover:bg-red-50" onClick={() => handleApprove(c.id, 'rejected')}>
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      )}
+                      <Badge variant="outline" className="capitalize">{c.b2bStatus || "active"}</Badge>
                     </TableCell>
                   </TableRow>
                 ))}

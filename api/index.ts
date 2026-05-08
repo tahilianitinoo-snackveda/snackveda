@@ -470,12 +470,17 @@ export default async function handler(req, res) {
       await db.insert(paymentsTable).values({ orderId: order.id, paymentMethod: d.paymentMethod, paymentStatus: "pending", amount: String(quote.total), referenceNumber: d.paymentReference ?? null });
       await db.update(usersTable).set({ ordersCount: sql`${usersTable.ordersCount} + 1` }).where(eq(usersTable.id, user.id));
       const serialized = await serializeOrder(order.id);
-      // Only notify admin on order creation — customer gets confirmation when payment is confirmed
-      const adminOnlyNotify = async () => {
+      // Send order received email to customer immediately
+      const sendOrderReceivedEmail = async () => {
+        const itemsHtml = (serialized?.items||[]).map((i: any) => `<tr><td style="padding:8px 12px;font-size:13px;border-bottom:1px solid #F1F5F9">${i.name}</td><td style="padding:8px 12px;font-size:13px;border-bottom:1px solid #F1F5F9;text-align:center">${i.quantity}</td><td style="padding:8px 12px;font-size:13px;border-bottom:1px solid #F1F5F9;text-align:right">₹${Number(i.lineTotal).toFixed(2)}</td></tr>`).join("");
+        const html = emailBase(`<h2>Thank You for Your Order!</h2><p>Hi ${user.fullName}, we've received your order and it's currently under review. We'll confirm it once payment is verified.</p><div class="box"><div class="row"><span class="lbl">Order Number</span><span class="val">${order.orderNumber}</span></div><div class="row"><span class="lbl">Status</span><span class="val">Under Review</span></div><div class="row"><span class="lbl">Total Payable</span><span class="val">₹${Number(order.totalAmount).toFixed(2)}</span></div></div><table><thead><tr><th>Product</th><th style="text-align:center">Qty</th><th style="text-align:right">Amount</th></tr></thead><tbody>${itemsHtml}</tbody></table><p style="font-size:13px"><strong>Pay to UPI:</strong> 9898477151@pthdfc (Narayani Distributors)<br>Please share the UTR/reference number after payment.</p><a href="https://snackveda.co.in/account" class="btn">View Order</a>`);
+        await sendEmail(user.email, `Order Received — ${order.orderNumber} | SnackVeda`, html);
+        if (user.phone) await sendSMS(user.phone, `SnackVeda: Order ${order.orderNumber} received. Pay Rs.${Number(order.totalAmount).toFixed(0)} to UPI: 9898477151@pthdfc. We'll confirm after payment.`);
+        // Admin alert
         const adminHtml = emailBase(`<h2>New B2C Order: ${order.orderNumber}</h2><div class="box"><div class="row"><span class="lbl">Customer</span><span class="val">${user.fullName}</span></div><div class="row"><span class="lbl">Email</span><span class="val">${user.email}</span></div><div class="row"><span class="lbl">Phone</span><span class="val">${user.phone||"N/A"}</span></div><div class="row"><span class="lbl">Amount</span><span class="val">₹${Number(order.totalAmount).toFixed(2)}</span></div></div><a href="https://snackveda.co.in/admin/orders" class="btn">View in Admin</a>`);
         await sendEmail("support@snackveda.co.in", `New B2C Order — ${order.orderNumber}`, adminHtml);
       };
-      adminOnlyNotify().catch(() => {});
+      sendOrderReceivedEmail().catch(() => {});
       return ok(serialized, 201);
     }
 

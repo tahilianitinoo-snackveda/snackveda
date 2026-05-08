@@ -23,9 +23,22 @@ function OrdersInner() {
   const [shipDialog, setShipDialog] = useState<{ open: boolean; orderId: string; orderNumber: string }>({ open: false, orderId: "", orderNumber: "" });
   const [shipForm, setShipForm] = useState({ courier: "Shiprocket", trackingNumber: "", trackingLink: "" });
   const [shipping, setShipping] = useState(false);
+  const [detailOrder, setDetailOrder] = useState<any>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   const { data: b2cOrders, isLoading: b2cLoading } = useListAdminOrders({ orderType: 'b2c' });
   const { data: b2bOrders, isLoading: b2bLoading } = useListAdminOrders({ orderType: 'b2b' });
+
+  const openDetail = async (orderId: string) => {
+    setDetailLoading(true);
+    setDetailOrder({ loading: true });
+    try {
+      const res = await fetch(`/api/orders/${orderId}`, { headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json();
+      setDetailOrder(data);
+    } catch { setDetailOrder(null); }
+    finally { setDetailLoading(false); }
+  };
 
   const handleShip = async () => {
     if (!shipForm.trackingNumber || !shipForm.trackingLink) { toast.error("Enter tracking number and link"); return; }
@@ -87,9 +100,12 @@ function OrdersInner() {
               <TableCell><Badge variant="outline" className="capitalize">{o.orderType}</Badge></TableCell>
               <TableCell className="font-medium"><Price amount={o.totalAmount} /></TableCell>
               <TableCell>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => openDetail(o.id)}>
+                    Details
+                  </Button>
                   <Select defaultValue={o.status} onValueChange={(val) => handleStatusChange(o.id, val)}>
-                    <SelectTrigger className="w-[120px] h-8 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="w-[110px] h-8 text-xs"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="pending">Pending</SelectItem>
                       <SelectItem value="confirmed">Confirmed</SelectItem>
@@ -115,6 +131,89 @@ function OrdersInner() {
 
   return (
     <AdminShell>
+      {/* Order Detail Dialog */}
+      <Dialog open={!!detailOrder} onOpenChange={(o) => { if (!o) setDetailOrder(null); }}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Order Details — {detailOrder?.orderNumber}</DialogTitle></DialogHeader>
+          {detailOrder?.loading ? (
+            <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
+          ) : detailOrder && (
+            <div className="space-y-6 py-2">
+              {/* Customer */}
+              <div className="bg-muted/30 rounded-xl p-4 space-y-2">
+                <p className="font-semibold text-sm mb-3">Customer Details</p>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <span className="text-muted-foreground">Name</span><span className="font-medium">{detailOrder.user?.fullName || "—"}</span>
+                  <span className="text-muted-foreground">Email</span><span className="font-medium">{detailOrder.user?.email || "—"}</span>
+                  <span className="text-muted-foreground">Phone</span><span className="font-medium">{detailOrder.user?.phone || "—"}</span>
+                  <span className="text-muted-foreground">Order Type</span><span className="font-medium capitalize">{detailOrder.orderType}</span>
+                  <span className="text-muted-foreground">Status</span><span className="font-medium capitalize">{detailOrder.status}</span>
+                  <span className="text-muted-foreground">GSTIN</span><span className="font-medium">{detailOrder.user?.gstNumber || "—"}</span>
+                </div>
+              </div>
+
+              {/* Shipping Address */}
+              {detailOrder.shippingAddress && (
+                <div className="bg-muted/30 rounded-xl p-4 space-y-2">
+                  <p className="font-semibold text-sm mb-3">Shipping Address</p>
+                  <div className="text-sm text-muted-foreground">
+                    <p className="font-medium text-foreground">{detailOrder.shippingAddress.fullName}</p>
+                    <p>{detailOrder.shippingAddress.line1}{detailOrder.shippingAddress.line2 ? `, ${detailOrder.shippingAddress.line2}` : ""}</p>
+                    <p>{detailOrder.shippingAddress.city}, {detailOrder.shippingAddress.state} — {detailOrder.shippingAddress.pincode}</p>
+                    <p>Phone: {detailOrder.shippingAddress.phone}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Items */}
+              <div>
+                <p className="font-semibold text-sm mb-3">Order Items</p>
+                <div className="border rounded-xl overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="text-left p-3 font-medium">Product</th>
+                        <th className="text-center p-3 font-medium">Qty</th>
+                        <th className="text-right p-3 font-medium">Price</th>
+                        <th className="text-right p-3 font-medium">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {detailOrder.items?.map((item: any) => (
+                        <tr key={item.id} className="border-t">
+                          <td className="p-3">{item.name}</td>
+                          <td className="p-3 text-center">{item.quantity}</td>
+                          <td className="p-3 text-right"><Price amount={item.unitPrice} /></td>
+                          <td className="p-3 text-right font-medium"><Price amount={item.lineTotal} /></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Payment Summary */}
+              <div className="bg-muted/30 rounded-xl p-4 space-y-2 text-sm">
+                <p className="font-semibold mb-3">Payment Summary</p>
+                <div className="space-y-1">
+                  <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><Price amount={detailOrder.subtotal} /></div>
+                  {detailOrder.discountAmount > 0 && <div className="flex justify-between text-green-600"><span>Discount</span><span>-<Price amount={detailOrder.discountAmount} /></span></div>}
+                  <div className="flex justify-between"><span className="text-muted-foreground">GST (5%)</span><Price amount={detailOrder.gstAmount} /></div>
+                  {detailOrder.shippingCharge > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Shipping</span><Price amount={detailOrder.shippingCharge} /></div>}
+                  <div className="flex justify-between font-bold border-t pt-2 mt-2"><span>Total</span><Price amount={detailOrder.totalAmount} /></div>
+                </div>
+                {detailOrder.payment && (
+                  <div className="mt-3 pt-3 border-t space-y-1">
+                    <div className="flex justify-between"><span className="text-muted-foreground">Payment Method</span><span className="capitalize">{detailOrder.payment.paymentMethod?.replace("_"," ")}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Payment Status</span><Badge variant={detailOrder.payment.paymentStatus === "received" ? "outline" : "secondary"} className={detailOrder.payment.paymentStatus === "received" ? "border-green-200 text-green-700" : ""}>{detailOrder.payment.paymentStatus}</Badge></div>
+                    {detailOrder.payment.referenceNumber && <div className="flex justify-between"><span className="text-muted-foreground">UTR / Reference</span><span className="font-mono">{detailOrder.payment.referenceNumber}</span></div>}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
       {/* Ship Order Dialog */}
       <Dialog open={shipDialog.open} onOpenChange={(o) => setShipDialog(s => ({ ...s, open: o }))}>
         <DialogContent>

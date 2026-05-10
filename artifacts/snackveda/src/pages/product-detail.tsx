@@ -243,7 +243,7 @@ export default function ProductDetail() {
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground mb-1">Shelf Life</h4>
-                  <p className="font-medium">6 Months</p>
+                  <p className="font-medium">{product.shelfLifeMonths ? `${product.shelfLifeMonths} Months` : '6 Months'}</p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground mb-1">HSN Code</h4>

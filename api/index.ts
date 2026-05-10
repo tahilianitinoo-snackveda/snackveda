@@ -317,11 +317,21 @@ export default async function handler(req, res) {
     return;
   }
 
-  const rawPath = req.url || "/";
-  const [pathPart, queryPart] = rawPath.split("?");
-  const path = pathPart.replace(/^\/api/, "") || "/";
+  const rawUrl = req.url || "/";
+  const [rawPathPart, rawQueryPart] = rawUrl.split("?");
+  const rawQueryParams = new URLSearchParams(rawQueryPart || "");
+  
+  // Vercel rewrites lose the original path — recover it from query param or headers
+  const pathFromQuery = rawQueryParams.get("path");
+  const pathFromHeader = (req.headers?.["x-matched-path"] as string) || (req.headers?.["x-invoke-path"] as string);
+  const rawPath = pathFromQuery || pathFromHeader || rawPathPart;
+  const path = rawPath.replace(/^\/api/, "") || "/";
+
   const method = req.method;
-  const params = Object.fromEntries(new URLSearchParams(queryPart || ""));
+  // Params: merge query params excluding the internal path param
+  rawQueryParams.delete("path");
+  const params: Record<string, string> = {};
+  rawQueryParams.forEach((v, k) => { params[k] = v; });
 
   let parsedBody = null;
   try {

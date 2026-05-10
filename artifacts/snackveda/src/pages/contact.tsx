@@ -22,7 +22,7 @@ export default function Contact() {
               </div>
               <h3 className="font-bold text-lg mb-2">Email Us</h3>
               <p className="text-muted-foreground text-sm mb-4">For general inquiries and support</p>
-              <a href="mailto:hello@snackveda.in" className="text-primary font-medium hover:underline">hello@snackveda.in</a>
+              <a href="mailto:support@snackveda.co.in" className="text-primary font-medium hover:underline">support@snackveda.co.in</a>
             </CardContent>
           </Card>
           
@@ -32,8 +32,8 @@ export default function Contact() {
                 <Phone className="w-6 h-6" />
               </div>
               <h3 className="font-bold text-lg mb-2">WhatsApp</h3>
-              <p className="text-muted-foreground text-sm mb-4">Mon-Fri from 9am to 6pm</p>
-              <a href="tel:+919000000000" className="text-primary font-medium hover:underline">+91 90000 00000</a>
+              <p className="text-muted-foreground text-sm mb-4">Mon-Sat from 9am to 6pm</p>
+              <a href="tel:+919624447151" className="text-primary font-medium hover:underline">+91 96244 47151</a>
             </CardContent>
           </Card>
 
@@ -43,11 +43,11 @@ export default function Contact() {
                 <MapPin className="w-6 h-6" />
               </div>
               <h3 className="font-bold text-lg mb-2">Visit Us</h3>
-              <p className="text-muted-foreground text-sm mb-4">Narayani Distributors HQ</p>
+              <p className="text-muted-foreground text-sm mb-4">Narayani Distributors</p>
               <address className="not-italic text-sm text-muted-foreground">
-                123 Industrial Estate<br />
-                Andheri East<br />
-                Mumbai, Maharashtra 400093
+                125 Trade Center<br />
+                18 South Tukoganj<br />
+                Indore, Madhya Pradesh 452001
               </address>
             </CardContent>
           </Card>

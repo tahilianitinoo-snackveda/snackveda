@@ -33,7 +33,7 @@ export function SiteFooter() {
           </div>
         </div>
         <div className="pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
-          <p>Operated by Narayani Distributors • Mumbai, India</p>
+          <p>Operated by Narayani Distributors • Indore, India</p>
           <p>&copy; {new Date().getFullYear()} SnackVeda. All rights reserved.</p>
         </div>
       </div>

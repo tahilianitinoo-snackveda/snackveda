@@ -604,11 +604,12 @@ export default async function handler(req, res) {
       }
       const adminProductMatch = path.match(/^\/admin\/products\/([^/]+)$/);
       if (adminProductMatch && method === "PATCH") {
-        const b = z.object({ name: z.string().optional(), variant: z.string().nullish(), b2cPrice: z.number().optional(), b2bPrice: z.number().optional(), moq: z.number().optional(), stockQty: z.number().optional(), status: z.string().optional(), description: z.string().nullish(), imageUrl: z.string().nullish() }).safeParse(parsedBody);
+        const b = z.object({ name: z.string().optional(), slug: z.string().optional(), variant: z.string().nullish(), category: z.string().optional(), b2cPrice: z.number().optional(), b2bPrice: z.number().optional(), moq: z.number().optional(), cartonQty: z.number().optional(), stockQty: z.number().optional(), gstPercent: z.number().optional(), hsnCode: z.string().optional(), shelfLifeMonths: z.number().optional(), weightGrams: z.number().optional(), status: z.string().optional(), description: z.string().nullish(), imageUrl: z.string().nullish() }).safeParse(parsedBody);
         if (!b.success) return err("Invalid data", "VALIDATION_ERROR", 400);
         const update: any = { ...b.data };
         if (update.b2cPrice !== undefined) update.b2cPrice = String(update.b2cPrice);
         if (update.b2bPrice !== undefined) update.b2bPrice = String(update.b2bPrice);
+        if (update.gstPercent !== undefined) update.gstPercent = String(update.gstPercent);
         const [row] = await db.update(productsTable).set(update).where(eq(productsTable.id, adminProductMatch[1])).returning();
         if (!row) return err("Product not found", "NOT_FOUND", 404);
         const images = await getProductImages(row.id);

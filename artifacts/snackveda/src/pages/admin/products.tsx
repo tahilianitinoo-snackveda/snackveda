@@ -211,7 +211,7 @@ function ProductsInner() {
     };
 
     if (editingProduct) {
-      updateProduct.mutate({ id: editingProduct.id, data }, {
+      updateProduct.mutate({ id: editingProduct.id, data: data as any }, {
         onSuccess: () => {
           toast.success("Product updated");
           setIsOpen(false);

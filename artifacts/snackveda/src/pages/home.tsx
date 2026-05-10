@@ -7,9 +7,11 @@ import { Link } from "wouter";
 import { Leaf, Flame, Brain, ShieldCheck, Sparkles, MapPin, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import heroImg from "@/assets/images/hero.png";
-import chipsImg from "@/assets/images/category-chips.png";
-import makhanaImg from "@/assets/images/category-makhana.png";
-import superpuffsImg from "@/assets/images/category-superpuffs.png";
+const CATEGORY_IMAGES = {
+  chips: "https://lgmphgwravmmyjdmcuou.supabase.co/storage/v1/object/public/Product-image/file_00000000150071fa96f64f365e7ea030.png",
+  makhana: "https://lgmphgwravmmyjdmcuou.supabase.co/storage/v1/object/public/Product-image/file_00000000150071fa96f64f365e7ea030.png",
+  superpuffs: "https://lgmphgwravmmyjdmcuou.supabase.co/storage/v1/object/public/Product-image/file_00000000150071fa96f64f365e7ea030.png",
+};
 
 export default function Home() {
   const { data: products, isLoading } = useListProducts();
@@ -85,7 +87,7 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <Link href="/shop?category=healthy_chips" className="group relative rounded-2xl overflow-hidden aspect-[4/3] block">
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10 transition-opacity group-hover:opacity-90" />
-            <img src={chipsImg} alt="Healthy Chips" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+            <img src={CATEGORY_IMAGES.chips} alt="Healthy Chips" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
             <div className="absolute bottom-0 left-0 p-8 z-20">
               <h3 className="text-2xl font-serif font-bold text-white mb-2">Healthy Chips</h3>
               <p className="text-white/80 text-sm flex items-center gap-2">Explore range <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" /></p>
@@ -93,7 +95,7 @@ export default function Home() {
           </Link>
           <Link href="/shop?category=makhana" className="group relative rounded-2xl overflow-hidden aspect-[4/3] block">
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10 transition-opacity group-hover:opacity-90" />
-            <img src={makhanaImg} alt="Makhana" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+            <img src={CATEGORY_IMAGES.makhana} alt="Makhana" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
             <div className="absolute bottom-0 left-0 p-8 z-20">
               <h3 className="text-2xl font-serif font-bold text-white mb-2">Premium Makhana</h3>
               <p className="text-white/80 text-sm flex items-center gap-2">Explore range <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" /></p>
@@ -101,7 +103,7 @@ export default function Home() {
           </Link>
           <Link href="/shop?category=superpuffs" className="group relative rounded-2xl overflow-hidden aspect-[4/3] block">
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10 transition-opacity group-hover:opacity-90" />
-            <img src={superpuffsImg} alt="Superpuffs" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+            <img src={CATEGORY_IMAGES.superpuffs} alt="Superpuffs" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
             <div className="absolute bottom-0 left-0 p-8 z-20">
               <h3 className="text-2xl font-serif font-bold text-white mb-2">Superpuffs</h3>
               <p className="text-white/80 text-sm flex items-center gap-2">Explore range <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" /></p>

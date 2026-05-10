@@ -211,14 +211,19 @@ function ProductsInner() {
     };
 
     if (editingProduct) {
-      updateProduct.mutate({ id: editingProduct.id, data: data as any }, {
-        onSuccess: () => {
-          toast.success("Product updated");
-          setIsOpen(false);
-          queryClient.invalidateQueries({ queryKey: getListAdminProductsQueryKey() });
-        },
-        onError: (err) => toast.error(err.message || "Failed to update product")
-      });
+      // Use direct fetch to bypass limited UpdateProductBody schema
+      const token = localStorage.getItem("snackveda_token");
+      fetch(`/api/admin/products/${editingProduct.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify(data),
+      }).then(async (res) => {
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.message);
+        toast.success("Product updated");
+        setIsOpen(false);
+        queryClient.invalidateQueries({ queryKey: getListAdminProductsQueryKey() });
+      }).catch((err) => toast.error(err.message || "Failed to update product"));
     } else {
       createProduct.mutate({ data }, {
         onSuccess: () => {

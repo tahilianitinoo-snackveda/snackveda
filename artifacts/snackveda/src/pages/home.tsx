@@ -7,10 +7,11 @@ import { Link } from "wouter";
 import { Leaf, Flame, Brain, ShieldCheck, Sparkles, MapPin, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import heroImg from "@/assets/images/hero.png";
+const SUPABASE_BASE = "https://lgmphgwravmmyjdmcuou.supabase.co/storage/v1/object/public/Product-image";
 const CATEGORY_IMAGES = {
-  chips: "https://lgmphgwravmmyjdmcuou.supabase.co/storage/v1/object/public/Product-image/file_00000000150071fa96f64f365e7ea030.png",
-  makhana: "https://lgmphgwravmmyjdmcuou.supabase.co/storage/v1/object/public/Product-image/file_00000000150071fa96f64f365e7ea030.png",
-  superpuffs: "https://lgmphgwravmmyjdmcuou.supabase.co/storage/v1/object/public/Product-image/file_00000000150071fa96f64f365e7ea030.png",
+  chips: `${SUPABASE_BASE}/file_00000000150071fa96f64f365e7ea030.png`,
+  makhana: `${SUPABASE_BASE}/file_00000000150071fa96f64f365e7ea030.png`,
+  superpuffs: `${SUPABASE_BASE}/file_00000000150071fa96f64f365e7ea030.png`,
 };
 
 export default function Home() {

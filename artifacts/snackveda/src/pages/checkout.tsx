@@ -191,7 +191,7 @@ function CheckoutInner() {
                     <FormField control={form.control} name="shippingCity" render={({ field }) => (
                       <FormItem>
                         <FormLabel>City</FormLabel>
-                        <FormControl><Input placeholder="Mumbai" {...field} /></FormControl>
+                        <FormControl><Input placeholder="Indore" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />

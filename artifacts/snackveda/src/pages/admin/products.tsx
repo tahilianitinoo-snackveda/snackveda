@@ -29,6 +29,7 @@ const productSchema = z.object({
   stockQty: z.coerce.number().min(0),
   gstPercent: z.coerce.number().min(0).max(100),
   hsnCode: z.string().optional(),
+  shelfLifeMonths: z.coerce.number().min(1).optional(),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -183,6 +184,7 @@ function ProductsInner() {
       stockQty: p.stockQty,
       gstPercent: p.gstPercent,
       hsnCode: p.hsnCode ?? "210690",
+      shelfLifeMonths: p.shelfLifeMonths ?? 6,
     });
     setIsOpen(true);
   };
@@ -207,7 +209,7 @@ function ProductsInner() {
       stockQty: values.stockQty,
       gstPercent: values.gstPercent,
       hsnCode: values.hsnCode ?? "210690",
-      shelfLifeMonths: 6,
+      shelfLifeMonths: values.shelfLifeMonths ?? 6,
     };
 
     if (editingProduct) {
@@ -317,6 +319,9 @@ function ProductsInner() {
                   )} />
                   <FormField control={form.control} name="hsnCode" render={({ field }) => (
                     <FormItem><FormLabel>HSN Code</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                  )} />
+                  <FormField control={form.control} name="shelfLifeMonths" render={({ field }) => (
+                    <FormItem><FormLabel>Shelf Life (Months)</FormLabel><FormControl><Input type="number" min="1" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                 </div>
                 <Button type="submit" className="w-full" disabled={createProduct.isPending || updateProduct.isPending}>

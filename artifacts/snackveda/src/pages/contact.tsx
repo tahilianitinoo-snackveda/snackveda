@@ -34,6 +34,8 @@ export default function Contact() {
               <h3 className="font-bold text-lg mb-2">WhatsApp</h3>
               <p className="text-muted-foreground text-sm mb-4">Mon-Sat from 9am to 6pm</p>
               <a href="tel:+919624447151" className="text-primary font-medium hover:underline">+91 96244 47151</a>
+              <br />
+              <a href="tel:+918305269092" className="text-primary font-medium hover:underline">+91 83052 69092</a>
             </CardContent>
           </Card>
 

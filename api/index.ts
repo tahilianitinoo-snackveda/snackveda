@@ -610,6 +610,7 @@ export default async function handler(req, res) {
         if (update.b2cPrice !== undefined) update.b2cPrice = String(update.b2cPrice);
         if (update.b2bPrice !== undefined) update.b2bPrice = String(update.b2bPrice);
         if (update.gstPercent !== undefined) update.gstPercent = String(update.gstPercent);
+        if (update.shelfLifeMonths !== undefined) update.shelfLifeMonths = Math.round(Number(update.shelfLifeMonths));
         const [row] = await db.update(productsTable).set(update).where(eq(productsTable.id, adminProductMatch[1])).returning();
         if (!row) return err("Product not found", "NOT_FOUND", 404);
         const images = await getProductImages(row.id);

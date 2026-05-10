@@ -209,7 +209,7 @@ function ProductsInner() {
       stockQty: values.stockQty,
       gstPercent: values.gstPercent,
       hsnCode: values.hsnCode ?? "210690",
-      shelfLifeMonths: values.shelfLifeMonths ?? 6,
+      shelfLifeMonths: Number(values.shelfLifeMonths) || 6,
     };
 
     if (editingProduct) {

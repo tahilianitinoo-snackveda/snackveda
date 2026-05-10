@@ -44,7 +44,6 @@ function PaymentsInner() {
         <TableHeader className="bg-muted/50">
           <TableRow>
             <TableHead>Order #</TableHead>
-            <TableHead>Customer</TableHead>
             <TableHead>Method</TableHead>
             <TableHead className="text-right">Amount</TableHead>
             {showActions && <TableHead className="text-right">Actions</TableHead>}
@@ -54,12 +53,11 @@ function PaymentsInner() {
         </TableHeader>
         <TableBody>
           {list.length === 0 ? (
-            <TableRow><TableCell colSpan={showActions ? 5 : 6} className="text-center py-8 text-muted-foreground">No payments found</TableCell></TableRow>
+            <TableRow><TableCell colSpan={showActions ? 4 : 5} className="text-center py-8 text-muted-foreground">No payments found</TableCell></TableRow>
           ) : list.map(p => (
             <TableRow key={p.id}>
-              <TableCell className="font-medium font-mono">{p.orderNumber}</TableCell>
-              <TableCell>{p.customerName}</TableCell>
-              <TableCell className="capitalize">{p.method.replace('_', ' ')}</TableCell>
+              <TableCell className="font-medium font-mono text-sm">{p.orderNumber}</TableCell>
+              <TableCell className="capitalize text-sm">{(p.paymentMethod || '').replace(/_/g, ' ')}</TableCell>
               <TableCell className="text-right font-medium"><Price amount={p.amount} /></TableCell>
               {showActions ? (
                 <TableCell className="text-right">
@@ -91,7 +89,7 @@ function PaymentsInner() {
               ) : (
                 <>
                   <TableCell className="font-mono text-sm">{p.referenceNumber || '-'}</TableCell>
-                  <TableCell className="text-muted-foreground text-sm">{p.updatedAt ? formatDate(p.updatedAt) : '-'}</TableCell>
+                  <TableCell className="text-muted-foreground text-sm">{p.paidAt ? formatDate(p.paidAt) : '-'}</TableCell>
                 </>
               )}
             </TableRow>

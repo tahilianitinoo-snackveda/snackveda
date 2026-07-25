@@ -26,6 +26,7 @@ export function SiteHeader() {
     { href: "/shop", label: "Shop" },
     { href: "/b2b", label: "B2B" },
     { href: "/about", label: "About" },
+    { href: "/blog", label: "Blog" },
     { href: "/faq", label: "FAQ" },
     { href: "/contact", label: "Contact" },
   ];

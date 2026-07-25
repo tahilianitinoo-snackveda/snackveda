@@ -1,6 +1,6 @@
 import { ReactNode, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Package, Users, ShoppingCart, CreditCard, LogOut, Menu } from "lucide-react";
+import { LayoutDashboard, Package, Users, ShoppingCart, CreditCard, Newspaper, LogOut, Menu } from "lucide-react";
 import { useLogoutUser } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 
@@ -19,6 +19,7 @@ export function AdminShell({ children }: AdminShellProps) {
     { href: "/admin/customers", icon: Users, label: "Customers" },
     { href: "/admin/orders", icon: ShoppingCart, label: "Orders" },
     { href: "/admin/payments", icon: CreditCard, label: "Payments" },
+    { href: "/admin/blog", icon: Newspaper, label: "Blog" },
   ];
 
   const handleLogout = () => {

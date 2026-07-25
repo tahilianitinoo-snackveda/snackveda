@@ -179,6 +179,25 @@ const productImagesTable = pgTable("product_images", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+const blogPostsTable = pgTable("blog_posts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  slug: text("slug").notNull(),
+  excerpt: text("excerpt"),
+  content: text("content").notNull(),
+  coverImageUrl: text("cover_image_url"),
+  author: text("author").notNull().default("SnackVeda Team"),
+  category: text("category").notNull().default("Snacking"),
+  tags: text("tags"),
+  metaTitle: text("meta_title"),
+  metaDescription: text("meta_description"),
+  status: text("status").notNull().default("draft"),
+  readMinutes: integer("read_minutes").notNull().default(3),
+  publishedAt: timestamp("published_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 type User = typeof usersTable.$inferSelect;
 type Product = typeof productsTable.$inferSelect;
 
@@ -236,6 +255,46 @@ async function getProductImages(productId: string) {
 function serializeProduct(p: typeof productsTable.$inferSelect, images?: any[]) {
   return { id: p.id, name: p.name, slug: p.slug, category: p.category, variant: p.variant, b2cPrice: Number(p.b2cPrice), b2bPrice: Number(p.b2bPrice), moq: p.moq, cartonQty: p.cartonQty, gstPercent: Number(p.gstPercent), hsnCode: p.hsnCode, shelfLifeMonths: p.shelfLifeMonths, weightGrams: p.weightGrams, description: p.description, stockQty: p.stockQty, status: p.status, sortOrder: p.sortOrder, imageUrl: p.imageUrl, images: images ?? [] };
 }
+
+// ─── BLOG ─────────────────────────────────────────────────────────────────────
+function serializeBlogPost(p: typeof blogPostsTable.$inferSelect, withContent = true) {
+  return {
+    id: p.id,
+    title: p.title,
+    slug: p.slug,
+    excerpt: p.excerpt,
+    ...(withContent ? { content: p.content } : {}),
+    coverImageUrl: p.coverImageUrl,
+    author: p.author,
+    category: p.category,
+    tags: (p.tags || "").split(",").map(t => t.trim()).filter(Boolean),
+    metaTitle: p.metaTitle,
+    metaDescription: p.metaDescription,
+    status: p.status,
+    readMinutes: p.readMinutes,
+    publishedAt: p.publishedAt?.toISOString() ?? null,
+    createdAt: p.createdAt.toISOString(),
+    updatedAt: p.updatedAt.toISOString(),
+  };
+}
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .slice(0, 90);
+}
+
+function estimateReadMinutes(content: string) {
+  const words = content.trim().split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.round(words / 200));
+}
+
+const xmlEscape = (s: string) =>
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
 
 // ─── PRICING ──────────────────────────────────────────────────────────────────
 function computeQuote(items: {productId:string;quantity:number}[], products: Product[], orderType: "b2c"|"b2b", user?: User|null) {
@@ -309,6 +368,13 @@ export default async function handler(req, res) {
   };
   const ok = (body, status = 200) => send(body, status);
   const err = (msg, code, status) => send({ message: msg, code }, status);
+  const sendRaw = (body, contentType, status = 200) => {
+    Object.entries(corsHeaders).forEach(([k, v]) => res.setHeader(k, v));
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Cache-Control", "public, max-age=0, s-maxage=3600");
+    res.statusCode = status;
+    res.end(body);
+  };
 
   if (req.method === "OPTIONS") {
     Object.entries(corsHeaders).forEach(([k, v]) => res.setHeader(k, v));
@@ -448,6 +514,95 @@ export default async function handler(req, res) {
       const images = await getProductImages(p.id);
       const relatedWithImages = await Promise.all(related.filter(r => r.id !== p.id).slice(0,3).map(async r => serializeProduct(r, await getProductImages(r.id))));
       return ok({ product: serializeProduct(p, images), related: relatedWithImages });
+    }
+
+    // ── BLOG (public) ────────────────────────────────────────────────────────
+    if (path === "/blog" && method === "GET") {
+      const db = getDb();
+      let rows = await db
+        .select()
+        .from(blogPostsTable)
+        .where(eq(blogPostsTable.status, "published"))
+        .orderBy(desc(blogPostsTable.publishedAt));
+      if (params.category) {
+        rows = rows.filter(r => r.category?.toLowerCase() === String(params.category).toLowerCase());
+      }
+      if (params.tag) {
+        const tag = String(params.tag).toLowerCase();
+        rows = rows.filter(r => (r.tags || "").toLowerCase().split(",").map(t => t.trim()).includes(tag));
+      }
+      const limit = params.limit ? Math.max(1, Math.min(50, Number(params.limit))) : undefined;
+      if (limit) rows = rows.slice(0, limit);
+      return ok(rows.map(p => serializeBlogPost(p, false)));
+    }
+
+    const blogSlugMatch = path.match(/^\/blog\/([^/]+)$/);
+    if (blogSlugMatch && method === "GET") {
+      const db = getDb();
+      const [post] = await db
+        .select()
+        .from(blogPostsTable)
+        .where(and(eq(blogPostsTable.slug, blogSlugMatch[1]), eq(blogPostsTable.status, "published")))
+        .limit(1);
+      if (!post) return err("Post not found", "NOT_FOUND", 404);
+      const related = await db
+        .select()
+        .from(blogPostsTable)
+        .where(eq(blogPostsTable.status, "published"))
+        .orderBy(desc(blogPostsTable.publishedAt))
+        .limit(4);
+      return ok({
+        post: serializeBlogPost(post),
+        related: related.filter(r => r.id !== post.id).slice(0, 3).map(r => serializeBlogPost(r, false)),
+      });
+    }
+
+    // ── SITEMAP (for Google Search Console) ──────────────────────────────────
+    if ((path === "/sitemap.xml" || path === "/sitemap") && method === "GET") {
+      const site = (process.env.SITE_URL || "https://snackveda.co.in").replace(/\/$/, "");
+      const today = new Date().toISOString().slice(0, 10);
+      const staticPaths = ["/", "/shop", "/b2b", "/about", "/blog", "/faq", "/contact", "/policies"];
+      const entries: { loc: string; lastmod: string; priority: string; changefreq: string }[] =
+        staticPaths.map(p => ({
+          loc: `${site}${p}`,
+          lastmod: today,
+          priority: p === "/" ? "1.0" : "0.8",
+          changefreq: p === "/" || p === "/shop" || p === "/blog" ? "daily" : "monthly",
+        }));
+      try {
+        const db = getDb();
+        const products = await db
+          .select({ slug: productsTable.slug, updatedAt: productsTable.updatedAt })
+          .from(productsTable)
+          .where(eq(productsTable.status, "active"));
+        for (const p of products) {
+          entries.push({
+            loc: `${site}/shop/${p.slug}`,
+            lastmod: p.updatedAt.toISOString().slice(0, 10),
+            priority: "0.7",
+            changefreq: "weekly",
+          });
+        }
+      } catch (e) { console.error("sitemap products error:", e?.message); }
+      try {
+        const db = getDb();
+        const posts = await db
+          .select({ slug: blogPostsTable.slug, updatedAt: blogPostsTable.updatedAt })
+          .from(blogPostsTable)
+          .where(eq(blogPostsTable.status, "published"));
+        for (const p of posts) {
+          entries.push({
+            loc: `${site}/blog/${p.slug}`,
+            lastmod: p.updatedAt.toISOString().slice(0, 10),
+            priority: "0.7",
+            changefreq: "monthly",
+          });
+        }
+      } catch (e) { console.error("sitemap blog error:", e?.message); }
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries
+        .map(e => `  <url>\n    <loc>${xmlEscape(e.loc)}</loc>\n    <lastmod>${e.lastmod}</lastmod>\n    <changefreq>${e.changefreq}</changefreq>\n    <priority>${e.priority}</priority>\n  </url>`)
+        .join("\n")}\n</urlset>`;
+      return sendRaw(xml, "application/xml; charset=utf-8");
     }
 
     // ── CART QUOTE ───────────────────────────────────────────────────────────
@@ -753,6 +908,82 @@ export default async function handler(req, res) {
         }
         return ok({ ok: true, status: "dispatched", orderId: updatedOrder.id });
       }
+
+      // ── BLOG (admin) ───────────────────────────────────────────────────────
+      if (path === "/admin/blog" && method === "GET") {
+        const rows = await db.select().from(blogPostsTable).orderBy(desc(blogPostsTable.createdAt));
+        return ok(rows.map(p => serializeBlogPost(p)));
+      }
+
+      if (path === "/admin/blog" && method === "POST") {
+        const b = BlogPostBody.safeParse(parsedBody);
+        if (!b.success) return err("Invalid post data", "VALIDATION_ERROR", 400);
+        const d = b.data;
+        const slug = slugify(d.slug || d.title);
+        if (!slug) return err("Title or slug is required", "VALIDATION_ERROR", 400);
+        const [existing] = await db.select().from(blogPostsTable).where(eq(blogPostsTable.slug, slug)).limit(1);
+        if (existing) return err("A post with this slug already exists", "SLUG_TAKEN", 400);
+        const [row] = await db.insert(blogPostsTable).values({
+          title: d.title,
+          slug,
+          excerpt: d.excerpt ?? null,
+          content: d.content,
+          coverImageUrl: d.coverImageUrl || null,
+          author: d.author || "SnackVeda Team",
+          category: d.category || "Snacking",
+          tags: Array.isArray(d.tags) ? d.tags.join(",") : (d.tags ?? null),
+          metaTitle: d.metaTitle ?? null,
+          metaDescription: d.metaDescription ?? null,
+          status: d.status || "draft",
+          readMinutes: d.readMinutes || estimateReadMinutes(d.content),
+          publishedAt: d.status === "published" ? new Date() : null,
+        }).returning();
+        return ok(serializeBlogPost(row), 201);
+      }
+
+      const adminBlogMatch = path.match(/^\/admin\/blog\/([^/]+)$/);
+      if (adminBlogMatch && method === "PATCH") {
+        const b = BlogPostBody.partial().safeParse(parsedBody);
+        if (!b.success) return err("Invalid post data", "VALIDATION_ERROR", 400);
+        const d = b.data;
+        const [current] = await db.select().from(blogPostsTable).where(eq(blogPostsTable.id, adminBlogMatch[1])).limit(1);
+        if (!current) return err("Post not found", "NOT_FOUND", 404);
+        const update: any = { updatedAt: new Date() };
+        if (d.title !== undefined) update.title = d.title;
+        if (d.slug !== undefined) {
+          const slug = slugify(d.slug);
+          if (slug && slug !== current.slug) {
+            const [clash] = await db.select().from(blogPostsTable).where(eq(blogPostsTable.slug, slug)).limit(1);
+            if (clash) return err("A post with this slug already exists", "SLUG_TAKEN", 400);
+            update.slug = slug;
+          }
+        }
+        if (d.excerpt !== undefined) update.excerpt = d.excerpt;
+        if (d.content !== undefined) {
+          update.content = d.content;
+          if (d.readMinutes === undefined) update.readMinutes = estimateReadMinutes(d.content);
+        }
+        if (d.coverImageUrl !== undefined) update.coverImageUrl = d.coverImageUrl || null;
+        if (d.author !== undefined) update.author = d.author;
+        if (d.category !== undefined) update.category = d.category;
+        if (d.tags !== undefined) update.tags = Array.isArray(d.tags) ? d.tags.join(",") : d.tags;
+        if (d.metaTitle !== undefined) update.metaTitle = d.metaTitle;
+        if (d.metaDescription !== undefined) update.metaDescription = d.metaDescription;
+        if (d.readMinutes !== undefined) update.readMinutes = d.readMinutes;
+        if (d.status !== undefined) {
+          update.status = d.status;
+          // Stamp publishedAt the first time a post goes live; keep the original date afterwards.
+          if (d.status === "published" && !current.publishedAt) update.publishedAt = new Date();
+        }
+        const [row] = await db.update(blogPostsTable).set(update).where(eq(blogPostsTable.id, adminBlogMatch[1])).returning();
+        return ok(serializeBlogPost(row));
+      }
+
+      if (adminBlogMatch && method === "DELETE") {
+        const [deleted] = await db.delete(blogPostsTable).where(eq(blogPostsTable.id, adminBlogMatch[1])).returning();
+        if (!deleted) return err("Post not found", "NOT_FOUND", 404);
+        return ok({ deleted: true, id: deleted.id });
+      }
     }
 
     return err("Not found", "NOT_FOUND", 404);
@@ -770,3 +1001,17 @@ const QuoteBody = z.object({ orderType: z.enum(["b2c","b2b"]), items: z.array(z.
 const ShippingSchema = z.object({ fullName: z.string(), phone: z.string(), line1: z.string(), line2: z.string().nullish(), city: z.string(), state: z.string(), pincode: z.string() });
 const B2cOrderBody = z.object({ items: z.array(z.object({ productId: z.string(), quantity: z.number() })), shippingAddress: ShippingSchema, paymentMethod: z.enum(["upi","bank_transfer","payment_link"]), paymentReference: z.string().nullish(), notes: z.string().nullish() });
 const B2bOrderBody = z.object({ items: z.array(z.object({ productId: z.string(), quantity: z.number() })), shippingAddress: ShippingSchema, paymentMethod: z.enum(["upi","bank_transfer","payment_link"]), notes: z.string().nullish() });
+const BlogPostBody = z.object({
+  title: z.string().min(2),
+  slug: z.string().nullish(),
+  excerpt: z.string().nullish(),
+  content: z.string().min(1),
+  coverImageUrl: z.string().nullish(),
+  author: z.string().nullish(),
+  category: z.string().nullish(),
+  tags: z.union([z.string(), z.array(z.string())]).nullish(),
+  metaTitle: z.string().nullish(),
+  metaDescription: z.string().nullish(),
+  status: z.enum(["draft", "published"]).nullish(),
+  readMinutes: z.number().nullish(),
+});

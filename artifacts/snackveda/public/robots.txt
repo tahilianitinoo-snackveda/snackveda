@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+# Private / transactional areas — no SEO value, keep out of the index
+Disallow: /admin
+Disallow: /account
+Disallow: /checkout
+Disallow: /cart
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+
+Sitemap: https://snackveda.co.in/sitemap.xml

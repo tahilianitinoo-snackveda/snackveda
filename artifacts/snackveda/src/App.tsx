@@ -19,6 +19,8 @@ import Register from "@/pages/register";
 import ForgotPassword from "@/pages/forgot-password";
 import ResetPassword from "@/pages/reset-password";
 import Policies from "@/pages/policies";
+import Blog from "@/pages/blog";
+import BlogPostPage from "@/pages/blog-post";
 import Account from "@/pages/account";
 import AccountOrderDetail from "@/pages/account-order-detail";
 import AdminDashboard from "@/pages/admin/dashboard";
@@ -26,6 +28,7 @@ import AdminProducts from "@/pages/admin/products";
 import AdminCustomers from "@/pages/admin/customers";
 import AdminOrders from "@/pages/admin/orders";
 import AdminPayments from "@/pages/admin/payments";
+import AdminBlog from "@/pages/admin/blog";
 import NotFound from "@/pages/not-found";
 
 // Ensure credentials flow for auth
@@ -57,6 +60,8 @@ function Router() {
       <Route path="/forgot-password" component={ForgotPassword} />
       <Route path="/reset-password" component={ResetPassword} />
       <Route path="/policies" component={Policies} />
+      <Route path="/blog" component={Blog} />
+      <Route path="/blog/:slug" component={BlogPostPage} />
       
       <Route path="/account" component={Account} />
       <Route path="/account/orders/:id" component={AccountOrderDetail} />
@@ -66,6 +71,7 @@ function Router() {
       <Route path="/admin/customers" component={AdminCustomers} />
       <Route path="/admin/orders" component={AdminOrders} />
       <Route path="/admin/payments" component={AdminPayments} />
+      <Route path="/admin/blog" component={AdminBlog} />
       
       <Route component={NotFound} />
     </Switch>

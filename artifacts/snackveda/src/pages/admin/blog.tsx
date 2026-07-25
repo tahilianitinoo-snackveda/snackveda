@@ -71,6 +71,8 @@ function BlogInner() {
   const [isOpen, setIsOpen] = useState(false);
   const [editing, setEditing] = useState<BlogPost | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+  // Once the author edits the slug by hand we stop deriving it from the title.
+  const [slugEdited, setSlugEdited] = useState(false);
 
   const { data: posts, isLoading } = useQuery({
     queryKey: blogKeys.adminList(),
@@ -138,6 +140,7 @@ function BlogInner() {
   const openCreate = () => {
     setEditing(null);
     setShowPreview(false);
+    setSlugEdited(false);
     form.reset(EMPTY_POST);
     setIsOpen(true);
   };
@@ -145,6 +148,7 @@ function BlogInner() {
   const openEdit = (post: BlogPost) => {
     setEditing(post);
     setShowPreview(false);
+    setSlugEdited(true);
     form.reset({
       title: post.title,
       slug: post.slug,
@@ -288,7 +292,7 @@ function BlogInner() {
                         placeholder="Why roasted makhana beats fried chips"
                         onChange={(e) => {
                           field.onChange(e);
-                          if (!editing && !form.getValues("slug")) {
+                          if (!editing && !slugEdited) {
                             form.setValue("slug", slugify(e.target.value));
                           }
                         }}
@@ -306,7 +310,14 @@ function BlogInner() {
                   <FormItem>
                     <FormLabel>URL slug</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="why-roasted-makhana-beats-fried-chips" />
+                      <Input
+                        {...field}
+                        placeholder="why-roasted-makhana-beats-fried-chips"
+                        onChange={(e) => {
+                          setSlugEdited(true);
+                          field.onChange(e);
+                        }}
+                      />
                     </FormControl>
                     <FormDescription>
                       Page address: snackveda.co.in/blog/{field.value || "your-slug"}. Avoid changing it after
@@ -445,7 +456,10 @@ function BlogInner() {
                       <FormControl>
                         <Input {...field} placeholder="Leave blank to use the post title" />
                       </FormControl>
-                      <FormDescription>{(field.value?.length ?? 0)}/60 characters used.</FormDescription>
+                      <FormDescription className={(field.value?.length ?? 0) > 60 ? "text-amber-600" : undefined}>
+                        {(field.value?.length ?? 0)}/60 characters
+                        {(field.value?.length ?? 0) > 60 ? " — Google will cut this off" : ""}
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -459,7 +473,10 @@ function BlogInner() {
                       <FormControl>
                         <Textarea {...field} rows={2} placeholder="The summary Google shows under your title." />
                       </FormControl>
-                      <FormDescription>{(field.value?.length ?? 0)}/160 characters used.</FormDescription>
+                      <FormDescription className={(field.value?.length ?? 0) > 160 ? "text-amber-600" : undefined}>
+                        {(field.value?.length ?? 0)}/160 characters
+                        {(field.value?.length ?? 0) > 160 ? " — Google will cut this off" : ""}
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

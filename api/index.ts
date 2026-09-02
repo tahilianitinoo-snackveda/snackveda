@@ -1,5 +1,5 @@
 // @ts-nocheck
-// SnackVeda API — Vercel Serverless Function
+// Narayani Distributors API — Vercel Serverless Function
 
 export const config = {
   api: {
@@ -19,7 +19,7 @@ async function sendEmail(to, subject, html) {
     await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { "Authorization": `Bearer ${RESEND_KEY()}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: `SnackVeda <${FROM_EMAIL}>`, to, subject, html }),
+      body: JSON.stringify({ from: `Narayani Distributors <${FROM_EMAIL}>`, to, subject, html }),
     });
   } catch (e) { console.error("Email error:", e?.message); }
 }
@@ -34,30 +34,30 @@ async function sendSMS(phone, message) {
 }
 
 function emailBase(content) {
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:Arial,sans-serif;background:#f9f9f7;margin:0}.wrap{max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)}.hdr{background:#0F766E;padding:24px 32px}.hdr h1{color:#fff;margin:0;font-size:22px}.hdr p{color:#99F6E4;margin:4px 0 0;font-size:12px}.bdy{padding:32px;color:#1E293B}.bdy h2{color:#0F766E;margin-top:0}.box{background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:16px 20px;margin:16px 0}.row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #E2E8F0;font-size:13px}.row:last-child{border-bottom:none}.lbl{color:#64748B}.val{font-weight:600}.btn{display:inline-block;background:#0F766E;color:#fff!important;text-decoration:none;padding:11px 24px;border-radius:8px;font-weight:600;margin:12px 0}table{width:100%;border-collapse:collapse;margin:12px 0}th{background:#0F766E;color:#fff;padding:8px 12px;text-align:left;font-size:12px}td{padding:8px 12px;font-size:13px;border-bottom:1px solid #F1F5F9}.ftr{background:#F8FAFC;padding:16px 32px;text-align:center;font-size:11px;color:#94A3B8;border-top:1px solid #E2E8F0}</style></head><body><div class="wrap"><div class="hdr"><h1>SnackVeda</h1><p>By Narayani Distributors</p></div><div class="bdy">${content}</div><div class="ftr">&copy; 2025 SnackVeda | Narayani Distributors | <a href="https://narayanidistributors.com" style="color:#0F766E">narayanidistributors.com</a></div></div></body></html>`;
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:Arial,sans-serif;background:#f9f9f7;margin:0}.wrap{max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)}.hdr{background:#0F766E;padding:24px 32px}.hdr h1{color:#fff;margin:0;font-size:22px}.hdr p{color:#99F6E4;margin:4px 0 0;font-size:12px}.bdy{padding:32px;color:#1E293B}.bdy h2{color:#0F766E;margin-top:0}.box{background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:16px 20px;margin:16px 0}.row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #E2E8F0;font-size:13px}.row:last-child{border-bottom:none}.lbl{color:#64748B}.val{font-weight:600}.btn{display:inline-block;background:#0F766E;color:#fff!important;text-decoration:none;padding:11px 24px;border-radius:8px;font-weight:600;margin:12px 0}table{width:100%;border-collapse:collapse;margin:12px 0}th{background:#0F766E;color:#fff;padding:8px 12px;text-align:left;font-size:12px}td{padding:8px 12px;font-size:13px;border-bottom:1px solid #F1F5F9}.ftr{background:#F8FAFC;padding:16px 32px;text-align:center;font-size:11px;color:#94A3B8;border-top:1px solid #E2E8F0}</style></head><body><div class="wrap"><div class="hdr"><h1>Narayani Distributors</h1></div><div class="bdy">${content}</div><div class="ftr">&copy; 2025 Narayani Distributors | <a href="https://narayanidistributors.com" style="color:#0F766E">narayanidistributors.com</a></div></div></body></html>`;
 }
 
 async function notifyRegistration(user, isB2B) {
-  const subject = isB2B ? "Welcome to SnackVeda Wholesale!" : "Welcome to SnackVeda!";
-  const html = emailBase(`<h2>Welcome, ${user.fullName}!</h2><p>${isB2B ? "Your wholesale account is active. You can now place bulk orders at trade pricing." : "You're now part of SnackVeda! Your first order gets <strong>15% off</strong>."}</p>${isB2B ? `<div class="box"><div class="row"><span class="lbl">Account</span><span class="val">Wholesale (B2B)</span></div><div class="row"><span class="lbl">Min Order</span><span class="val">₹5,000</span></div></div>` : ""}<a href="https://narayanidistributors.com/shop" class="btn">Shop Now</a>`);
+  const subject = isB2B ? "Welcome to Narayani Distributors Wholesale!" : "Welcome to Narayani Distributors!";
+  const html = emailBase(`<h2>Welcome, ${user.fullName}!</h2><p>${isB2B ? "Your wholesale account is active. You can now place bulk orders at trade pricing." : "You're now part of Narayani Distributors! Your first order gets <strong>15% off</strong>."}</p>${isB2B ? `<div class="box"><div class="row"><span class="lbl">Account</span><span class="val">Wholesale (B2B)</span></div><div class="row"><span class="lbl">Min Order</span><span class="val">₹5,000</span></div></div>` : ""}<a href="https://narayanidistributors.com/shop" class="btn">Shop Now</a>`);
   await sendEmail(user.email, subject, html);
-  if (user.phone) await sendSMS(user.phone, isB2B ? `Welcome to SnackVeda Wholesale! Your account is active. Order at narayanidistributors.com` : `Welcome to SnackVeda! Get 15% off your first order. Shop at narayanidistributors.com`);
+  if (user.phone) await sendSMS(user.phone, isB2B ? `Welcome to Narayani Distributors Wholesale! Your account is active. Order at narayanidistributors.com` : `Welcome to Narayani Distributors! Get 15% off your first order. Shop at narayanidistributors.com`);
 }
 
 async function notifyOrderPlaced(order, user) {
   const itemsHtml = (order.items||[]).map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.quantity}</td><td style="text-align:right">₹${Number(i.lineTotal).toFixed(2)}</td></tr>`).join("");
   const html = emailBase(`<h2>Order Confirmed!</h2><p>Hi ${user.fullName}, your order is placed.</p><div class="box"><div class="row"><span class="lbl">Order No</span><span class="val">${order.orderNumber}</span></div><div class="row"><span class="lbl">Total</span><span class="val">₹${Number(order.totalAmount).toFixed(2)}</span></div><div class="row"><span class="lbl">Pay to UPI</span><span class="val">9898477151@pthdfc</span></div></div><table><thead><tr><th>Product</th><th>Qty</th><th>Amount</th></tr></thead><tbody>${itemsHtml}</tbody></table><a href="https://narayanidistributors.com/account" class="btn">View Order</a>`);
   await sendEmail(user.email, `Order Confirmed — ${order.orderNumber}`, html);
-  if (user.phone) await sendSMS(user.phone, `SnackVeda: Order ${order.orderNumber} confirmed. Pay Rs.${Number(order.totalAmount).toFixed(0)} to UPI: 9898477151@pthdfc. View: narayanidistributors.com/account`);
+  if (user.phone) await sendSMS(user.phone, `Narayani Distributors: Order ${order.orderNumber} confirmed. Pay Rs.${Number(order.totalAmount).toFixed(0)} to UPI: 9898477151@pthdfc. View: narayanidistributors.com/account`);
   // Admin alert
   const adminHtml = emailBase(`<h2>New Order: ${order.orderNumber}</h2><div class="box"><div class="row"><span class="lbl">Customer</span><span class="val">${user.fullName}</span></div><div class="row"><span class="lbl">Email</span><span class="val">${user.email}</span></div><div class="row"><span class="lbl">Phone</span><span class="val">${user.phone||"N/A"}</span></div><div class="row"><span class="lbl">Type</span><span class="val">${order.orderType==="b2b"?"Wholesale":"Retail"}</span></div><div class="row"><span class="lbl">Amount</span><span class="val">₹${Number(order.totalAmount).toFixed(2)}</span></div></div><a href="https://narayanidistributors.com/admin/orders" class="btn">View in Admin</a>`);
   await sendEmail(ADMIN_EMAIL, `New ${order.orderType.toUpperCase()} Order — ${order.orderNumber}`, adminHtml);
 }
 
 async function notifyShipping(order, user, courier, trackingNumber, trackingLink) {
-  const html = emailBase(`<h2>Your Order is Shipped!</h2><p>Hi ${user.fullName}, your SnackVeda order is on the way!</p><div class="box"><div class="row"><span class="lbl">Order No</span><span class="val">${order.orderNumber}</span></div><div class="row"><span class="lbl">Courier</span><span class="val">${courier}</span></div><div class="row"><span class="lbl">AWB / Tracking No</span><span class="val">${trackingNumber}</span></div></div><a href="${trackingLink}" class="btn">Track Your Order</a><p style="color:#64748B;font-size:12px">Estimated delivery: 3-7 business days.</p>`);
+  const html = emailBase(`<h2>Your Order is Shipped!</h2><p>Hi ${user.fullName}, your Narayani Distributors order is on the way!</p><div class="box"><div class="row"><span class="lbl">Order No</span><span class="val">${order.orderNumber}</span></div><div class="row"><span class="lbl">Courier</span><span class="val">${courier}</span></div><div class="row"><span class="lbl">AWB / Tracking No</span><span class="val">${trackingNumber}</span></div></div><a href="${trackingLink}" class="btn">Track Your Order</a><p style="color:#64748B;font-size:12px">Estimated delivery: 3-7 business days.</p>`);
   await sendEmail(user.email, `Your Order is Shipped — ${order.orderNumber}`, html);
-  if (user.phone) await sendSMS(user.phone, `SnackVeda: Order ${order.orderNumber} shipped via ${courier}. AWB: ${trackingNumber}. Track: ${trackingLink}`);
+  if (user.phone) await sendSMS(user.phone, `Narayani Distributors: Order ${order.orderNumber} shipped via ${courier}. AWB: ${trackingNumber}. Track: ${trackingLink}`);
 }
 // Runtime: Node.js 20
 
@@ -186,7 +186,7 @@ const blogPostsTable = pgTable("blog_posts", {
   excerpt: text("excerpt"),
   content: text("content").notNull(),
   coverImageUrl: text("cover_image_url"),
-  author: text("author").notNull().default("SnackVeda Team"),
+  author: text("author").notNull().default("Narayani Distributors Team"),
   category: text("category").notNull().default("Snacking"),
   tags: text("tags"),
   metaTitle: text("meta_title"),
@@ -330,7 +330,7 @@ function computeQuote(items: {productId:string;quantity:number}[], products: Pro
 
 async function generateOrderNumber(type: "b2c"|"b2b") {
   const year = new Date().getFullYear();
-  const prefix = `SV-${type.toUpperCase()}-${year}-`;
+  const prefix = `ND-${type.toUpperCase()}-${year}-`;
   const [row] = await getDb().select({ count: sql<number>`count(*)::int` }).from(ordersTable).where(and(like(ordersTable.orderNumber, `${prefix}%`)));
   return `${prefix}${String((row?.count ?? 0) + 1).padStart(4, "0")}`;
 }
@@ -460,8 +460,8 @@ export default async function handler(req, res) {
           // Generate a simple reset token (JWT with 1h expiry)
           const token = jwt.sign({ userId: user.id, type: "password_reset" }, process.env.JWT_SECRET!, { expiresIn: "1h" });
           const resetLink = `https://narayanidistributors.com/reset-password?token=${token}`;
-          const html = `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#f9f9f7;margin:0"><div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)"><div style="background:#0F766E;padding:24px 32px"><h1 style="color:#fff;margin:0;font-size:22px">SnackVeda</h1></div><div style="padding:32px;color:#1E293B"><h2 style="color:#0F766E;margin-top:0">Reset Your Password</h2><p>Hi ${user.fullName}, we received a request to reset your password.</p><p>Click the button below to reset it. This link expires in 1 hour.</p><a href="${resetLink}" style="display:inline-block;background:#0F766E;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:600;margin:16px 0">Reset Password</a><p style="color:#64748B;font-size:13px;margin-top:16px">If you didn't request this, ignore this email. Your password won't change.</p></div><div style="background:#F8FAFC;padding:16px 32px;text-align:center;font-size:11px;color:#94A3B8;border-top:1px solid #E2E8F0">&copy; 2025 SnackVeda | Narayani Distributors</div></div></body></html>`;
-          await sendEmail(user.email, "Reset Your SnackVeda Password", html);
+          const html = `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#f9f9f7;margin:0"><div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)"><div style="background:#0F766E;padding:24px 32px"><h1 style="color:#fff;margin:0;font-size:22px">Narayani Distributors</h1></div><div style="padding:32px;color:#1E293B"><h2 style="color:#0F766E;margin-top:0">Reset Your Password</h2><p>Hi ${user.fullName}, we received a request to reset your password.</p><p>Click the button below to reset it. This link expires in 1 hour.</p><a href="${resetLink}" style="display:inline-block;background:#0F766E;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:600;margin:16px 0">Reset Password</a><p style="color:#64748B;font-size:13px;margin-top:16px">If you didn't request this, ignore this email. Your password won't change.</p></div><div style="background:#F8FAFC;padding:16px 32px;text-align:center;font-size:11px;color:#94A3B8;border-top:1px solid #E2E8F0">&copy; 2025 Narayani Distributors</div></div></body></html>`;
+          await sendEmail(user.email, "Reset Your Narayani Distributors Password", html);
         }
       } catch (e) { console.error("Forgot password error:", e); }
       return ok({ ok: true }); // always return ok
@@ -639,8 +639,8 @@ export default async function handler(req, res) {
       const sendOrderReceivedEmail = async () => {
         const itemsHtml = (serialized?.items||[]).map((i: any) => `<tr><td style="padding:8px 12px;font-size:13px;border-bottom:1px solid #F1F5F9">${i.name}</td><td style="padding:8px 12px;font-size:13px;border-bottom:1px solid #F1F5F9;text-align:center">${i.quantity}</td><td style="padding:8px 12px;font-size:13px;border-bottom:1px solid #F1F5F9;text-align:right">₹${Number(i.lineTotal).toFixed(2)}</td></tr>`).join("");
         const html = emailBase(`<h2>Thank You for Your Order!</h2><p>Hi ${user.fullName}, we've received your order and it's currently under review. We'll confirm it once payment is verified.</p><div class="box"><div class="row"><span class="lbl">Order Number</span><span class="val">${order.orderNumber}</span></div><div class="row"><span class="lbl">Status</span><span class="val">Under Review</span></div><div class="row"><span class="lbl">Total Payable</span><span class="val">₹${Number(order.totalAmount).toFixed(2)}</span></div></div><table><thead><tr><th>Product</th><th style="text-align:center">Qty</th><th style="text-align:right">Amount</th></tr></thead><tbody>${itemsHtml}</tbody></table><p style="font-size:13px"><strong>Pay to UPI:</strong> 9898477151@pthdfc (Narayani Distributors)<br>Please share the UTR/reference number after payment.</p><a href="https://narayanidistributors.com/account" class="btn">View Order</a>`);
-        await sendEmail(user.email, `Order Received — ${order.orderNumber} | SnackVeda`, html);
-        if (user.phone) await sendSMS(user.phone, `SnackVeda: Order ${order.orderNumber} received. Pay Rs.${Number(order.totalAmount).toFixed(0)} to UPI: 9898477151@pthdfc. We'll confirm after payment.`);
+        await sendEmail(user.email, `Order Received — ${order.orderNumber} | Narayani Distributors`, html);
+        if (user.phone) await sendSMS(user.phone, `Narayani Distributors: Order ${order.orderNumber} received. Pay Rs.${Number(order.totalAmount).toFixed(0)} to UPI: 9898477151@pthdfc. We'll confirm after payment.`);
         // Admin alert
         const adminHtml = emailBase(`<h2>New B2C Order: ${order.orderNumber}</h2><div class="box"><div class="row"><span class="lbl">Customer</span><span class="val">${user.fullName}</span></div><div class="row"><span class="lbl">Email</span><span class="val">${user.email}</span></div><div class="row"><span class="lbl">Phone</span><span class="val">${user.phone||"N/A"}</span></div><div class="row"><span class="lbl">Amount</span><span class="val">₹${Number(order.totalAmount).toFixed(2)}</span></div></div><a href="https://narayanidistributors.com/admin/orders" class="btn">View in Admin</a>`);
         await sendEmail("support@narayanidistributors.com", `New B2C Order — ${order.orderNumber}`, adminHtml);
@@ -694,7 +694,7 @@ export default async function handler(req, res) {
       const db = getDb();
       let [inv] = await db.select().from(invoicesTable).where(eq(invoicesTable.orderId, order.id)).limit(1);
       if (!inv) { const invoiceNumber = await generateInvoiceNumber(); [inv] = await db.insert(invoicesTable).values({ orderId: order.id, invoiceNumber }).returning(); }
-      return ok({ invoiceNumber: inv.invoiceNumber, issuedAt: inv.createdAt.toISOString(), seller: { name: "Narayani Distributors", brand: "SnackVeda", address: "Indore, Madhya Pradesh, India", gstNumber: "23AAAAA0000A1Z5", phone: "+91 90000 00000", email: "hello@narayanidistributors.com" }, order });
+      return ok({ invoiceNumber: inv.invoiceNumber, issuedAt: inv.createdAt.toISOString(), seller: { name: "Narayani Distributors", brand: "Narayani Distributors", address: "Indore, Madhya Pradesh, India", gstNumber: "23AAAAA0000A1Z5", phone: "+91 90000 00000", email: "hello@narayanidistributors.com" }, order });
     }
 
     // ── ACCOUNT ──────────────────────────────────────────────────────────────
@@ -864,10 +864,10 @@ export default async function handler(req, res) {
           if (customer) {
             const statusLabels: Record<string, string> = { confirmed: "Confirmed", dispatched: "Dispatched", delivered: "Delivered", cancelled: "Cancelled", pending: "Pending" };
             const statusLabel = statusLabels[b.data.status] || b.data.status;
-            const html = `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#f9f9f7;margin:0"><div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)"><div style="background:#0F766E;padding:24px 32px"><h1 style="color:#fff;margin:0;font-size:22px">SnackVeda</h1><p style="color:#99F6E4;margin:4px 0 0;font-size:12px">By Narayani Distributors</p></div><div style="padding:32px;color:#1E293B"><h2 style="color:#0F766E;margin-top:0">Order Status Updated</h2><p>Hi ${customer.fullName}, your order status has been updated.</p><div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:16px 20px;margin:16px 0"><div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #E2E8F0;font-size:13px"><span style="color:#64748B">Order Number</span><span style="font-weight:600">${updated.orderNumber}</span></div><div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #E2E8F0;font-size:13px"><span style="color:#64748B">New Status</span><span style="font-weight:600;color:#0F766E">${statusLabel}</span></div><div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px"><span style="color:#64748B">Total Amount</span><span style="font-weight:600">₹${Number(updated.totalAmount).toFixed(2)}</span></div></div>${b.data.status === "confirmed" ? `<p style="font-size:13px">Your payment has been confirmed. We are preparing your order for dispatch.</p>` : ""}${b.data.status === "cancelled" ? `<p style="font-size:13px">Your order has been cancelled. For queries contact support@narayanidistributors.com</p>` : ""}<a href="https://narayanidistributors.com/account" style="display:inline-block;background:#0F766E;color:#fff;text-decoration:none;padding:11px 24px;border-radius:8px;font-weight:600;margin:12px 0">View Order</a></div><div style="background:#F8FAFC;padding:16px 32px;text-align:center;font-size:11px;color:#94A3B8;border-top:1px solid #E2E8F0">&copy; 2025 SnackVeda | Narayani Distributors</div></div></body></html>`;
+            const html = `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#f9f9f7;margin:0"><div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)"><div style="background:#0F766E;padding:24px 32px"><h1 style="color:#fff;margin:0;font-size:22px">Narayani Distributors</h1><p style="color:#99F6E4;margin:4px 0 0;font-size:12px">By Narayani Distributors</p></div><div style="padding:32px;color:#1E293B"><h2 style="color:#0F766E;margin-top:0">Order Status Updated</h2><p>Hi ${customer.fullName}, your order status has been updated.</p><div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:16px 20px;margin:16px 0"><div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #E2E8F0;font-size:13px"><span style="color:#64748B">Order Number</span><span style="font-weight:600">${updated.orderNumber}</span></div><div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #E2E8F0;font-size:13px"><span style="color:#64748B">New Status</span><span style="font-weight:600;color:#0F766E">${statusLabel}</span></div><div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px"><span style="color:#64748B">Total Amount</span><span style="font-weight:600">₹${Number(updated.totalAmount).toFixed(2)}</span></div></div>${b.data.status === "confirmed" ? `<p style="font-size:13px">Your payment has been confirmed. We are preparing your order for dispatch.</p>` : ""}${b.data.status === "cancelled" ? `<p style="font-size:13px">Your order has been cancelled. For queries contact support@narayanidistributors.com</p>` : ""}<a href="https://narayanidistributors.com/account" style="display:inline-block;background:#0F766E;color:#fff;text-decoration:none;padding:11px 24px;border-radius:8px;font-weight:600;margin:12px 0">View Order</a></div><div style="background:#F8FAFC;padding:16px 32px;text-align:center;font-size:11px;color:#94A3B8;border-top:1px solid #E2E8F0">&copy; 2025 Narayani Distributors</div></div></body></html>`;
             await sendEmail(customer.email, `Order ${statusLabel} — ${updated.orderNumber}`, html);
             if (customer.phone && (b.data.status === "confirmed" || b.data.status === "cancelled")) {
-              await sendSMS(customer.phone, `SnackVeda: Order ${updated.orderNumber} is now ${statusLabel}. View: narayanidistributors.com/account`);
+              await sendSMS(customer.phone, `Narayani Distributors: Order ${updated.orderNumber} is now ${statusLabel}. View: narayanidistributors.com/account`);
             }
           }
         } catch (e) { console.error("Status notification error:", e); }
@@ -929,7 +929,7 @@ export default async function handler(req, res) {
           excerpt: d.excerpt ?? null,
           content: d.content,
           coverImageUrl: d.coverImageUrl || null,
-          author: d.author || "SnackVeda Team",
+          author: d.author || "Narayani Distributors Team",
           category: d.category || "Snacking",
           tags: Array.isArray(d.tags) ? d.tags.join(",") : (d.tags ?? null),
           metaTitle: d.metaTitle ?? null,

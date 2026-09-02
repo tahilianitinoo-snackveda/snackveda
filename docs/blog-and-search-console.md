@@ -60,9 +60,9 @@ Toggling the **Live** switch in the posts table publishes or unpublishes instant
    domain registrar's DNS. Covers every subdomain.
 3. Or **URL prefix property** with `https://narayanidistributors.com`, then either:
    - **HTML tag** — copy the `<meta name="google-site-verification" ... />` line into
-     `artifacts/snackveda/index.html`, where the comment marks the spot, and redeploy; or
+     `artifacts/narayani/index.html`, where the comment marks the spot, and redeploy; or
    - **HTML file** — drop the downloaded `google*.html` file into
-     `artifacts/snackveda/public/` and redeploy. It will be served at the site root.
+     `artifacts/narayani/public/` and redeploy. It will be served at the site root.
 
 ### b. Submit the sitemap
 
@@ -77,7 +77,7 @@ In Search Console → **Sitemaps**, enter `sitemap.xml` and submit.
 New posts appear in it the moment they are published — nothing to regenerate. The
 response is cached at the CDN for an hour.
 
-`robots.txt` (at `artifacts/snackveda/public/robots.txt`) already points Google at the
+`robots.txt` (at `artifacts/narayani/public/robots.txt`) already points Google at the
 sitemap and blocks `/admin`, `/account`, `/checkout` and the auth pages from being indexed.
 
 ### c. Ask for indexing on a new post

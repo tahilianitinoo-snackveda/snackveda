@@ -4,7 +4,7 @@ import { sql, and, like } from "drizzle-orm";
 
 export async function generateOrderNumber(orderType: "b2c" | "b2b"): Promise<string> {
   const year = new Date().getFullYear();
-  const prefix = `SV-${orderType.toUpperCase()}-${year}-`;
+  const prefix = `ND-${orderType.toUpperCase()}-${year}-`;
   const [row] = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(ordersTable)

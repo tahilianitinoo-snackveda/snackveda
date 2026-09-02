@@ -123,7 +123,7 @@ router.post("/admin/blog", requireAdmin, async (req, res) => {
       excerpt: d.excerpt ?? null,
       content: d.content,
       coverImageUrl: d.coverImageUrl || null,
-      author: d.author || "SnackVeda Team",
+      author: d.author || "Narayani Distributors Team",
       category: d.category || "Snacking",
       tags: tagsToText(d.tags),
       metaTitle: d.metaTitle ?? null,

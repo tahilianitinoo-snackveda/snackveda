@@ -230,11 +230,11 @@ router.get("/orders/:orderId/invoice", requireAuth, async (req, res) => {
     issuedAt: inv.createdAt.toISOString(),
     seller: {
       name: "Narayani Distributors",
-      brand: "SnackVeda",
+      brand: "Narayani Distributors",
       address: "Mumbai, Maharashtra, India",
       gstNumber: "27AAAAA0000A1Z5",
       phone: "+91 90000 00000",
-      email: "hello@snackveda.in",
+      email: "hello@narayanidistributors.com",
     },
     order,
   });

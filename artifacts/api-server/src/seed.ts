@@ -26,20 +26,20 @@ const products = [
 
 async function seed() {
   console.log("Seeding admin user...");
-  const adminEmail = "admin@snackveda.com";
+  const adminEmail = "admin@narayanidistributors.com";
   const adminPass = await bcrypt.hash("Admin@123", 10);
   await db
     .insert(usersTable)
     .values({
       email: adminEmail,
       passwordHash: adminPass,
-      fullName: "SnackVeda Admin",
+      fullName: "Narayani Distributors Admin",
       role: "super_admin",
       customerType: "retail",
     })
     .onConflictDoUpdate({
       target: usersTable.email,
-      set: { fullName: "SnackVeda Admin", role: "super_admin", isActive: true },
+      set: { fullName: "Narayani Distributors Admin", role: "super_admin", isActive: true },
     });
 
   console.log("Seeding products...");

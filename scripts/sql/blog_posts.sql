@@ -1,4 +1,4 @@
--- SnackVeda — blog_posts table
+-- Narayani Distributors — blog_posts table
 -- Run this once in the Supabase SQL editor (or `psql $DATABASE_URL -f scripts/sql/blog_posts.sql`).
 -- Safe to re-run: everything is IF NOT EXISTS.
 
@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS blog_posts (
   excerpt           text,
   content           text NOT NULL,
   cover_image_url   text,
-  author            text NOT NULL DEFAULT 'SnackVeda Team',
+  author            text NOT NULL DEFAULT 'Narayani Distributors Team',
   category          text NOT NULL DEFAULT 'Snacking',
   tags              text,
   meta_title        text,
@@ -36,6 +36,6 @@ SELECT
   'Nutrition',
   'published',
   now(),
-  'Why Makhana Is India''s Smartest Everyday Snack | SnackVeda',
+  'Why Makhana Is India''s Smartest Everyday Snack | Narayani Distributors',
   'Roasted makhana is low-calorie, protein-rich and gluten-free. Learn why fox nuts are the smartest everyday Indian snack.'
 WHERE NOT EXISTS (SELECT 1 FROM blog_posts);

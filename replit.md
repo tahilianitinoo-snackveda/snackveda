@@ -1,11 +1,11 @@
-# SnackVeda
+# Narayani Distributors
 
 A full-stack e-commerce platform for **Narayani Distributors** selling premium Indian snacks (16 SKUs across Healthy Chips, Makhana, and Superpuffs). Supports both B2C retail and B2B wholesale with a complete admin back-office.
 
 ## Stack
 
 - **Monorepo:** pnpm workspace
-- **Frontend (`artifacts/snackveda`):** React + Vite + Tailwind v4, shadcn/ui, wouter, TanStack Query, Zustand cart store, Framer Motion, Recharts, jsPDF for invoices
+- **Frontend (`artifacts/narayani`):** React + Vite + Tailwind v4, shadcn/ui, wouter, TanStack Query, Zustand cart store, Framer Motion, Recharts, jsPDF for invoices
 - **Backend (`artifacts/api-server`):** Express 5 + Drizzle ORM + PostgreSQL + express-session (Postgres-backed) + bcryptjs
 - **Contracts:** OpenAPI 3.1 (`lib/api-spec/openapi.yaml`) → Orval-generated TanStack Query hooks (`lib/api-client-react`) and Zod schemas (`lib/api-zod`)
 - **DB schema:** `lib/db/src/schema/*.ts`
@@ -46,21 +46,21 @@ A full-stack e-commerce platform for **Narayani Distributors** selling premium I
 
 ## Demo Credentials
 
-- **Admin:** `admin@snackveda.com` / `Admin@123` (super_admin)
+- **Admin:** `admin@narayanidistributors.com` / `Admin@123` (super_admin)
 - 16 products seeded across all categories with realistic ₹ pricing, MOQ, carton sizes
 
 ## Order Numbering
 
-- B2C: `SV-B2C-2025-0001`
-- B2B: `SV-B2B-2025-0001`
+- B2C: `ND-B2C-2025-0001`
+- B2B: `ND-B2B-2025-0001`
 - Invoices: `INV-2025-00001` (issued on payment confirmation)
 
 ## Routes
 
 | Path | Artifact |
 |---|---|
-| `/` | snackveda (web) |
-| `/blog` | snackveda (web) |
+| `/` | narayani (web) |
+| `/blog` | narayani (web) |
 | `/sitemap.xml` | api-server (generated) |
 | `/api` | api-server |
 | `/__mockup` | mockup-sandbox (dev only) |

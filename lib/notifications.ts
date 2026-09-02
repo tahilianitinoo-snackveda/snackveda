@@ -1,4 +1,4 @@
-// SnackVeda Notification Service
+// Narayani Distributors Notification Service
 // Email: Resend | SMS: Fast2SMS
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY!;
@@ -13,7 +13,7 @@ async function sendEmail(to: string, subject: string, html: string) {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { "Authorization": `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: `SnackVeda <${FROM_EMAIL}>`, to, subject, html }),
+      body: JSON.stringify({ from: `Narayani Distributors <${FROM_EMAIL}>`, to, subject, html }),
     });
     const data = await res.json();
     if (!res.ok) console.error("Resend error:", data);
@@ -61,12 +61,12 @@ function baseTemplate(content: string) {
 </style></head><body>
 <div class="wrap">
   <div class="header">
-    <h1>SnackVeda</h1>
+    <h1>Narayani Distributors</h1>
     <p>By Narayani Distributors</p>
   </div>
   <div class="body">${content}</div>
   <div class="footer">
-    &copy; 2025 SnackVeda | Narayani Distributors<br>
+    &copy; 2025 Narayani Distributors<br>
     <a href="https://narayanidistributors.com" style="color:#0F766E">narayanidistributors.com</a> | support@narayanidistributors.com
   </div>
 </div>
@@ -77,14 +77,14 @@ function baseTemplate(content: string) {
 
 export async function sendWelcomeEmail(email: string, name: string, isB2B = false) {
   const subject = isB2B
-    ? "Welcome to SnackVeda — Your Wholesale Account is Ready"
-    : "Welcome to SnackVeda — Start Snacking Smarter!";
+    ? "Welcome to Narayani Distributors — Your Wholesale Account is Ready"
+    : "Welcome to Narayani Distributors — Start Snacking Smarter!";
 
   const html = baseTemplate(`
     <h2>Welcome, ${name}!</h2>
     <p>${isB2B
-      ? "Your <strong>SnackVeda Wholesale Account</strong> has been created successfully. You now have access to trade pricing and bulk ordering."
-      : "You're now part of the SnackVeda family! Discover our range of healthy, delicious snacks made with better ingredients."
+      ? "Your <strong>Narayani Distributors Wholesale Account</strong> has been created successfully. You now have access to trade pricing and bulk ordering."
+      : "You're now part of the Narayani Distributors family! Discover our range of healthy, delicious snacks made with better ingredients."
     }</p>
     ${isB2B ? `
     <div class="info-box">
@@ -99,14 +99,14 @@ export async function sendWelcomeEmail(email: string, name: string, isB2B = fals
   await sendEmail(email, subject, html);
 
   const sms = isB2B
-    ? `Welcome to SnackVeda! Your wholesale account is active. Min order Rs.5000. Shop at narayanidistributors.com`
-    : `Welcome to SnackVeda! Shop healthy snacks at narayanidistributors.com. Your first order gets 15% off!`;
+    ? `Welcome to Narayani Distributors! Your wholesale account is active. Min order Rs.5000. Shop at narayanidistributors.com`
+    : `Welcome to Narayani Distributors! Shop healthy snacks at narayanidistributors.com. Your first order gets 15% off!`;
   // SMS on registration only if phone available — called separately
 }
 
 export async function sendOrderConfirmationEmail(order: any, customer: any) {
   const isB2B = order.orderType === "b2b";
-  const subject = `Order Confirmed — ${order.orderNumber} | SnackVeda`;
+  const subject = `Order Confirmed — ${order.orderNumber} | Narayani Distributors`;
 
   const itemsHtml = order.items?.map((i: any) => `
     <tr>
@@ -144,16 +144,16 @@ export async function sendOrderConfirmationEmail(order: any, customer: any) {
 }
 
 export async function sendOrderConfirmationSMS(phone: string, orderNumber: string, amount: number) {
-  const msg = `SnackVeda: Order ${orderNumber} placed. Pay Rs.${amount} to UPI: 9898477151@pthdfc. Track at narayanidistributors.com/account`;
+  const msg = `Narayani Distributors: Order ${orderNumber} placed. Pay Rs.${amount} to UPI: 9898477151@pthdfc. Track at narayanidistributors.com/account`;
   await sendSMS(phone, msg);
 }
 
 export async function sendShippingEmail(order: any, customer: any, trackingInfo: { courier: string; trackingNumber: string; trackingLink: string }) {
-  const subject = `Your Order is Shipped — ${order.orderNumber} | SnackVeda`;
+  const subject = `Your Order is Shipped — ${order.orderNumber} | Narayani Distributors`;
 
   const html = baseTemplate(`
     <h2>Your Order is on the Way!</h2>
-    <p>Hi ${customer.fullName}, great news — your SnackVeda order has been dispatched!</p>
+    <p>Hi ${customer.fullName}, great news — your Narayani Distributors order has been dispatched!</p>
     <div class="info-box">
       <div class="info-row"><span class="info-label">Order Number</span><span class="info-value">${order.orderNumber}</span></div>
       <div class="info-row"><span class="info-label">Courier</span><span class="info-value">${trackingInfo.courier}</span></div>
@@ -167,12 +167,12 @@ export async function sendShippingEmail(order: any, customer: any, trackingInfo:
 }
 
 export async function sendShippingSMS(phone: string, orderNumber: string, courier: string, trackingNumber: string, trackingLink: string) {
-  const msg = `SnackVeda: Order ${orderNumber} shipped via ${courier}. Track: ${trackingLink} | AWB: ${trackingNumber}`;
+  const msg = `Narayani Distributors: Order ${orderNumber} shipped via ${courier}. Track: ${trackingLink} | AWB: ${trackingNumber}`;
   await sendSMS(phone, msg);
 }
 
 export async function sendAdminNewOrderAlert(order: any, customer: any) {
-  const subject = `New Order — ${order.orderNumber} (${order.orderType.toUpperCase()}) | SnackVeda Admin`;
+  const subject = `New Order — ${order.orderNumber} (${order.orderType.toUpperCase()}) | Narayani Distributors Admin`;
 
   const html = baseTemplate(`
     <h2>New Order Received</h2>

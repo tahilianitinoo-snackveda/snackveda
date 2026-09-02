@@ -127,7 +127,7 @@ const blogPostsTable = pgTable("blog_posts", {
   excerpt: text("excerpt"),
   content: text("content").notNull(),
   coverImageUrl: text("cover_image_url"),
-  author: text("author").notNull().default("SnackVeda Team"),
+  author: text("author").notNull().default("Narayani Distributors Team"),
   category: text("category").notNull().default("Snacking"),
   tags: text("tags"),
   metaTitle: text("meta_title"),
@@ -253,7 +253,7 @@ function computeQuote(items: {productId:string;quantity:number}[], products: Pro
 
 async function generateOrderNumber(type: "b2c"|"b2b") {
   const year = new Date().getFullYear();
-  const prefix = `SV-${type.toUpperCase()}-${year}-`;
+  const prefix = `ND-${type.toUpperCase()}-${year}-`;
   const [row] = await getDb().select({ count: sql<number>`count(*)::int` }).from(ordersTable).where(and(like(ordersTable.orderNumber, `${prefix}%`)));
   return `${prefix}${String((row?.count ?? 0) + 1).padStart(4, "0")}`;
 }
@@ -487,7 +487,7 @@ export const handler: Handler = async (event: HandlerEvent, _context: HandlerCon
       const db = getDb();
       let [inv] = await db.select().from(invoicesTable).where(eq(invoicesTable.orderId, order.id)).limit(1);
       if (!inv) { const invoiceNumber = await generateInvoiceNumber(); [inv] = await db.insert(invoicesTable).values({ orderId: order.id, invoiceNumber }).returning(); }
-      return ok({ invoiceNumber: inv.invoiceNumber, issuedAt: inv.createdAt.toISOString(), seller: { name: "Narayani Distributors", brand: "SnackVeda", address: "Indore, Madhya Pradesh, India", gstNumber: "23AAAAA0000A1Z5", phone: "+91 90000 00000", email: "hello@narayanidistributors.com" }, order });
+      return ok({ invoiceNumber: inv.invoiceNumber, issuedAt: inv.createdAt.toISOString(), seller: { name: "Narayani Distributors", brand: "Narayani Distributors", address: "Indore, Madhya Pradesh, India", gstNumber: "23AAAAA0000A1Z5", phone: "+91 90000 00000", email: "hello@narayanidistributors.com" }, order });
     }
 
     // ── ACCOUNT ──────────────────────────────────────────────────────────────
@@ -664,7 +664,7 @@ export const handler: Handler = async (event: HandlerEvent, _context: HandlerCon
         if (existing) return err("A post with this slug already exists", "SLUG_TAKEN", 400);
         const [row] = await db.insert(blogPostsTable).values({
           title: d.title, slug, excerpt: d.excerpt ?? null, content: d.content,
-          coverImageUrl: d.coverImageUrl || null, author: d.author || "SnackVeda Team",
+          coverImageUrl: d.coverImageUrl || null, author: d.author || "Narayani Distributors Team",
           category: d.category || "Snacking",
           tags: Array.isArray(d.tags) ? d.tags.join(",") : (d.tags ?? null),
           metaTitle: d.metaTitle ?? null, metaDescription: d.metaDescription ?? null,

@@ -10,7 +10,7 @@ export const blogPostsTable = pgTable("blog_posts", {
   excerpt: text("excerpt"),
   content: text("content").notNull(),
   coverImageUrl: text("cover_image_url"),
-  author: text("author").notNull().default("SnackVeda Team"),
+  author: text("author").notNull().default("Narayani Distributors Team"),
   category: text("category").notNull().default("Snacking"),
   tags: text("tags"),
   metaTitle: text("meta_title"),

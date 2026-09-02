@@ -63,7 +63,6 @@ export function SiteHeader() {
           </Sheet>
           <Link href="/" className="flex flex-col items-start">
             <span className="font-serif text-2xl font-bold tracking-tight text-primary">Narayani Distributors</span>
-            <span className="text-[10px] text-muted-foreground uppercase tracking-widest -mt-1">by Narayani Distributors</span>
           </Link>
         </div>
 

@@ -24,7 +24,7 @@ Until the table exists, `/blog` shows "No posts published yet" and `/admin/blog`
 Push to the branch Vercel builds. Nothing else to configure — the API function,
 the blog pages and the sitemap all ship with the same deploy.
 
-Optional env var: `SITE_URL` (defaults to `https://snackveda.co.in`). Set it if the
+Optional env var: `SITE_URL` (defaults to `https://narayanidistributors.com`). Set it if the
 production domain ever changes, so the sitemap emits the right URLs.
 
 ---
@@ -36,7 +36,7 @@ Log in as the admin, go to **Admin → Blog → New Post**.
 | Field | What it does |
 |---|---|
 | Title | The `<h1>` and the default Google headline |
-| URL slug | The page address, `snackveda.co.in/blog/<slug>`. Don't change it after publishing — Google has already indexed the old one |
+| URL slug | The page address, `narayanidistributors.com/blog/<slug>`. Don't change it after publishing — Google has already indexed the old one |
 | Category | Groups posts and shows as the filter chips on `/blog` |
 | Cover image URL | Shown on the listing, the post header, and in WhatsApp/social previews. Use 1200×630px |
 | Excerpt | The 1–2 line summary on the listing page |
@@ -58,7 +58,7 @@ Toggling the **Live** switch in the posts table publishes or unpublishes instant
 1. Go to https://search.google.com/search-console and add a property.
 2. **Domain property** (recommended) — add the TXT record it gives you at your
    domain registrar's DNS. Covers every subdomain.
-3. Or **URL prefix property** with `https://snackveda.co.in`, then either:
+3. Or **URL prefix property** with `https://narayanidistributors.com`, then either:
    - **HTML tag** — copy the `<meta name="google-site-verification" ... />` line into
      `artifacts/snackveda/index.html`, where the comment marks the spot, and redeploy; or
    - **HTML file** — drop the downloaded `google*.html` file into
@@ -68,7 +68,7 @@ Toggling the **Live** switch in the posts table publishes or unpublishes instant
 
 In Search Console → **Sitemaps**, enter `sitemap.xml` and submit.
 
-`https://snackveda.co.in/sitemap.xml` is generated live on each request and contains:
+`https://narayanidistributors.com/sitemap.xml` is generated live on each request and contains:
 
 - the static pages (`/`, `/shop`, `/b2b`, `/about`, `/blog`, `/faq`, `/contact`, `/policies`)
 - every **active** product (`/shop/<slug>`)

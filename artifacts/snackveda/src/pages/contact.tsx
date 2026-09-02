@@ -22,7 +22,7 @@ export default function Contact() {
               </div>
               <h3 className="font-bold text-lg mb-2">Email Us</h3>
               <p className="text-muted-foreground text-sm mb-4">For general inquiries and support</p>
-              <a href="mailto:support@snackveda.co.in" className="text-primary font-medium hover:underline">support@snackveda.co.in</a>
+              <a href="mailto:support@narayanidistributors.com" className="text-primary font-medium hover:underline">support@narayanidistributors.com</a>
             </CardContent>
           </Card>
           

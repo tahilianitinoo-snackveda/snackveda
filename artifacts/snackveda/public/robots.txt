@@ -11,4 +11,4 @@ Disallow: /register
 Disallow: /forgot-password
 Disallow: /reset-password
 
-Sitemap: https://snackveda.co.in/sitemap.xml
+Sitemap: https://narayanidistributors.com/sitemap.xml

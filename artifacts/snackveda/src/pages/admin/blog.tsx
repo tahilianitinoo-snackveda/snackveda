@@ -172,7 +172,7 @@ function BlogInner() {
       <div className="mb-8 flex items-center justify-between gap-4">
         <div>
           <h1 className="font-serif text-3xl font-bold">Blog</h1>
-          <p className="text-muted-foreground">Write posts, publish them, and they appear on snackveda.co.in/blog</p>
+          <p className="text-muted-foreground">Write posts, publish them, and they appear on narayanidistributors.com/blog</p>
         </div>
         <Button onClick={openCreate}>
           <Plus className="mr-2 h-4 w-4" /> New Post
@@ -320,7 +320,7 @@ function BlogInner() {
                       />
                     </FormControl>
                     <FormDescription>
-                      Page address: snackveda.co.in/blog/{field.value || "your-slug"}. Avoid changing it after
+                      Page address: narayanidistributors.com/blog/{field.value || "your-slug"}. Avoid changing it after
                       publishing — Google indexes the old URL.
                     </FormDescription>
                     <FormMessage />
@@ -408,7 +408,7 @@ function BlogInner() {
                         {...field}
                         rows={14}
                         className="font-mono text-sm"
-                        placeholder={"## A subheading\n\nWrite your paragraph here.\n\n- A bullet point\n- Another point\n\n**Bold text**, *italic text* and [a link](https://snackveda.co.in/shop)."}
+                        placeholder={"## A subheading\n\nWrite your paragraph here.\n\n- A bullet point\n- Another point\n\n**Bold text**, *italic text* and [a link](https://narayanidistributors.com/shop)."}
                       />
                     </FormControl>
                     <FormDescription>

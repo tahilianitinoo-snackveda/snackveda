@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-export const SITE_URL = "https://snackveda.co.in";
+export const SITE_URL = "https://narayanidistributors.com";
 const DEFAULT_TITLE = "SnackVeda | Mindful Eating Meets Joyful Snacking";
 const DEFAULT_DESCRIPTION =
   "Premium Indian snacks by Narayani Distributors — healthy chips, roasted makhana and superpuffs. Clean ingredients, bold flavours, retail and wholesale.";

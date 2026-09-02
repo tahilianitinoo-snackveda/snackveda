@@ -390,7 +390,7 @@ export const handler: Handler = async (event: HandlerEvent, _context: HandlerCon
 
     // ── SITEMAP (for Google Search Console) ──────────────────────────────────
     if ((path === "/sitemap.xml" || path === "/sitemap") && method === "GET") {
-      const site = (process.env.SITE_URL || "https://snackveda.co.in").replace(/\/$/, "");
+      const site = (process.env.SITE_URL || "https://narayanidistributors.com").replace(/\/$/, "");
       const today = new Date().toISOString().slice(0, 10);
       const entries: { loc: string; lastmod: string; priority: string; changefreq: string }[] =
         ["/", "/shop", "/b2b", "/about", "/blog", "/faq", "/contact", "/policies"].map(p => ({
@@ -487,7 +487,7 @@ export const handler: Handler = async (event: HandlerEvent, _context: HandlerCon
       const db = getDb();
       let [inv] = await db.select().from(invoicesTable).where(eq(invoicesTable.orderId, order.id)).limit(1);
       if (!inv) { const invoiceNumber = await generateInvoiceNumber(); [inv] = await db.insert(invoicesTable).values({ orderId: order.id, invoiceNumber }).returning(); }
-      return ok({ invoiceNumber: inv.invoiceNumber, issuedAt: inv.createdAt.toISOString(), seller: { name: "Narayani Distributors", brand: "SnackVeda", address: "Indore, Madhya Pradesh, India", gstNumber: "23AAAAA0000A1Z5", phone: "+91 90000 00000", email: "hello@snackveda.com" }, order });
+      return ok({ invoiceNumber: inv.invoiceNumber, issuedAt: inv.createdAt.toISOString(), seller: { name: "Narayani Distributors", brand: "SnackVeda", address: "Indore, Madhya Pradesh, India", gstNumber: "23AAAAA0000A1Z5", phone: "+91 90000 00000", email: "hello@narayanidistributors.com" }, order });
     }
 
     // ── ACCOUNT ──────────────────────────────────────────────────────────────

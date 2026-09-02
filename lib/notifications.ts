@@ -3,8 +3,8 @@
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY!;
 const FAST2SMS_API_KEY = process.env.FAST2SMS_API_KEY!;
-const FROM_EMAIL = "support@snackveda.co.in";
-const ADMIN_EMAIL = "support@snackveda.co.in";
+const FROM_EMAIL = "support@narayanidistributors.com";
+const ADMIN_EMAIL = "support@narayanidistributors.com";
 const SENDER_ID = "SNKVDA";
 
 // ─── EMAIL ────────────────────────────────────────────────────────────────────
@@ -67,7 +67,7 @@ function baseTemplate(content: string) {
   <div class="body">${content}</div>
   <div class="footer">
     &copy; 2025 SnackVeda | Narayani Distributors<br>
-    <a href="https://snackveda.co.in" style="color:#0F766E">snackveda.co.in</a> | support@snackveda.co.in
+    <a href="https://narayanidistributors.com" style="color:#0F766E">narayanidistributors.com</a> | support@narayanidistributors.com
   </div>
 </div>
 </body></html>`;
@@ -92,15 +92,15 @@ export async function sendWelcomeEmail(email: string, name: string, isB2B = fals
       <div class="info-row"><span class="info-label">Minimum Order</span><span class="info-value">₹5,000</span></div>
       <div class="info-row"><span class="info-label">Order Multiples</span><span class="info-value">As per MOQ per SKU</span></div>
     </div>` : ""}
-    <a href="https://snackveda.co.in/shop" class="btn">Start Shopping</a>
+    <a href="https://narayanidistributors.com/shop" class="btn">Start Shopping</a>
     <p style="color:#64748B;font-size:13px">Questions? Reply to this email or WhatsApp us at +91 9898477151</p>
   `);
 
   await sendEmail(email, subject, html);
 
   const sms = isB2B
-    ? `Welcome to SnackVeda! Your wholesale account is active. Min order Rs.5000. Shop at snackveda.co.in`
-    : `Welcome to SnackVeda! Shop healthy snacks at snackveda.co.in. Your first order gets 15% off!`;
+    ? `Welcome to SnackVeda! Your wholesale account is active. Min order Rs.5000. Shop at narayanidistributors.com`
+    : `Welcome to SnackVeda! Shop healthy snacks at narayanidistributors.com. Your first order gets 15% off!`;
   // SMS on registration only if phone available — called separately
 }
 
@@ -137,14 +137,14 @@ export async function sendOrderConfirmationEmail(order: any, customer: any) {
       <div class="info-row"><span class="info-label" style="font-weight:700">Total Payable</span><span class="info-value" style="font-size:16px;color:#0F766E">₹${Number(order.totalAmount).toFixed(2)}</span></div>
     </div>
     <p><strong>Payment:</strong> Please pay ₹${Number(order.totalAmount).toFixed(2)} to UPI ID: <strong>9898477151@pthdfc</strong> (Narayani Distributors) and share the UTR reference.</p>
-    <a href="https://snackveda.co.in/account" class="btn">View Order</a>
+    <a href="https://narayanidistributors.com/account" class="btn">View Order</a>
   `);
 
   await sendEmail(customer.email, subject, html);
 }
 
 export async function sendOrderConfirmationSMS(phone: string, orderNumber: string, amount: number) {
-  const msg = `SnackVeda: Order ${orderNumber} placed. Pay Rs.${amount} to UPI: 9898477151@pthdfc. Track at snackveda.co.in/account`;
+  const msg = `SnackVeda: Order ${orderNumber} placed. Pay Rs.${amount} to UPI: 9898477151@pthdfc. Track at narayanidistributors.com/account`;
   await sendSMS(phone, msg);
 }
 
@@ -160,7 +160,7 @@ export async function sendShippingEmail(order: any, customer: any, trackingInfo:
       <div class="info-row"><span class="info-label">Tracking Number</span><span class="info-value">${trackingInfo.trackingNumber}</span></div>
     </div>
     <a href="${trackingInfo.trackingLink}" class="btn">Track Your Order</a>
-    <p style="color:#64748B;font-size:13px">Estimated delivery: 3–7 business days. Questions? Contact us at support@snackveda.co.in</p>
+    <p style="color:#64748B;font-size:13px">Estimated delivery: 3–7 business days. Questions? Contact us at support@narayanidistributors.com</p>
   `);
 
   await sendEmail(customer.email, subject, html);
@@ -184,7 +184,7 @@ export async function sendAdminNewOrderAlert(order: any, customer: any) {
       <div class="info-row"><span class="info-label">Phone</span><span class="info-value">${customer.phone || "N/A"}</span></div>
       <div class="info-row"><span class="info-label">Amount</span><span class="info-value">₹${Number(order.totalAmount).toFixed(2)}</span></div>
     </div>
-    <a href="https://snackveda.co.in/admin/orders" class="btn">View in Admin</a>
+    <a href="https://narayanidistributors.com/admin/orders" class="btn">View in Admin</a>
   `);
 
   await sendEmail(ADMIN_EMAIL, subject, html);

@@ -158,7 +158,7 @@ const sections = [
         </div>
         <div className="space-y-3">
           <h3 className="text-lg font-semibold">User Rights</h3>
-          <p className="text-muted-foreground">Customers may request correction or deletion of their personal data by contacting us at support@snackveda.co.in.</p>
+          <p className="text-muted-foreground">Customers may request correction or deletion of their personal data by contacting us at support@narayanidistributors.com.</p>
         </div>
       </div>
     ),
@@ -219,7 +219,7 @@ export default function Policies() {
         </Tabs>
 
         <div className="mt-12 text-center text-sm text-muted-foreground border-t pt-8">
-          <p>For any queries regarding our policies, contact us at <a href="mailto:support@snackveda.co.in" className="text-primary hover:underline">support@snackveda.co.in</a></p>
+          <p>For any queries regarding our policies, contact us at <a href="mailto:support@narayanidistributors.com" className="text-primary hover:underline">support@narayanidistributors.com</a></p>
           <p className="mt-2">SnackVeda by Narayani Distributors — Healthy Snacking for Modern India.</p>
         </div>
       </div>

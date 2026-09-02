@@ -17,7 +17,6 @@ export function generateInvoicePdf(invoice: Invoice) {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.setTextColor(100, 116, 139);
-  doc.text("by Narayani Distributors", 14, 26);
 
   doc.setFontSize(10);
   doc.setTextColor(51, 65, 85);
@@ -125,7 +124,7 @@ export function generateInvoicePdf(invoice: Invoice) {
   doc.setFontSize(9);
   doc.setTextColor(148, 163, 184);
   const pageHeight = doc.internal.pageSize.height;
-  doc.text("Thank you for your order — Operated by Narayani Distributors", 105, pageHeight - 15, { align: "center" });
+  doc.text("Thank you for your order", 105, pageHeight - 15, { align: "center" });
 
   doc.save(`${invoice.invoiceNumber}.pdf`);
 }

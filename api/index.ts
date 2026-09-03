@@ -84,8 +84,7 @@ import {
   usersTable, productsTable, productImagesTable, addressesTable,
   ordersTable, orderItemsTable, paymentsTable, invoicesTable, blogPostsTable,
 } from "./lib/schema";
-
-type User = typeof usersTable.$inferSelect;
+import { signToken, verifyToken, profileUser } from "./lib/auth";
 
 // ─── DB ───────────────────────────────────────────────────────────────────────
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -107,13 +106,7 @@ function getDb() {
 }
 
 // ─── JWT ──────────────────────────────────────────────────────────────────────
-function signToken(userId: string) {
-  return jwt.sign({ userId }, process.env.JWT_SECRET!, { expiresIn: "30d" });
-}
-function verifyToken(token: string): { userId: string } | null {
-  try { return jwt.verify(token, process.env.JWT_SECRET!) as { userId: string }; }
-  catch { return null; }
-}
+type User = typeof usersTable.$inferSelect;
 async function getUser(authHeader?: string): Promise<User | null> {
   if (!authHeader?.startsWith("Bearer ")) return null;
   const payload = verifyToken(authHeader.slice(7));
@@ -126,9 +119,6 @@ async function getUser(authHeader?: string): Promise<User | null> {
 const ok = (body: any, status = 200) => ({ statusCode: status, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Content-Type, Authorization", "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS" }, body: JSON.stringify(body) });
 const err = (msg: string, code: string, status: number) => ok({ message: msg, code }, status);
 
-function profileUser(u: User) {
-  return { id: u.id, email: u.email, fullName: u.fullName, phone: u.phone, role: u.role, b2bStatus: u.b2bStatus, customerType: u.customerType, businessName: u.businessName, gstNumber: u.gstNumber, businessAddress: u.businessAddress, ordersCount: u.ordersCount, createdAt: u.createdAt.toISOString() };
-}
 async function getProductImages(productId: string) {
   try {
     const db = getDb();

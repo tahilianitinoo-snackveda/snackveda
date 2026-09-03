@@ -22,7 +22,7 @@ import {
 } from "./lib/schema";
 import { signToken, verifyToken, profileUser } from "./lib/auth";
 import { sendEmail, sendSMS, emailBase, notifyRegistration, notifyOrderPlaced, notifyShipping } from "./lib/notify";
-import { formatOrderNumber, formatInvoiceNumber } from "./lib/orderNumbers";
+import { formatOrderNumber, formatInvoiceNumber, orderNumberPrefix } from "./lib/orderNumbers";
 
 // ─── DB ───────────────────────────────────────────────────────────────────────
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -112,7 +112,7 @@ const xmlEscape = (s: string) =>
 
 async function generateOrderNumber(type: "b2c"|"b2b") {
   const year = new Date().getFullYear();
-  const prefix = `ND-${type.toUpperCase()}-${year}-`;
+  const prefix = orderNumberPrefix(type, year);
   const [row] = await getDb().select({ count: sql<number>`count(*)::int` }).from(ordersTable).where(like(ordersTable.orderNumber, `${prefix}%`));
   return formatOrderNumber(type, year, (row?.count ?? 0) + 1);
 }

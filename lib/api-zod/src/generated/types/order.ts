@@ -9,6 +9,7 @@ import type { Address } from "./address";
 import type { OrderItemView } from "./orderItemView";
 import type { OrderStatus } from "./orderStatus";
 import type { OrderType } from "./orderType";
+import type { OrderUser } from "./orderUser";
 import type { PaymentView } from "./paymentView";
 
 export interface Order {
@@ -33,4 +34,5 @@ export interface Order {
   payment: PaymentView | null;
   /** @nullable */
   invoiceNumber: string | null;
+  user: OrderUser | null;
 }

@@ -37,6 +37,7 @@ export * from "./order";
 export * from "./orderItemView";
 export * from "./orderStatus";
 export * from "./orderType";
+export * from "./orderUser";
 export * from "./paymentMethod";
 export * from "./paymentStatus";
 export * from "./paymentView";

@@ -332,6 +332,18 @@ export interface PaymentView {
   paidAt: string | null;
 }
 
+export interface OrderUser {
+  id: string;
+  email: string;
+  fullName: string;
+  /** @nullable */
+  phone: string | null;
+  /** @nullable */
+  businessName: string | null;
+  /** @nullable */
+  gstNumber: string | null;
+}
+
 export interface Order {
   id: string;
   orderNumber: string;
@@ -354,6 +366,7 @@ export interface Order {
   payment: PaymentView | null;
   /** @nullable */
   invoiceNumber: string | null;
+  user: OrderUser | null;
 }
 
 export type InvoiceSeller = {
@@ -361,6 +374,9 @@ export type InvoiceSeller = {
   address: string;
   gstin: string;
   email: string;
+  brand: string;
+  gstNumber: string;
+  phone: string;
 };
 
 export interface Invoice {

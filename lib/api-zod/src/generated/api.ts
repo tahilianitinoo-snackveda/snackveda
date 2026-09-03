@@ -343,6 +343,17 @@ export const GetOrderByIdResponse = zod.object({
     zod.null(),
   ]),
   invoiceNumber: zod.string().nullable(),
+  user: zod.union([
+    zod.object({
+      id: zod.string(),
+      email: zod.string(),
+      fullName: zod.string(),
+      phone: zod.string().nullable(),
+      businessName: zod.string().nullable(),
+      gstNumber: zod.string().nullable(),
+    }),
+    zod.null(),
+  ]),
 });
 
 /**
@@ -411,6 +422,17 @@ export const ListMyOrdersResponseItem = zod.object({
     zod.null(),
   ]),
   invoiceNumber: zod.string().nullable(),
+  user: zod.union([
+    zod.object({
+      id: zod.string(),
+      email: zod.string(),
+      fullName: zod.string(),
+      phone: zod.string().nullable(),
+      businessName: zod.string().nullable(),
+      gstNumber: zod.string().nullable(),
+    }),
+    zod.null(),
+  ]),
 });
 export const ListMyOrdersResponse = zod.array(ListMyOrdersResponseItem);
 
@@ -582,6 +604,17 @@ export const GetInvoiceForOrderResponse = zod.object({
       zod.null(),
     ]),
     invoiceNumber: zod.string().nullable(),
+    user: zod.union([
+      zod.object({
+        id: zod.string(),
+        email: zod.string(),
+        fullName: zod.string(),
+        phone: zod.string().nullable(),
+        businessName: zod.string().nullable(),
+        gstNumber: zod.string().nullable(),
+      }),
+      zod.null(),
+    ]),
   }),
   issuedAt: zod.coerce.date(),
   seller: zod.object({
@@ -589,6 +622,9 @@ export const GetInvoiceForOrderResponse = zod.object({
     address: zod.string(),
     gstin: zod.string(),
     email: zod.string(),
+    brand: zod.string(),
+    gstNumber: zod.string(),
+    phone: zod.string(),
   }),
 });
 
@@ -671,6 +707,17 @@ export const GetAdminDashboardResponse = zod.object({
         zod.null(),
       ]),
       invoiceNumber: zod.string().nullable(),
+      user: zod.union([
+        zod.object({
+          id: zod.string(),
+          email: zod.string(),
+          fullName: zod.string(),
+          phone: zod.string().nullable(),
+          businessName: zod.string().nullable(),
+          gstNumber: zod.string().nullable(),
+        }),
+        zod.null(),
+      ]),
     }),
   ),
   ordersByCategory: zod.array(
@@ -917,6 +964,17 @@ export const ListAdminOrdersResponseItem = zod.object({
     zod.null(),
   ]),
   invoiceNumber: zod.string().nullable(),
+  user: zod.union([
+    zod.object({
+      id: zod.string(),
+      email: zod.string(),
+      fullName: zod.string(),
+      phone: zod.string().nullable(),
+      businessName: zod.string().nullable(),
+      gstNumber: zod.string().nullable(),
+    }),
+    zod.null(),
+  ]),
 });
 export const ListAdminOrdersResponse = zod.array(ListAdminOrdersResponseItem);
 
@@ -1000,6 +1058,17 @@ export const UpdateAdminOrderStatusResponse = zod.object({
     zod.null(),
   ]),
   invoiceNumber: zod.string().nullable(),
+  user: zod.union([
+    zod.object({
+      id: zod.string(),
+      email: zod.string(),
+      fullName: zod.string(),
+      phone: zod.string().nullable(),
+      businessName: zod.string().nullable(),
+      gstNumber: zod.string().nullable(),
+    }),
+    zod.null(),
+  ]),
 });
 
 /**
@@ -1096,4 +1165,15 @@ export const ConfirmAdminPaymentResponse = zod.object({
     zod.null(),
   ]),
   invoiceNumber: zod.string().nullable(),
+  user: zod.union([
+    zod.object({
+      id: zod.string(),
+      email: zod.string(),
+      fullName: zod.string(),
+      phone: zod.string().nullable(),
+      businessName: zod.string().nullable(),
+      gstNumber: zod.string().nullable(),
+    }),
+    zod.null(),
+  ]),
 });

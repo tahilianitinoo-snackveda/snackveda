@@ -11,4 +11,7 @@ export type InvoiceSeller = {
   address: string;
   gstin: string;
   email: string;
+  brand: string;
+  gstNumber: string;
+  phone: string;
 };

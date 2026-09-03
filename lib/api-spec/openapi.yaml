@@ -882,7 +882,22 @@ components:
             - { $ref: "#/components/schemas/PaymentView" }
             - { type: "null" }
         invoiceNumber: { type: ["string", "null"] }
-      required: [id, orderNumber, userId, customerName, customerEmail, orderType, status, subtotal, discountAmount, discountPercent, gstAmount, shippingCharge, totalAmount, notes, createdAt, items, shippingAddress, payment, invoiceNumber]
+        user:
+          oneOf:
+            - { $ref: "#/components/schemas/OrderUser" }
+            - { type: "null" }
+      required: [id, orderNumber, userId, customerName, customerEmail, orderType, status, subtotal, discountAmount, discountPercent, gstAmount, shippingCharge, totalAmount, notes, createdAt, items, shippingAddress, payment, invoiceNumber, user]
+
+    OrderUser:
+      type: object
+      properties:
+        id: { type: string }
+        email: { type: string }
+        fullName: { type: string }
+        phone: { type: ["string", "null"] }
+        businessName: { type: ["string", "null"] }
+        gstNumber: { type: ["string", "null"] }
+      required: [id, email, fullName, phone, businessName, gstNumber]
 
     PaymentView:
       type: object
@@ -908,7 +923,10 @@ components:
             address: { type: string }
             gstin: { type: string }
             email: { type: string }
-          required: [name, address, gstin, email]
+            brand: { type: string }
+            gstNumber: { type: string }
+            phone: { type: string }
+          required: [name, address, gstin, email, brand, gstNumber, phone]
       required: [invoiceNumber, order, issuedAt, seller]
 
     AdminDashboard:

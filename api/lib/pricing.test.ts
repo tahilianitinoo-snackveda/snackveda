@@ -7,6 +7,12 @@ const chips: QuoteProduct = {
   gstPercent: "5.00", moq: 5,
 };
 
+const makhana: QuoteProduct = {
+  id: "p2", name: "Makhana Peri Peri", slug: "makhana-peri-peri",
+  category: "makhana", b2cPrice: "250.00", b2bPrice: "180.00",
+  gstPercent: "5.00", moq: 10,
+};
+
 describe("computeQuote", () => {
   it("prices a single B2C line at the retail price plus GST", () => {
     const q = computeQuote([{ productId: "p1", quantity: 2 }], [chips], "b2c", null);
@@ -50,6 +56,18 @@ describe("computeQuote", () => {
       { role: "b2c_customer", ordersCount: 0 });
     expect(q.discountAmount).toBe(179.1);
     expect(q.shippingCharge).toBe(0);
+  });
+
+  it("charges shipping when the discount drops the order back below the threshold", () => {
+    // 4 x 250 = 1000 gross, which clears 999 — but a first-order 15% discount
+    // leaves 850, which does not. This is the case that actually pins the rule:
+    // an implementation reading the gross subtotal would waive the 60 here.
+    const q = computeQuote([{ productId: "p2", quantity: 4 }], [makhana], "b2c",
+      { role: "b2c_customer", ordersCount: 0 });
+    expect(q.subtotal).toBe(1000);
+    expect(q.discountAmount).toBe(150);
+    expect(q.shippingCharge).toBe(60);
+    expect(q.total).toBe(952.5);
   });
 
   it("prices B2B lines at trade price with no loyalty discount and no shipping", () => {

@@ -1,4 +1,3 @@
-// @ts-nocheck
 // Narayani Distributors API — Vercel Serverless Function
 
 export const config = {
@@ -15,7 +14,7 @@ import { z } from "zod";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { eq, inArray, and, asc, desc, gte, like, sql } from "drizzle-orm";
-import { computeQuote } from "./lib/pricing";
+import { computeQuote, type QuoteItem } from "./lib/pricing";
 import {
   usersTable, productsTable, productImagesTable, addressesTable,
   ordersTable, orderItemsTable, paymentsTable, invoicesTable, blogPostsTable,
@@ -546,7 +545,14 @@ export default async function handler(req, res) {
         const b = z.object({ name: z.string(), slug: z.string(), category: z.string(), variant: z.string().nullish(), b2cPrice: z.number(), b2bPrice: z.number(), moq: z.number().default(1), cartonQty: z.number().default(1), gstPercent: z.number().default(5), hsnCode: z.string().default("21069099"), shelfLifeMonths: z.number().default(6), weightGrams: z.number().default(60), description: z.string().nullish(), stockQty: z.number().default(100), status: z.string().default("active"), sortOrder: z.number().default(0), imageUrl: z.string().nullish() }).safeParse(parsedBody);
         if (!b.success) return err("Invalid product data", "VALIDATION_ERROR", 400);
         const p = b.data;
-        const [row] = await db.insert(productsTable).values({ ...p, b2cPrice: String(p.b2cPrice), b2bPrice: String(p.b2bPrice), gstPercent: String(p.gstPercent) }).returning();
+        // name/slug/category/moq/cartonQty/hsnCode/shelfLifeMonths/weightGrams are restated
+        // rather than left to the spread alone. They are the products columns that are notNull
+        // with no database default, and the same `strictNullChecks: false` quirk described on
+        // OrderItemSchema makes z.infer report them optional. Restating each key with its own
+        // value is a no-op at runtime — the schema requires or defaults every one of them, so a
+        // successful parse always carries all eight — but it keeps the insert fully checked, so
+        // adding a new required column still fails here instead of being silently dropped.
+        const [row] = await db.insert(productsTable).values({ ...p, name: p.name, slug: p.slug, category: p.category, moq: p.moq, cartonQty: p.cartonQty, hsnCode: p.hsnCode, shelfLifeMonths: p.shelfLifeMonths, weightGrams: p.weightGrams, b2cPrice: String(p.b2cPrice), b2bPrice: String(p.b2bPrice), gstPercent: String(p.gstPercent) }).returning();
         return ok(serializeProduct(row), 201);
       }
       const adminProductMatch = path.match(/^\/admin\/products\/([^/]+)$/);
@@ -779,10 +785,20 @@ export default async function handler(req, res) {
 // ─── ZOD SCHEMAS ─────────────────────────────────────────────────────────────
 const RegisterBody = z.object({ email: z.string(), password: z.string().min(6), fullName: z.string(), phone: z.string().nullish(), accountType: z.enum(["b2c","b2b"]), businessName: z.string().nullish(), businessType: z.string().nullish(), gstNumber: z.string().nullish(), businessAddress: z.string().nullish() });
 const LoginBody = z.object({ email: z.string(), password: z.string() });
-const QuoteBody = z.object({ orderType: z.enum(["b2c","b2b"]), items: z.array(z.object({ productId: z.string(), quantity: z.number() })) });
+// One shared schema replacing three byte-identical inline copies. It validates exactly as
+// they did — both fields required, unknown keys stripped — and zod schemas are immutable, so
+// sharing one instance across the three bodies below changes nothing at runtime.
+//
+// The assertion restores the output type zod would infer on its own if this project compiled
+// with `strictNullChecks`. With it off, zod's `addQuestionMarks` helper asks whether
+// `undefined extends T` — true for every T when strictNullChecks is off — so `z.infer` marks
+// every field optional and stops matching what a successful parse actually yields. Asserting
+// here rather than at the three call sites keeps the explanation next to the cause.
+const OrderItemSchema = z.object({ productId: z.string(), quantity: z.number() }) as unknown as z.ZodType<QuoteItem>;
+const QuoteBody = z.object({ orderType: z.enum(["b2c","b2b"]), items: z.array(OrderItemSchema) });
 const ShippingSchema = z.object({ fullName: z.string(), phone: z.string(), line1: z.string(), line2: z.string().nullish(), city: z.string(), state: z.string(), pincode: z.string() });
-const B2cOrderBody = z.object({ items: z.array(z.object({ productId: z.string(), quantity: z.number() })), shippingAddress: ShippingSchema, paymentMethod: z.enum(["upi","bank_transfer","payment_link"]), paymentReference: z.string().nullish(), notes: z.string().nullish() });
-const B2bOrderBody = z.object({ items: z.array(z.object({ productId: z.string(), quantity: z.number() })), shippingAddress: ShippingSchema, paymentMethod: z.enum(["upi","bank_transfer","payment_link"]), notes: z.string().nullish() });
+const B2cOrderBody = z.object({ items: z.array(OrderItemSchema), shippingAddress: ShippingSchema, paymentMethod: z.enum(["upi","bank_transfer","payment_link"]), paymentReference: z.string().nullish(), notes: z.string().nullish() });
+const B2bOrderBody = z.object({ items: z.array(OrderItemSchema), shippingAddress: ShippingSchema, paymentMethod: z.enum(["upi","bank_transfer","payment_link"]), notes: z.string().nullish() });
 const BlogPostBody = z.object({
   title: z.string().min(2),
   slug: z.string().nullish(),

@@ -88,7 +88,9 @@ one.
 
 **Files:**
 - Create: `vitest.config.ts`, `api/lib/pricing.ts`, `api/lib/pricing.test.ts`
-- Modify: `package.json`
+- Modify: `package.json`, `api/index.ts` (delete the original `computeQuote`, import the
+  extracted one — without this the routes keep calling an untested copy and the new module
+  is dead code)
 
 **Interfaces:**
 - Consumes: nothing.

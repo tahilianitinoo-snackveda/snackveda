@@ -1,5 +1,14 @@
 import { Link } from "wouter";
 
+// Storefronts and trade directories carrying our products. These leave the site,
+// so they are plain anchors rather than wouter links.
+const MARKETPLACES = [
+  { name: "Flipkart", href: "https://www.flipkart.com/search?q=chips++&otracker=search&otracker1=search&marketplace=FLIPKART&as-show=on&as=off&p%5B%5D=facets.brand%255B%255D%3Dtwirtles" },
+  { name: "IndiaMART", href: "https://www.indiamart.com/narayanidistributors-indore/chips.html" },
+  { name: "Exporters India", href: "https://www.exportersindia.com/narayani-distributors/" },
+  { name: "GlobalLinker", href: "https://www.globallinker.com/search/narayani-distributors" },
+];
+
 export function SiteFooter() {
   return (
     <footer className="bg-muted py-12 mt-auto">
@@ -33,6 +42,23 @@ export function SiteFooter() {
               <li><Link href="/contact" className="hover:text-foreground transition-colors">Contact</Link></li>
             </ul>
           </div>
+        </div>
+        <div className="pt-8 border-t border-border flex flex-col sm:flex-row sm:items-center gap-x-6 gap-y-3 mb-6">
+          <h3 className="font-semibold text-sm shrink-0">Also available on</h3>
+          <ul className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
+            {MARKETPLACES.map((m) => (
+              <li key={m.name}>
+                <a
+                  href={m.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-foreground transition-colors"
+                >
+                  {m.name}
+                </a>
+              </li>
+            ))}
+          </ul>
         </div>
         <div className="pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
           <p>Indore, India</p>

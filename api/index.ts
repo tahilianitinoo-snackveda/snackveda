@@ -14,14 +14,14 @@ import { z } from "zod";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { eq, inArray, and, asc, desc, gte, like, sql } from "drizzle-orm";
-import { computeQuote, type QuoteItem } from "./lib/pricing";
+import { computeQuote, type QuoteItem } from "./_lib/pricing";
 import {
   usersTable, productsTable, productImagesTable, addressesTable,
   ordersTable, orderItemsTable, paymentsTable, invoicesTable, blogPostsTable,
-} from "./lib/schema";
-import { signToken, verifyToken, profileUser } from "./lib/auth";
-import { sendEmail, sendSMS, emailBase, notifyRegistration, notifyOrderPlaced, notifyShipping } from "./lib/notify";
-import { formatOrderNumber, formatInvoiceNumber, orderNumberPrefix } from "./lib/orderNumbers";
+} from "./_lib/schema";
+import { signToken, verifyToken, profileUser } from "./_lib/auth";
+import { sendEmail, sendSMS, emailBase, notifyRegistration, notifyOrderPlaced, notifyShipping } from "./_lib/notify";
+import { formatOrderNumber, formatInvoiceNumber, orderNumberPrefix } from "./_lib/orderNumbers";
 
 // ─── DB ───────────────────────────────────────────────────────────────────────
 let _db: ReturnType<typeof drizzle> | null = null;

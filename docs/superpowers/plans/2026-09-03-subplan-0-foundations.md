@@ -30,6 +30,13 @@ one.
 - Do not modify checkout request/response shapes in this sub-plan. The frontend is live.
 - Vercel env secrets are write-only; there is no CLI route to the database. Every test in
   this sub-plan is a unit test with no database.
+- **Execution branch is `subplan-0-foundations`, not `main`.** Never push to `main` during
+  this sub-plan; the merge happens once after the whole-branch review.
+- **Extraction tasks (1, 3, 5, 6) land as two commits:** first the code moved with behaviour
+  unchanged, then any cleanup of typing or naming in the code you just moved. Tightening
+  loose types as you move is expected and wanted. The two commits exist so that if a test
+  fails, `git diff` between them says whether the move or the cleanup caused it — with one
+  combined commit that information is gone.
 
 ---
 
@@ -169,10 +176,18 @@ the harness is wrong, not the code.
 
 - [ ] **Step 6: Create the module by moving the function verbatim**
 
-Create `api/lib/pricing.ts`. Copy `computeQuote` out of `api/index.ts` **without changing a
-single arithmetic expression** — the point of this task is to prove behaviour is unchanged,
-so any improvement here destroys the evidence. Add the exported types from the Interfaces
-block above, and `export` the function.
+Create `api/lib/pricing.ts`. Move `computeQuote` out of `api/index.ts` and export it, with
+the types from the Interfaces block above.
+
+Land this as **two commits**:
+
+1. **The move, arithmetic untouched.** Every numeric expression identical to the original —
+   no reordering, no refactoring of the rounding. Run the test; it must pass.
+2. **The cleanup.** Now replace `const lines: any[] = []` with a real `QuoteLine[]`, name
+   anything unclear, and tighten signatures. Run the test again; it must still pass.
+
+Keep them separate so a failure can be attributed. Do not change any arithmetic in either
+commit — the tests pin those numbers deliberately.
 
 - [ ] **Step 7: Run the test and confirm it passes**
 
@@ -813,23 +828,28 @@ corepack pnpm install && corepack pnpm run typecheck && corepack pnpm test && co
 
 Expected: install clean, typecheck 0 errors, tests pass, build exits 0.
 
-- [ ] **Step 7: Commit and push**
+- [ ] **Step 7: Commit and push the branch**
 
 ```bash
 git add -A
 git commit -m "refactor: delete the netlify and express backends, leaving one api"
-git push origin main
+git push -u origin subplan-0-foundations
 ```
 
-- [ ] **Step 8: Confirm production is unaffected**
+**Do not push to `main`.** Merging happens once, after the whole-branch review, via
+`superpowers:finishing-a-development-branch`.
+
+- [ ] **Step 8: Confirm production is still healthy**
+
+Production is still serving `main`, so nothing in this branch has reached it yet. Record the
+current live state as the baseline the merge will be checked against:
 
 ```bash
-corepack pnpm exec vercel ls snackveda | grep "https://snackveda-" | head -1
 curl -s https://narayanidistributors.com/api/health
 ```
 
-Expected: newest deployment `● Ready`; health returns `{"status":"ok","db":true,...}`.
-Deleting `netlify.toml` cannot affect Vercel, but this is the revenue path — check anyway.
+Expected: `{"status":"ok","db":true,"jwt":true,"productCount":15}`. Note it in your report;
+the same call after the merge must return the same thing.
 
 ---
 

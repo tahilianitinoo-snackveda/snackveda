@@ -265,6 +265,32 @@ Append to `api/lib/pricing.test.ts`, inside the `describe`:
     expect(q.discountAmount).toBe(179.1);
     expect(q.shippingCharge).toBe(0);
   });
+
+  it("charges shipping when the discount drops the order back below the threshold", () => {
+    // 4 x 250 = 1000 gross, which clears 999 — but a first-order 15% discount
+    // leaves 850, which does not. This is the case that actually pins the rule:
+    // an implementation reading the gross subtotal would waive the 60 here.
+    // The test above cannot discriminate on its own — 1194 and 1014.90 both clear
+    // the threshold, so it passes under either reading.
+    const q = computeQuote([{ productId: "p2", quantity: 4 }], [makhana], "b2c",
+      { role: "b2c_customer", ordersCount: 0 });
+    expect(q.subtotal).toBe(1000);
+    expect(q.discountAmount).toBe(150);
+    expect(q.shippingCharge).toBe(60);
+    expect(q.total).toBe(952.5);
+  });
+```
+
+This second case needs a second fixture, because no integer quantity of a ₹199 product can
+land in the window where gross clears ₹999 but the discounted figure does not. Add beside
+`chips`:
+
+```ts
+const makhana: QuoteProduct = {
+  id: "p2", name: "Makhana Peri Peri", slug: "makhana-peri-peri",
+  category: "makhana", b2cPrice: "250.00", b2bPrice: "180.00",
+  gstPercent: "5.00", moq: 10,
+};
 ```
 
 - [ ] **Step 3: Add the B2B tests**

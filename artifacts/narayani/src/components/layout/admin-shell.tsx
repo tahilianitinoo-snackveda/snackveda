@@ -1,7 +1,6 @@
 import { ReactNode, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { LayoutDashboard, Package, Users, ShoppingCart, CreditCard, Newspaper, LogOut, Menu } from "lucide-react";
-import { useLogoutUser } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 
 interface AdminShellProps {
@@ -10,7 +9,6 @@ interface AdminShellProps {
 
 export function AdminShell({ children }: AdminShellProps) {
   const [location] = useLocation();
-  const logout = useLogoutUser();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const navItems = [
@@ -24,7 +22,7 @@ export function AdminShell({ children }: AdminShellProps) {
 
   const handleLogout = () => {
     localStorage.removeItem("narayani_token");
-    logout.mutate(undefined, { onSuccess: () => { window.location.href = "/"; } });
+    window.location.href = "/";
   };
 
   const isActive = (href: string) => location === href;

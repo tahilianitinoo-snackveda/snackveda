@@ -65,13 +65,6 @@ export const LoginUserResponse = zod.object({
 });
 
 /**
- * @summary Log out
- */
-export const LogoutUserResponse = zod.object({
-  success: zod.boolean(),
-});
-
-/**
  * @summary Get the current logged-in user profile
  */
 export const GetCurrentUserResponse = zod.object({
@@ -536,7 +529,7 @@ export const CreateMyAddressBody = zod.object({
  * @summary Get a JSON invoice for a paid order (used for client-side PDF render)
  */
 export const GetInvoiceForOrderParams = zod.object({
-  orderId: zod.coerce.string(),
+  id: zod.coerce.string(),
 });
 
 export const GetInvoiceForOrderResponse = zod.object({

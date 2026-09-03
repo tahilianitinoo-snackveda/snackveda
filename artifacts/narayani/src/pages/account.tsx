@@ -1,7 +1,7 @@
 import { SiteShell } from "@/components/layout/site-shell";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { useAuth } from "@/hooks/use-auth";
-import { useListMyOrders, useGetMyProfile, useLogoutUser, getInvoiceForOrder } from "@workspace/api-client-react";
+import { useListMyOrders, useGetMyProfile, getInvoiceForOrder } from "@workspace/api-client-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -19,7 +19,6 @@ function AccountInner() {
   const { user, isB2BApproved } = useAuth();
   const { data: profile, isLoading: profileLoading } = useGetMyProfile();
   const { data: orders, isLoading: ordersLoading } = useListMyOrders();
-  const logout = useLogoutUser();
 
   const [downloadingOrderId, setDownloadingOrderId] = useState<string | null>(null);
 

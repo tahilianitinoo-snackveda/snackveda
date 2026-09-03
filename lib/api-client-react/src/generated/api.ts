@@ -40,7 +40,6 @@ import type {
   Product,
   ProductDetail,
   RegisterBody,
-  SuccessResponse,
   UpdateCustomerStatusBody,
   UpdateOrderStatusBody,
   UpdateProductBody,
@@ -61,7 +60,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary Health check
  */
 export const getHealthCheckUrl = () => {
-  return `/api/healthz`;
+  return `/api/health`;
 };
 
 export const healthCheck = async (
@@ -74,7 +73,7 @@ export const healthCheck = async (
 };
 
 export const getHealthCheckQueryKey = () => {
-  return [`/api/healthz`] as const;
+  return [`/api/health`] as const;
 };
 
 export const getHealthCheckQueryOptions = <
@@ -302,87 +301,6 @@ export const useLoginUser = <
   TContext
 > => {
   return useMutation(getLoginUserMutationOptions(options));
-};
-
-/**
- * @summary Log out
- */
-export const getLogoutUserUrl = () => {
-  return `/api/auth/logout`;
-};
-
-export const logoutUser = async (
-  options?: RequestInit,
-): Promise<SuccessResponse> => {
-  return customFetch<SuccessResponse>(getLogoutUserUrl(), {
-    ...options,
-    method: "POST",
-  });
-};
-
-export const getLogoutUserMutationOptions = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof logoutUser>>,
-    TError,
-    void,
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof logoutUser>>,
-  TError,
-  void,
-  TContext
-> => {
-  const mutationKey = ["logoutUser"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof logoutUser>>,
-    void
-  > = () => {
-    return logoutUser(requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type LogoutUserMutationResult = NonNullable<
-  Awaited<ReturnType<typeof logoutUser>>
->;
-
-export type LogoutUserMutationError = ErrorType<unknown>;
-
-/**
- * @summary Log out
- */
-export const useLogoutUser = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof logoutUser>>,
-    TError,
-    void,
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof logoutUser>>,
-  TError,
-  void,
-  TContext
-> => {
-  return useMutation(getLogoutUserMutationOptions(options));
 };
 
 /**
@@ -1384,29 +1302,29 @@ export const useCreateMyAddress = <
 /**
  * @summary Get a JSON invoice for a paid order (used for client-side PDF render)
  */
-export const getGetInvoiceForOrderUrl = (orderId: string) => {
-  return `/api/invoices/${orderId}`;
+export const getGetInvoiceForOrderUrl = (id: string) => {
+  return `/api/orders/${id}/invoice`;
 };
 
 export const getInvoiceForOrder = async (
-  orderId: string,
+  id: string,
   options?: RequestInit,
 ): Promise<Invoice> => {
-  return customFetch<Invoice>(getGetInvoiceForOrderUrl(orderId), {
+  return customFetch<Invoice>(getGetInvoiceForOrderUrl(id), {
     ...options,
     method: "GET",
   });
 };
 
-export const getGetInvoiceForOrderQueryKey = (orderId: string) => {
-  return [`/api/invoices/${orderId}`] as const;
+export const getGetInvoiceForOrderQueryKey = (id: string) => {
+  return [`/api/orders/${id}/invoice`] as const;
 };
 
 export const getGetInvoiceForOrderQueryOptions = <
   TData = Awaited<ReturnType<typeof getInvoiceForOrder>>,
   TError = ErrorType<ErrorResponse>,
 >(
-  orderId: string,
+  id: string,
   options?: {
     query?: UseQueryOptions<
       Awaited<ReturnType<typeof getInvoiceForOrder>>,
@@ -1418,18 +1336,16 @@ export const getGetInvoiceForOrderQueryOptions = <
 ) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey =
-    queryOptions?.queryKey ?? getGetInvoiceForOrderQueryKey(orderId);
+  const queryKey = queryOptions?.queryKey ?? getGetInvoiceForOrderQueryKey(id);
 
   const queryFn: QueryFunction<
     Awaited<ReturnType<typeof getInvoiceForOrder>>
-  > = ({ signal }) =>
-    getInvoiceForOrder(orderId, { signal, ...requestOptions });
+  > = ({ signal }) => getInvoiceForOrder(id, { signal, ...requestOptions });
 
   return {
     queryKey,
     queryFn,
-    enabled: !!orderId,
+    enabled: !!id,
     ...queryOptions,
   } as UseQueryOptions<
     Awaited<ReturnType<typeof getInvoiceForOrder>>,
@@ -1451,7 +1367,7 @@ export function useGetInvoiceForOrder<
   TData = Awaited<ReturnType<typeof getInvoiceForOrder>>,
   TError = ErrorType<ErrorResponse>,
 >(
-  orderId: string,
+  id: string,
   options?: {
     query?: UseQueryOptions<
       Awaited<ReturnType<typeof getInvoiceForOrder>>,
@@ -1461,7 +1377,7 @@ export function useGetInvoiceForOrder<
     request?: SecondParameter<typeof customFetch>;
   },
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getGetInvoiceForOrderQueryOptions(orderId, options);
+  const queryOptions = getGetInvoiceForOrderQueryOptions(id, options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;
@@ -1894,7 +1810,7 @@ export function useListAdminCustomers<
  * @summary Approve/reject a B2B customer
  */
 export const getUpdateAdminCustomerStatusUrl = (id: string) => {
-  return `/api/admin/customers/${id}`;
+  return `/api/admin/customers/${id}/status`;
 };
 
 export const updateAdminCustomerStatus = async (

@@ -19,7 +19,7 @@ tags:
   - name: admin
 
 paths:
-  /healthz:
+  /health:
     get:
       operationId: healthCheck
       tags: [health]
@@ -74,18 +74,6 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ErrorResponse" }
-
-  /auth/logout:
-    post:
-      operationId: logoutUser
-      tags: [auth]
-      summary: Log out
-      responses:
-        "200":
-          description: Logged out
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/SuccessResponse" }
 
   /auth/me:
     get:
@@ -328,14 +316,14 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Address" }
 
-  /invoices/{orderId}:
+  /orders/{id}/invoice:
     get:
       operationId: getInvoiceForOrder
       tags: [invoices]
       summary: Get a JSON invoice for a paid order (used for client-side PDF render)
       parameters:
         - in: path
-          name: orderId
+          name: id
           required: true
           schema: { type: string }
       responses:
@@ -439,7 +427,7 @@ paths:
                 type: array
                 items: { $ref: "#/components/schemas/AdminCustomer" }
 
-  /admin/customers/{id}:
+  /admin/customers/{id}/status:
     patch:
       operationId: updateAdminCustomerStatus
       tags: [admin]

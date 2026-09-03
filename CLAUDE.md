@@ -14,16 +14,18 @@ before writing any copy. This is the easiest mistake to make here.
 | Path | What |
 |---|---|
 | `artifacts/narayani/` | The frontend. React 19 + Vite + Tailwind v4 + shadcn/ui + wouter + TanStack Query + Zustand. |
-| `api/index.ts` | **The live backend.** One file, Vercel serverless, JWT bearer auth. Has `@ts-nocheck` — the type checker is off here. |
-| `lib/db/src/schema/` | Drizzle schema. Note `product_images` is missing here and defined only inline in `api/index.ts`. |
-| `lib/api-spec/openapi.yaml` | The contract. **It has drifted from reality — do not trust it.** |
+| `api/index.ts` | **The live backend.** Vercel serverless, JWT bearer auth. Routing and handlers; the logic lives in `api/lib/`. Type-checked. |
+| `api/lib/` | `pricing`, `schema`, `auth`, `notify`, `orderNumbers`. Unit-tested, no database. Change pricing or auth here, not in the entrypoint. |
+| `lib/db/src/schema/` | Drizzle schema for the tooling. The API has its own copy in `api/lib/schema.ts`, which includes `product_images`. |
+| `lib/api-spec/openapi.yaml` | The contract. Generated clients come from it — regenerate rather than hand-editing `**/generated/`. |
 
 ## Build and deploy
 
 ```bash
 pnpm install
 pnpm run build:frontend     # what Vercel runs
-pnpm run typecheck          # fails with 2 known pre-existing errors in pdf.ts
+pnpm run typecheck          # passes clean — any error is yours
+pnpm test                   # 26 unit tests over api/lib, no database needed
 ```
 
 `pnpm` is not on PATH — use `corepack pnpm`, or shim
@@ -34,11 +36,16 @@ Deploy is automatic: push to `main` → Vercel builds → live in ~35s. Vercel a
 
 ## Things that will bite you
 
-- **No tests exist.** You cannot prove you did not break something. Adding them is sub-plan 0.
-- **`pnpm run typecheck` already fails** with 2 errors in `artifacts/narayani/src/lib/pdf.ts`
-  — the generated types lack `seller.gstNumber` and `order.user`, which the live API does
-  return. That is the contract drift. Two errors is the clean baseline; more means you broke
-  something.
+- **Tests cover `api/lib/` only.** 26 unit tests over pricing, auth and order numbers, with no
+  database. No route handler and no React component is exercised by anything, so a green suite
+  says nothing about checkout, payments or admin actions — read those changes carefully.
+- **`pnpm run typecheck` passes clean.** Any error you see is one you introduced.
+- **`PATCH /admin/blog/:id` with `"slug": null` still 500s** — it reaches `slugify(null)`
+  ([api/index.ts:742](api/index.ts:742), [:94](api/index.ts:94)). Known, deliberately left: every
+  fix turns a 500 into a 200 on an untested live route, so it needs its own task with a test.
+- **`api/tsconfig.json` sets `"strict": false`,** and that is actively costing you — with
+  `strictNullChecks` off, zod infers every field as optional, which forced two workarounds in
+  `api/index.ts`. Turning it on surfaces exactly one error: the `slugify` bug above.
 - **Vercel env secrets are write-only.** `vercel env pull` returns `DATABASE_URL`,
   `JWT_SECRET`, `RESEND_API_KEY` as `""`. There is no CLI route to the database — schema and
   data changes go through the Supabase SQL editor as files in `scripts/sql/`.

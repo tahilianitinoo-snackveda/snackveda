@@ -14,9 +14,9 @@ before writing any copy. This is the easiest mistake to make here.
 | Path | What |
 |---|---|
 | `artifacts/narayani/` | The frontend. React 19 + Vite + Tailwind v4 + shadcn/ui + wouter + TanStack Query + Zustand. |
-| `api/index.ts` | **The live backend.** Vercel serverless, JWT bearer auth. Routing and handlers; the logic lives in `api/lib/`. Type-checked. |
-| `api/lib/` | `pricing`, `schema`, `auth`, `notify`, `orderNumbers`. Unit-tested, no database. Change pricing or auth here, not in the entrypoint. |
-| `lib/db/src/schema/` | Drizzle schema for the tooling. The API has its own copy in `api/lib/schema.ts`, which includes `product_images`. |
+| `api/index.ts` | **The live backend.** Vercel serverless, JWT bearer auth. Routing and handlers; the logic lives in `api/_lib/`. Type-checked. |
+| `api/_lib/` | `pricing`, `schema`, `auth`, `notify`, `orderNumbers`. Unit-tested, no database. Change pricing or auth here, not in the entrypoint. |
+| `lib/db/src/schema/` | Drizzle schema for the tooling. The API has its own copy in `api/_lib/schema.ts`, which includes `product_images`. |
 | `lib/api-spec/openapi.yaml` | The contract. Generated clients come from it — regenerate rather than hand-editing `**/generated/`. |
 
 ## Build and deploy
@@ -25,7 +25,7 @@ before writing any copy. This is the easiest mistake to make here.
 pnpm install
 pnpm run build:frontend     # what Vercel runs
 pnpm run typecheck          # passes clean — any error is yours
-pnpm test                   # 26 unit tests over api/lib, no database needed
+pnpm test                   # 27 unit tests over api/_lib, no database needed
 ```
 
 `pnpm` is not on PATH — use `corepack pnpm`, or shim
@@ -36,7 +36,7 @@ Deploy is automatic: push to `main` → Vercel builds → live in ~35s. Vercel a
 
 ## Things that will bite you
 
-- **Tests cover `api/lib/` only.** 26 unit tests over pricing, auth and order numbers, with no
+- **Tests cover `api/_lib/` only.** 27 unit tests over pricing, auth and order numbers, with no
   database. No route handler and no React component is exercised by anything, so a green suite
   says nothing about checkout, payments or admin actions — read those changes carefully.
 - **`pnpm run typecheck` passes clean.** Any error you see is one you introduced.

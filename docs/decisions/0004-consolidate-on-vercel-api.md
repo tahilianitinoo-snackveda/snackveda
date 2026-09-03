@@ -55,7 +55,7 @@ Delete `netlify/functions/api.ts`, `netlify.toml`, and `artifacts/api-server/` i
 
 ## Consequences
 
-- `api/lib/` (`pricing.ts`, `auth.ts`, `schema.ts`, `notify.ts`, `orderNumbers.ts`) is now the
+- `api/_lib/` (`pricing.ts`, `auth.ts`, `schema.ts`, `notify.ts`, `orderNumbers.ts`) is now the
   only home for this business logic, each piece with its own test coverage added in Tasks
   1–6 of this sub-plan. `artifacts/api-server/src/lib/pricing.ts` and `orderNumber.ts` — the
   copies that logic was originally extracted from — are gone with the rest of the directory.

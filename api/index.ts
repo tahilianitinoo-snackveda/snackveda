@@ -22,6 +22,7 @@ import {
 } from "./lib/schema";
 import { signToken, verifyToken, profileUser } from "./lib/auth";
 import { sendEmail, sendSMS, emailBase, notifyRegistration, notifyOrderPlaced, notifyShipping } from "./lib/notify";
+import { formatOrderNumber, formatInvoiceNumber } from "./lib/orderNumbers";
 
 // ─── DB ───────────────────────────────────────────────────────────────────────
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -112,13 +113,13 @@ const xmlEscape = (s: string) =>
 async function generateOrderNumber(type: "b2c"|"b2b") {
   const year = new Date().getFullYear();
   const prefix = `ND-${type.toUpperCase()}-${year}-`;
-  const [row] = await getDb().select({ count: sql<number>`count(*)::int` }).from(ordersTable).where(and(like(ordersTable.orderNumber, `${prefix}%`)));
-  return `${prefix}${String((row?.count ?? 0) + 1).padStart(4, "0")}`;
+  const [row] = await getDb().select({ count: sql<number>`count(*)::int` }).from(ordersTable).where(like(ordersTable.orderNumber, `${prefix}%`));
+  return formatOrderNumber(type, year, (row?.count ?? 0) + 1);
 }
 async function generateInvoiceNumber() {
   const year = new Date().getFullYear();
   const [row] = await getDb().select({ count: sql<number>`count(*)::int` }).from(invoicesTable);
-  return `INV-${year}-${String((row?.count ?? 0) + 1).padStart(5, "0")}`;
+  return formatInvoiceNumber(year, (row?.count ?? 0) + 1);
 }
 async function serializeOrder(orderId: string) {
   const db = getDb();

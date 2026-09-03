@@ -6,7 +6,7 @@ A full-stack e-commerce platform for **Narayani Distributors** selling premium I
 
 - **Monorepo:** pnpm workspace
 - **Frontend (`artifacts/narayani`):** React + Vite + Tailwind v4, shadcn/ui, wouter, TanStack Query, Zustand cart store, Framer Motion, Recharts, jsPDF for invoices
-- **Backend (`artifacts/api-server`):** Express 5 + Drizzle ORM + PostgreSQL + express-session (Postgres-backed) + bcryptjs
+- **Backend (`api/index.ts`):** Single Vercel serverless function + Drizzle ORM + PostgreSQL + JWT bearer auth (jsonwebtoken) + bcryptjs
 - **Contracts:** OpenAPI 3.1 (`lib/api-spec/openapi.yaml`) → Orval-generated TanStack Query hooks (`lib/api-client-react`) and Zod schemas (`lib/api-zod`)
 - **DB schema:** `lib/db/src/schema/*.ts`
 
@@ -61,15 +61,15 @@ A full-stack e-commerce platform for **Narayani Distributors** selling premium I
 |---|---|
 | `/` | narayani (web) |
 | `/blog` | narayani (web) |
-| `/sitemap.xml` | api-server (generated) |
-| `/api` | api-server |
+| `/sitemap.xml` | api/index.ts (generated) |
+| `/api` | api/index.ts |
 | `/__mockup` | mockup-sandbox (dev only) |
 
 ## Local commands
 
 - Regenerate API client/zod from OpenAPI: `pnpm --filter @workspace/api-spec run codegen`
 - Push DB schema changes: `pnpm --filter @workspace/db run push`
-- Reseed products + admin: `cd artifacts/api-server && pnpm exec tsx src/seed.ts`
+- Seed / reseed data: no script exists against the live API; schema and data changes go through the Supabase SQL editor as files in `scripts/sql/`
 
 ## Conventions
 

@@ -8,7 +8,6 @@
     "typecheck": "pnpm run typecheck:libs && tsc -p api/tsconfig.json --noEmit && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
     "build:frontend": "pnpm --filter @workspace/narayani run build",
     "dev:frontend": "pnpm --filter @workspace/narayani run dev",
-    "dev:api": "pnpm --filter @workspace/api-server run dev",
     "test": "vitest run",
     "test:watch": "vitest"
   },

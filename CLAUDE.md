@@ -15,12 +15,8 @@ before writing any copy. This is the easiest mistake to make here.
 |---|---|
 | `artifacts/narayani/` | The frontend. React 19 + Vite + Tailwind v4 + shadcn/ui + wouter + TanStack Query + Zustand. |
 | `api/index.ts` | **The live backend.** One file, Vercel serverless, JWT bearer auth. Has `@ts-nocheck` — the type checker is off here. |
-| `netlify/functions/api.ts` | A second, divergent copy of the backend. Not the live one. |
-| `artifacts/api-server/` | A third backend, session-based. **Orphaned** — cannot serve the current token-based frontend. |
 | `lib/db/src/schema/` | Drizzle schema. Note `product_images` is missing here and defined only inline in `api/index.ts`. |
 | `lib/api-spec/openapi.yaml` | The contract. **It has drifted from reality — do not trust it.** |
-
-Three backends is a known problem, not a design. See the program plan.
 
 ## Build and deploy
 

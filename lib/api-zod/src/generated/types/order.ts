@@ -15,9 +15,6 @@ import type { PaymentView } from "./paymentView";
 export interface Order {
   id: string;
   orderNumber: string;
-  userId: string;
-  customerName: string;
-  customerEmail: string;
   orderType: OrderType;
   status: OrderStatus;
   subtotal: number;

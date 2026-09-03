@@ -845,9 +845,6 @@ components:
       properties:
         id: { type: string }
         orderNumber: { type: string }
-        userId: { type: string }
-        customerName: { type: string }
-        customerEmail: { type: string }
         orderType: { $ref: "#/components/schemas/OrderType" }
         status: { $ref: "#/components/schemas/OrderStatus" }
         subtotal: { type: number }
@@ -874,7 +871,7 @@ components:
           oneOf:
             - { $ref: "#/components/schemas/OrderUser" }
             - { type: "null" }
-      required: [id, orderNumber, userId, customerName, customerEmail, orderType, status, subtotal, discountAmount, discountPercent, gstAmount, shippingCharge, totalAmount, notes, createdAt, items, shippingAddress, payment, invoiceNumber, user]
+      required: [id, orderNumber, orderType, status, subtotal, discountAmount, discountPercent, gstAmount, shippingCharge, totalAmount, notes, createdAt, items, shippingAddress, payment, invoiceNumber, user]
 
     OrderUser:
       type: object
@@ -909,12 +906,11 @@ components:
           properties:
             name: { type: string }
             address: { type: string }
-            gstin: { type: string }
             email: { type: string }
             brand: { type: string }
             gstNumber: { type: string }
             phone: { type: string }
-          required: [name, address, gstin, email, brand, gstNumber, phone]
+          required: [name, address, email, brand, gstNumber, phone]
       required: [invoiceNumber, order, issuedAt, seller]
 
     AdminDashboard:

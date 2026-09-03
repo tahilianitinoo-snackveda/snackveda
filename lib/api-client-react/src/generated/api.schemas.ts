@@ -347,9 +347,6 @@ export interface OrderUser {
 export interface Order {
   id: string;
   orderNumber: string;
-  userId: string;
-  customerName: string;
-  customerEmail: string;
   orderType: OrderType;
   status: OrderStatus;
   subtotal: number;
@@ -372,7 +369,6 @@ export interface Order {
 export type InvoiceSeller = {
   name: string;
   address: string;
-  gstin: string;
   email: string;
   brand: string;
   gstNumber: string;

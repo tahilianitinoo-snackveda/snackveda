@@ -276,9 +276,6 @@ export const GetOrderByIdParams = zod.object({
 export const GetOrderByIdResponse = zod.object({
   id: zod.string(),
   orderNumber: zod.string(),
-  userId: zod.string(),
-  customerName: zod.string(),
-  customerEmail: zod.string(),
   orderType: zod.enum(["b2c", "b2b"]),
   status: zod.enum([
     "pending",
@@ -355,9 +352,6 @@ export const GetOrderByIdResponse = zod.object({
 export const ListMyOrdersResponseItem = zod.object({
   id: zod.string(),
   orderNumber: zod.string(),
-  userId: zod.string(),
-  customerName: zod.string(),
-  customerEmail: zod.string(),
   orderType: zod.enum(["b2c", "b2b"]),
   status: zod.enum([
     "pending",
@@ -537,9 +531,6 @@ export const GetInvoiceForOrderResponse = zod.object({
   order: zod.object({
     id: zod.string(),
     orderNumber: zod.string(),
-    userId: zod.string(),
-    customerName: zod.string(),
-    customerEmail: zod.string(),
     orderType: zod.enum(["b2c", "b2b"]),
     status: zod.enum([
       "pending",
@@ -613,7 +604,6 @@ export const GetInvoiceForOrderResponse = zod.object({
   seller: zod.object({
     name: zod.string(),
     address: zod.string(),
-    gstin: zod.string(),
     email: zod.string(),
     brand: zod.string(),
     gstNumber: zod.string(),
@@ -635,9 +625,6 @@ export const GetAdminDashboardResponse = zod.object({
     zod.object({
       id: zod.string(),
       orderNumber: zod.string(),
-      userId: zod.string(),
-      customerName: zod.string(),
-      customerEmail: zod.string(),
       orderType: zod.enum(["b2c", "b2b"]),
       status: zod.enum([
         "pending",
@@ -897,9 +884,6 @@ export const ListAdminOrdersQueryParams = zod.object({
 export const ListAdminOrdersResponseItem = zod.object({
   id: zod.string(),
   orderNumber: zod.string(),
-  userId: zod.string(),
-  customerName: zod.string(),
-  customerEmail: zod.string(),
   orderType: zod.enum(["b2c", "b2b"]),
   status: zod.enum([
     "pending",
@@ -991,9 +975,6 @@ export const UpdateAdminOrderStatusBody = zod.object({
 export const UpdateAdminOrderStatusResponse = zod.object({
   id: zod.string(),
   orderNumber: zod.string(),
-  userId: zod.string(),
-  customerName: zod.string(),
-  customerEmail: zod.string(),
   orderType: zod.enum(["b2c", "b2b"]),
   status: zod.enum([
     "pending",
@@ -1098,9 +1079,6 @@ export const ConfirmAdminPaymentBody = zod.object({
 export const ConfirmAdminPaymentResponse = zod.object({
   id: zod.string(),
   orderNumber: zod.string(),
-  userId: zod.string(),
-  customerName: zod.string(),
-  customerEmail: zod.string(),
   orderType: zod.enum(["b2c", "b2b"]),
   status: zod.enum([
     "pending",

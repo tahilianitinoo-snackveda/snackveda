@@ -33,7 +33,7 @@ export function generateInvoicePdf(invoice: Invoice) {
   doc.text("INVOICE TO:", 14, 52);
 
   doc.setFont("helvetica", "normal");
-  const customerName = order.user?.fullName || order.customerName || "Customer";
+  const customerName = order.user?.fullName || "Customer";
   doc.text(customerName, 14, 58);
   if (addr) {
     doc.text(addr.line1, 14, 63);

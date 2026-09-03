@@ -14,14 +14,21 @@ const FROM_EMAIL = "support@narayanidistributors.com";
 const ADMIN_EMAIL = "support@narayanidistributors.com";
 
 async function sendEmail(to, subject, html) {
-  if (!RESEND_KEY()) return;
+  if (!RESEND_KEY()) { console.error("EMAIL NOT SENT: RESEND_API_KEY is unset.", { to, subject }); return; }
   try {
-    await fetch("https://api.resend.com/emails", {
+    const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { "Authorization": `Bearer ${RESEND_KEY()}`, "Content-Type": "application/json" },
       body: JSON.stringify({ from: `Narayani Distributors <${FROM_EMAIL}>`, to, subject, html }),
     });
-  } catch (e) { console.error("Email error:", e?.message); }
+    // fetch only rejects on a transport failure, so a refusal from Resend — an
+    // unverified sending domain, a bad key, a suppressed address — arrives as a
+    // perfectly resolved 4xx. Without this check those disappear without a trace.
+    if (!res.ok) {
+      const body = await res.text().catch(() => "<unreadable>");
+      console.error("EMAIL NOT SENT: Resend returned", res.status, body, { to, subject });
+    }
+  } catch (e) { console.error("EMAIL NOT SENT: transport error:", e?.message, { to, subject }); }
 }
 
 async function sendSMS(phone, message) {
@@ -29,8 +36,13 @@ async function sendSMS(phone, message) {
   try {
     const clean = String(phone).replace(/\D/g,"").replace(/^91/,"").slice(-10);
     if (clean.length !== 10) return;
-    await fetch(`https://www.fast2sms.com/dev/bulkV2?authorization=${FAST2SMS_KEY()}&sender_id=SNKVDA&message=${encodeURIComponent(message)}&language=english&route=dlt&numbers=${clean}`, { method: "GET" });
-  } catch (e) { console.error("SMS error:", e?.message); }
+    const res = await fetch(`https://www.fast2sms.com/dev/bulkV2?authorization=${FAST2SMS_KEY()}&sender_id=SNKVDA&message=${encodeURIComponent(message)}&language=english&route=dlt&numbers=${clean}`, { method: "GET" });
+    // Same trap as email: Fast2SMS signals rejection with a status code, not a throw.
+    if (!res.ok) {
+      const body = await res.text().catch(() => "<unreadable>");
+      console.error("SMS NOT SENT: Fast2SMS returned", res.status, body, { phone: clean });
+    }
+  } catch (e) { console.error("SMS NOT SENT: transport error:", e?.message); }
 }
 
 function emailBase(content) {

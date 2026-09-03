@@ -13,6 +13,15 @@ const makhana: QuoteProduct = {
   gstPercent: "5.00", moq: 10,
 };
 
+// A second GST rate is the whole point of this fixture: every other test in this file
+// mixes at most one rate, which lets the B2C apportioning loop degenerate to lineShare
+// === 1 without anything noticing.
+const almonds: QuoteProduct = {
+  id: "p3", name: "Premium Roasted Almonds", slug: "premium-roasted-almonds",
+  category: "dry_fruits", b2cPrice: "300.00", b2bPrice: "220.00",
+  gstPercent: "12.00", moq: 4,
+};
+
 describe("computeQuote", () => {
   it("prices a single B2C line at the retail price plus GST", () => {
     const q = computeQuote([{ productId: "p1", quantity: 2 }], [chips], "b2c", null);
@@ -20,6 +29,31 @@ describe("computeQuote", () => {
     expect(q.discountPercent).toBe(0);
     expect(q.gstAmount).toBe(19.9);
     expect(q.total).toBe(477.9); // 398 + 19.90 GST + 60 shipping, under the 999 threshold
+  });
+
+  it("apportions B2C GST across lines by each line's own share of the subtotal", () => {
+    // chips: 2 x 199.00 = 398.00 subtotal @ 5% GST.
+    // almonds: 1 x 300.00 = 300.00 subtotal @ 12% GST.
+    // subtotal = 398 + 300 = 698, with no loyalty discount so afterDiscount === subtotal.
+    // A correct per-line weighting gives each line its own rate on its own share:
+    //   398 * 5%  = 19.90
+    // + 300 * 12% = 36.00
+    // -----------------------
+    //             = 55.90
+    // Two implementations that would still pass every other test in this file, but fail
+    // this one:
+    //  - collapsing the loop to a single flat rate off the first line only:
+    //      698 * 5% = 34.90
+    //  - averaging the two rates unweighted by each line's size:
+    //      698 * ((5 + 12) / 2)% = 59.33
+    const q = computeQuote(
+      [{ productId: "p1", quantity: 2 }, { productId: "p3", quantity: 1 }],
+      [chips, almonds], "b2c", null);
+    expect(q.subtotal).toBe(698);
+    expect(q.discountAmount).toBe(0);
+    expect(q.gstAmount).toBe(55.9);
+    expect(q.shippingCharge).toBe(60); // 698 is under the 999 free-shipping threshold
+    expect(q.total).toBe(813.9); // 698 + 55.90 GST + 60 shipping
   });
 
   it.each([

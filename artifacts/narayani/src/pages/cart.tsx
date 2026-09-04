@@ -14,8 +14,8 @@ export default function Cart() {
 
   const getCategoryGradient = (category: string) => {
     switch (category) {
-      case "healthy_chips": return "from-amber-200 to-amber-500";
-      case "makhana": return "from-teal-200 to-teal-500";
+      case "healthy_chips": return "from-primary to-primary";
+      case "makhana": return "from-primary to-primary";
       case "superpuffs": return "from-orange-200 to-orange-500";
       default: return "from-gray-200 to-gray-500";
     }
@@ -93,7 +93,7 @@ export default function Cart() {
                   <p className="text-sm text-muted-foreground mb-1">{item.weightGrams}g</p>
                   
                   {isB2BApproved && (
-                    <Badge variant="outline" className="text-[10px] w-fit mb-2 text-amber-600 border-amber-300">
+                    <Badge variant="outline" className="text-[10px] w-fit mb-2 text-primary border-primary/30">
                       Wholesale — multiples of {item.moq}
                     </Badge>
                   )}

@@ -136,8 +136,8 @@ export default function ProductDetail() {
 
   const getCategoryGradient = (category: string) => {
     switch (category) {
-      case 'healthy_chips': return 'from-amber-200 to-amber-500';
-      case 'makhana': return 'from-teal-200 to-teal-500';
+      case 'healthy_chips': return 'from-primary to-primary';
+      case 'makhana': return 'from-primary to-primary';
       case 'superpuffs': return 'from-orange-200 to-orange-500';
       default: return 'from-gray-200 to-gray-500';
     }
@@ -193,7 +193,7 @@ export default function ProductDetail() {
                 </div>
                 
                 {isB2BApproved ? (
-                  <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 p-2 rounded mt-2">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted p-2 rounded mt-2">
                     <Info className="w-4 h-4" />
                     Wholesale price applied. Minimum Order Quantity (MOQ): {product.moq} units
                   </div>

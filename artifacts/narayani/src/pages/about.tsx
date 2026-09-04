@@ -25,7 +25,7 @@ export default function About() {
           </p>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 pt-4">
             {["100% Vegetarian","Pure, quality ingredients","Healthy and guilt-free","Tasty and satisfying","Baked, not fried","Crafted for everyday wellness"].map(item => (
-              <div key={item} className="bg-teal-50 border border-teal-100 rounded-xl p-3 text-sm text-teal-800 font-medium text-center">{item}</div>
+              <div key={item} className="bg-muted border border-border rounded-xl p-3 text-sm text-foreground font-medium text-center">{item}</div>
             ))}
           </div>
         </section>

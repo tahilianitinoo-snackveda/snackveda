@@ -456,7 +456,7 @@ function BlogInner() {
                       <FormControl>
                         <Input {...field} placeholder="Leave blank to use the post title" />
                       </FormControl>
-                      <FormDescription className={(field.value?.length ?? 0) > 60 ? "text-amber-600" : undefined}>
+                      <FormDescription className={(field.value?.length ?? 0) > 60 ? "text-amber-700" : undefined}>
                         {(field.value?.length ?? 0)}/60 characters
                         {(field.value?.length ?? 0) > 60 ? " — Google will cut this off" : ""}
                       </FormDescription>
@@ -473,7 +473,7 @@ function BlogInner() {
                       <FormControl>
                         <Textarea {...field} rows={2} placeholder="The summary Google shows under your title." />
                       </FormControl>
-                      <FormDescription className={(field.value?.length ?? 0) > 160 ? "text-amber-600" : undefined}>
+                      <FormDescription className={(field.value?.length ?? 0) > 160 ? "text-amber-700" : undefined}>
                         {(field.value?.length ?? 0)}/160 characters
                         {(field.value?.length ?? 0) > 160 ? " — Google will cut this off" : ""}
                       </FormDescription>

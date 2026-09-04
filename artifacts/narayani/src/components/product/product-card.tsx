@@ -53,8 +53,8 @@ export function ProductCard({ product }: ProductCardProps) {
 
   const getCategoryGradient = (category: string) => {
     switch (category) {
-      case "healthy_chips": return "from-amber-200 to-amber-500";
-      case "makhana": return "from-teal-200 to-teal-500";
+      case "healthy_chips": return "from-primary to-primary";
+      case "makhana": return "from-primary to-primary";
       case "superpuffs": return "from-orange-200 to-orange-500";
       default: return "from-gray-200 to-gray-500";
     }
@@ -86,7 +86,7 @@ export function ProductCard({ product }: ProductCardProps) {
         )}
         {isB2B && (
           <div className="absolute top-2 left-2">
-            <Badge className="bg-amber-500 text-white text-[10px]">Wholesale</Badge>
+            <Badge className="bg-primary text-primary-foreground text-[10px]">Wholesale</Badge>
           </div>
         )}
       </Link>

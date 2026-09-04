@@ -115,7 +115,7 @@ function OrdersInner() {
                     </SelectContent>
                   </Select>
                   {o.status === "confirmed" && (
-                    <Button size="sm" variant="outline" className="h-8 text-xs text-teal-700 border-teal-300 hover:bg-teal-50"
+                    <Button size="sm" variant="outline" className="h-8 text-xs text-primary border-primary/30 hover:bg-primary/10"
                       onClick={() => { setShipDialog({ open: true, orderId: o.id, orderNumber: o.orderNumber }); setShipForm({ courier: "Shiprocket", trackingNumber: "", trackingLink: "" }); }}>
                       Ship
                     </Button>

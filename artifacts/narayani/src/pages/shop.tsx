@@ -52,8 +52,8 @@ export default function Shop() {
 
       <div className="container mx-auto px-4 py-8">
         {isB2BApproved && (
-          <div className="mb-8 bg-amber-100 text-amber-900 border border-amber-200 p-4 rounded-xl flex items-center gap-3">
-            <Zap className="h-5 w-5 text-amber-600 shrink-0" />
+          <div className="mb-8 bg-primary/10 text-primary border border-primary/20 p-4 rounded-xl flex items-center gap-3">
+            <Zap className="h-5 w-5 shrink-0" />
             <div className="text-sm font-medium">Trade pricing active. You are viewing wholesale rates. Minimum Order Quantities (MOQ) apply per item.</div>
           </div>
         )}

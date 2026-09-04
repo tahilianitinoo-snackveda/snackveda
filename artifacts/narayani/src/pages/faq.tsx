@@ -84,7 +84,7 @@ export default function FAQ() {
           ))}
         </Accordion>
 
-        <div className="mt-16 bg-teal-50 border border-teal-100 rounded-2xl p-8 text-center">
+        <div className="mt-16 bg-muted border border-border rounded-2xl p-8 text-center">
           <h2 className="text-xl font-serif font-bold mb-2">Still have questions?</h2>
           <p className="text-muted-foreground mb-4">We're happy to help. Reach out to us directly.</p>
           <a href="mailto:support@narayanidistributors.com" className="text-primary font-medium hover:underline">support@narayanidistributors.com</a>

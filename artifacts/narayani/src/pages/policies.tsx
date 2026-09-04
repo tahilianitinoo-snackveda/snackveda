@@ -174,7 +174,7 @@ const sections = [
           <h3 className="text-lg font-semibold">We Offer</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {["Healthy snacks and munchies","Makhana products","Millet-based snacks","Gud Chana varieties","Roasted and flavored snacks","Bulk and wholesale supply","Retail and online orders"].map(item => (
-              <div key={item} className="bg-teal-50 border border-teal-100 rounded-xl p-3 text-sm text-teal-800 font-medium">{item}</div>
+              <div key={item} className="bg-muted border border-border rounded-xl p-3 text-sm text-foreground font-medium">{item}</div>
             ))}
           </div>
         </div>

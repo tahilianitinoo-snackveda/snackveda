@@ -103,7 +103,7 @@ function ProductImageManager({ productId, productName }: { productId: string; pr
                   <img src={img.url} alt={img.altText || ""} className="w-16 h-16 object-cover rounded-lg border" onError={(e) => { (e.target as HTMLImageElement).src = "https://placehold.co/64x64?text=?"; }} />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-muted-foreground truncate">{img.url}</p>
-                    {img.isPrimary && <Badge className="text-[10px] mt-1 bg-amber-500">Primary</Badge>}
+                    {img.isPrimary && <Badge className="text-[10px] mt-1 bg-primary">Primary</Badge>}
                   </div>
                   <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive shrink-0" onClick={() => deleteImage.mutate(img.id)} disabled={deleteImage.isPending}>
                     <Trash2 className="w-4 h-4" />
@@ -146,7 +146,7 @@ function ProductImageManager({ productId, productName }: { productId: string; pr
             </div>
           )}
           {images && images.length >= 4 && (
-            <p className="text-sm text-amber-600 text-center">Maximum 4 images reached. Delete one to add more.</p>
+            <p className="text-sm text-amber-700 text-center">Maximum 4 images reached. Delete one to add more.</p>
           )}
         </div>
       </SheetContent>
@@ -370,7 +370,7 @@ function ProductsInner() {
                   <Badge variant="secondary" className="capitalize">{p.category.replace("_", " ")}</Badge>
                 </TableCell>
                 <TableCell className="text-right font-medium"><Price amount={p.b2cPrice} /></TableCell>
-                <TableCell className="text-right text-amber-600 text-sm">{p.b2bPrice ? <Price amount={p.b2bPrice} /> : "—"}</TableCell>
+                <TableCell className="text-right text-primary text-sm">{p.b2bPrice ? <Price amount={p.b2bPrice} /> : "—"}</TableCell>
                 <TableCell className="text-right">{p.stockQty}</TableCell>
                 <TableCell className="text-center">
                   <ProductImageManager productId={p.id} productName={p.name} />

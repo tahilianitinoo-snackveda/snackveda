@@ -19,6 +19,7 @@ import {
   usersTable, productsTable, productImagesTable, addressesTable,
   ordersTable, orderItemsTable, paymentsTable, invoicesTable, blogPostsTable,
   quoteEnquiriesTable, siteSettingsTable, productReviewsTable, catalogueLeadsTable,
+  legalPagesTable,
 } from "./_lib/schema";
 import { signToken, verifyToken, profileUser } from "./_lib/auth";
 import { sendEmail, sendSMS, emailBase, notifyRegistration, notifyOrderPlaced, notifyShipping, notifyQuoteEnquiry } from "./_lib/notify";
@@ -172,6 +173,14 @@ function serializeReview(r: typeof productReviewsTable.$inferSelect) {
     verifiedPurchase: r.verifiedPurchase,
     status: r.status,
     createdAt: r.createdAt.toISOString(),
+  };
+}
+
+function serializeLegalPage(p: typeof legalPagesTable.$inferSelect) {
+  return {
+    id: p.id, slug: p.slug, title: p.title, content: p.content,
+    sortOrder: p.sortOrder, published: p.published,
+    updatedAt: p.updatedAt.toISOString(),
   };
 }
 
@@ -512,6 +521,17 @@ export default async function handler(req, res) {
         .map(e => `  <url>\n    <loc>${xmlEscape(e.loc)}</loc>\n    <lastmod>${e.lastmod}</lastmod>\n    <changefreq>${e.changefreq}</changefreq>\n    <priority>${e.priority}</priority>\n  </url>`)
         .join("\n")}\n</urlset>`;
       return sendRaw(xml, "application/xml; charset=utf-8");
+    }
+
+    // ── LEGAL PAGES (spec point 49) ──────────────────────────────────────────
+    // Published policies only. An unpublished one is a draft, and a draft policy
+    // must never be the one a customer is held to.
+    if (path === "/legal" && method === "GET") {
+      const db = getDb();
+      const rows = await db.select().from(legalPagesTable)
+        .where(eq(legalPagesTable.published, true))
+        .orderBy(asc(legalPagesTable.sortOrder), asc(legalPagesTable.slug));
+      return ok(rows.map(serializeLegalPage));
     }
 
     // ── CATALOGUE (spec point 20) ────────────────────────────────────────────
@@ -1122,6 +1142,61 @@ export default async function handler(req, res) {
         return ok({ ok: true, status: "dispatched", orderId: updatedOrder.id });
       }
 
+      // ── LEGAL PAGES (admin) ────────────────────────────────────────────────
+      if (path === "/admin/legal" && method === "GET") {
+        const rows = await db.select().from(legalPagesTable)
+          .orderBy(asc(legalPagesTable.sortOrder), asc(legalPagesTable.slug));
+        return ok(rows.map(serializeLegalPage));
+      }
+
+      if (path === "/admin/legal" && method === "POST") {
+        const b = LegalPageBody.safeParse(parsedBody);
+        if (!b.success) return err("Invalid policy data", "VALIDATION_ERROR", 400);
+        const slug = slugify(b.data.slug || b.data.title);
+        if (!slug) return err("Title or slug is required", "VALIDATION_ERROR", 400);
+        const [clash] = await db.select().from(legalPagesTable).where(eq(legalPagesTable.slug, slug)).limit(1);
+        if (clash) return err("A policy with this slug already exists", "SLUG_TAKEN", 400);
+        const [row] = await db.insert(legalPagesTable).values({
+          slug,
+          title: b.data.title,
+          content: b.data.content,
+          sortOrder: b.data.sortOrder ?? 99,
+          published: b.data.published ?? true,
+        }).returning();
+        return ok(serializeLegalPage(row), 201);
+      }
+
+      const adminLegalMatch = path.match(/^\/admin\/legal\/([^/]+)$/);
+      if (adminLegalMatch && method === "PATCH") {
+        const b = LegalPageBody.partial().safeParse(parsedBody);
+        if (!b.success) return err("Invalid policy data", "VALIDATION_ERROR", 400);
+        const d = b.data;
+        const update: Record<string, unknown> = { updatedAt: new Date() };
+        if (d.title !== undefined) update.title = d.title;
+        if (d.content !== undefined) update.content = d.content;
+        if (d.sortOrder !== undefined) update.sortOrder = d.sortOrder;
+        if (d.published !== undefined) update.published = d.published;
+        if (d.slug !== undefined) {
+          const slug = slugify(d.slug);
+          if (slug) {
+            const [clash] = await db.select().from(legalPagesTable).where(eq(legalPagesTable.slug, slug)).limit(1);
+            if (clash && clash.id !== adminLegalMatch[1]) {
+              return err("A policy with this slug already exists", "SLUG_TAKEN", 400);
+            }
+            update.slug = slug;
+          }
+        }
+        const [row] = await db.update(legalPagesTable).set(update)
+          .where(eq(legalPagesTable.id, adminLegalMatch[1])).returning();
+        if (!row) return err("Policy not found", "NOT_FOUND", 404);
+        return ok(serializeLegalPage(row));
+      }
+
+      if (adminLegalMatch && method === "DELETE") {
+        await db.delete(legalPagesTable).where(eq(legalPagesTable.id, adminLegalMatch[1]));
+        return ok({ ok: true });
+      }
+
       // ── CATALOGUE LEADS (admin) ────────────────────────────────────────────
       if (path === "/admin/catalogue-leads" && method === "GET") {
         const rows = await db.select().from(catalogueLeadsTable)
@@ -1351,6 +1426,15 @@ async function loadSettings(db: ReturnType<typeof getDb>): Promise<Record<string
   for (const r of rows) out[r.key] = (r.value || "").trim();
   return out;
 }
+
+/** A policy document — spec point 49. Markdown in, markdown out. */
+const LegalPageBody = z.object({
+  slug: z.string().trim().max(90).optional(),
+  title: z.string().trim().min(2).max(120),
+  content: z.string().max(60000),
+  sortOrder: z.number().int().min(0).max(999).optional(),
+  published: z.boolean().optional(),
+});
 
 /**
  * The details asked for before the catalogue downloads — spec point 20.

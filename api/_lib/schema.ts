@@ -151,6 +151,24 @@ export const productImagesTable = pgTable("product_images", {
 });
 
 /**
+ * Policy documents — spec point 49.
+ *
+ * These were JSX in the storefront, so changing a refund window meant a deploy.
+ * They are the documents most likely to need editing by someone who is not a
+ * developer, and they were the hardest thing in the site to edit.
+ */
+export const legalPagesTable = pgTable("legal_pages", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  slug: text("slug").notNull(),
+  title: text("title").notNull(),
+  /** Markdown, rendered with the same helper the blog uses. */
+  content: text("content").notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  published: boolean("published").notNull().default(true),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
  * Who asked for the wholesale and export catalogue — spec point 20.
  *
  * The details are collected once and the download happens immediately after. This

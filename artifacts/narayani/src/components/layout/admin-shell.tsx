@@ -1,6 +1,6 @@
 import { ReactNode, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Package, Users, ShoppingCart, CreditCard, Newspaper, FileText, Star, Settings, LogOut, Menu } from "lucide-react";
+import { LayoutDashboard, Package, Users, ShoppingCart, CreditCard, Newspaper, FileText, Star, Scale, Settings, LogOut, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface AdminShellProps {
@@ -20,6 +20,7 @@ export function AdminShell({ children }: AdminShellProps) {
     { href: "/admin/payments", icon: CreditCard, label: "Payments" },
     { href: "/admin/blog", icon: Newspaper, label: "Blog" },
     { href: "/admin/reviews", icon: Star, label: "Reviews" },
+    { href: "/admin/legal", icon: Scale, label: "Policies" },
     { href: "/admin/settings", icon: Settings, label: "Settings" },
   ];
 

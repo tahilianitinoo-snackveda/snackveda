@@ -1,226 +1,133 @@
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { SiteShell } from "@/components/layout/site-shell";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
+import { renderMarkdown } from "@/lib/markdown";
+import { useSeo } from "@/lib/seo";
 
-const sections = [
-  {
-    id: "cancellation",
-    label: "Cancellation & Refund",
-    content: (
-      <div className="space-y-8">
-        <div>
-          <h2 className="text-2xl font-serif font-bold mb-4">Cancellation & Refund Policy</h2>
-        </div>
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold">Cancellation Policy</h3>
-          <p className="text-muted-foreground">At Narayani Distributors, we strive to process and dispatch orders quickly to ensure timely delivery of fresh products. Therefore:</p>
-          <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
-            <li>Orders can be cancelled only before dispatch.</li>
-            <li>Once the order has been shipped, cancellation requests will not be accepted.</li>
-            <li>To request a cancellation, customers must contact us immediately via email or customer support.</li>
-          </ul>
-        </div>
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold">Refund Policy</h3>
-          <p className="text-muted-foreground">Refunds are applicable only under the following conditions:</p>
-          <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
-            <li>Product received is damaged during transit</li>
-            <li>Wrong product delivered</li>
-            <li>Product package is tampered with before delivery</li>
-            <li>Order not delivered due to our fault</li>
-          </ul>
-        </div>
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold">Non-Refundable Situations</h3>
-          <p className="text-muted-foreground">Refunds will not be applicable for:</p>
-          <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
-            <li>Taste preferences or personal dislike</li>
-            <li>Slight variation in packaging/design</li>
-            <li>Delay caused by courier or unforeseen circumstances</li>
-            <li>Incorrect address or phone number provided by customer</li>
-          </ul>
-        </div>
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold">Refund Process</h3>
-          <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
-            <li>Customers must report issues within 48 hours of delivery.</li>
-            <li>Supporting images/videos may be requested.</li>
-            <li>Approved refunds will be processed within 5–7 business days to the original payment method.</li>
-          </ul>
-        </div>
-      </div>
-    ),
-  },
-  {
-    id: "delivery",
-    label: "Delivery Policy",
-    content: (
-      <div className="space-y-8">
-        <h2 className="text-2xl font-serif font-bold mb-4">Delivery Policy</h2>
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold">Shipping Locations</h3>
-          <p className="text-muted-foreground">Narayani Distributors currently delivers across India.</p>
-        </div>
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold">Dispatch Timeline</h3>
-          <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
-            <li>Orders are generally dispatched within 1–3 business days.</li>
-            <li>Bulk or special orders may require additional processing time.</li>
-          </ul>
-        </div>
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold">Delivery Timeline</h3>
-          <div className="grid md:grid-cols-3 gap-4 mt-2">
-            {[
-              { label: "Metro Cities", time: "3–5 business days" },
-              { label: "Other Cities/Towns", time: "5–8 business days" },
-              { label: "Remote Areas", time: "7–10 business days" },
-            ].map(item => (
-              <div key={item.label} className="bg-muted/40 border rounded-xl p-4 text-center">
-                <p className="font-semibold text-sm">{item.label}</p>
-                <p className="text-primary font-bold mt-1">{item.time}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold">Delivery Delays</h3>
-          <p className="text-muted-foreground">Delivery timelines may vary due to weather conditions, courier delays, public holidays, or natural calamities. Narayani Distributors shall not be held liable for delays caused by third-party logistics providers.</p>
-        </div>
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold">Order Tracking</h3>
-          <p className="text-muted-foreground">Customers will receive tracking details via email/SMS once the order is shipped.</p>
-        </div>
-      </div>
-    ),
-  },
-  {
-    id: "terms",
-    label: "Terms & Conditions",
-    content: (
-      <div className="space-y-8">
-        <h2 className="text-2xl font-serif font-bold mb-4">Terms & Conditions</h2>
-        <p className="text-muted-foreground">Welcome to Narayani Distributors. By using this website, you agree to the following terms and conditions.</p>
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold">Product Information</h3>
-          <p className="text-muted-foreground">We aim to ensure all product descriptions, pricing, and images are accurate. However, minor variations may occur, product availability may change without prior notice, and prices are subject to change at any time.</p>
-        </div>
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold">Use of Website</h3>
-          <p className="text-muted-foreground">Users agree not to misuse the website, not to attempt unauthorized access, and not to use the website for unlawful purposes.</p>
-        </div>
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold">Intellectual Property</h3>
-          <p className="text-muted-foreground">All content on this website including logos, product images, graphics, text, and designs are the property of Narayani Distributors and may not be copied or reproduced without permission.</p>
-        </div>
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold">Limitation of Liability</h3>
-          <p className="text-muted-foreground">Narayani Distributors shall not be liable for indirect or incidental damages, loss due to delayed delivery, or allergic reactions caused by ingredients listed on packaging. Customers are advised to read ingredient and nutritional information carefully before consumption.</p>
-        </div>
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold">Governing Law</h3>
-          <p className="text-muted-foreground">These terms shall be governed by the laws of India.</p>
-        </div>
-      </div>
-    ),
-  },
-  {
-    id: "privacy",
-    label: "Privacy Policy",
-    content: (
-      <div className="space-y-8">
-        <h2 className="text-2xl font-serif font-bold mb-4">Privacy Policy</h2>
-        <p className="text-muted-foreground">At Narayani Distributors, customer privacy is important to us.</p>
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold">Information We Collect</h3>
-          <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
-            <li>Name, phone number, email address</li>
-            <li>Shipping/Billing address</li>
-            <li>Payment information</li>
-            <li>Device/browser information</li>
-          </ul>
-        </div>
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold">How We Use Information</h3>
-          <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
-            <li>Order processing and delivery updates</li>
-            <li>Customer support</li>
-            <li>Marketing communication</li>
-            <li>Improving website experience</li>
-          </ul>
-        </div>
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold">Payment Security</h3>
-          <p className="text-muted-foreground">We do not store card or banking details on our servers. Payments are processed securely through trusted third-party payment gateways.</p>
-        </div>
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold">Data Sharing</h3>
-          <p className="text-muted-foreground">We do not sell customer data. Information may only be shared with courier partners, payment gateways, or government authorities if legally required.</p>
-        </div>
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold">User Rights</h3>
-          <p className="text-muted-foreground">Customers may request correction or deletion of their personal data by contacting us at support@narayanidistributors.com.</p>
-        </div>
-      </div>
-    ),
-  },
-  {
-    id: "services",
-    label: "Our Services",
-    content: (
-      <div className="space-y-8">
-        <h2 className="text-2xl font-serif font-bold mb-4">Our Services</h2>
-        <p className="text-muted-foreground">Narayani Distributors is a merchant exporter and distributor of Indian packaged foods, sourcing premium-quality snacks made with better ingredients by selected manufacturers and brands.</p>
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold">We Offer</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {["Healthy snacks and munchies","Makhana products","Millet-based snacks","Gud Chana varieties","Roasted and flavored snacks","Bulk and wholesale supply","Retail and online orders"].map(item => (
-              <div key={item} className="bg-muted border border-border rounded-xl p-3 text-sm text-foreground font-medium">{item}</div>
-            ))}
-          </div>
-        </div>
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold">Business Services</h3>
-          <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
-            <li>Distributor partnerships</li>
-            <li>Retail store supply</li>
-            <li>Modern trade supply</li>
-            <li>Corporate and bulk gifting solutions</li>
-          </ul>
-        </div>
-      </div>
-    ),
-  },
-];
+/**
+ * /policies — spec point 49.
+ *
+ * ─── THESE USED TO BE JSX ───────────────────────────────────────────────────
+ * All five policies were hardcoded in this file, which meant changing a refund
+ * window or a delivery timeline was a code change and a deploy. They are the
+ * documents most likely to need editing by someone who is not a developer, and
+ * they were the hardest thing on the site to edit.
+ *
+ * They now come from the `legal_pages` table and are edited in Admin → Policies.
+ * The seed migration transcribed the existing text word for word — these are terms
+ * customers have already agreed to, and rewording them in a migration would have
+ * changed the contract silently.
+ *
+ * ─── WHAT HAPPENS IF THE REQUEST FAILS ──────────────────────────────────────
+ * An error state that says so, with the support address. NOT an empty page and
+ * NOT a hardcoded fallback copy of the policies: a stale duplicate of a legal
+ * document living in the bundle is exactly the problem this change removes, and
+ * two versions of a refund policy is worse than a page that admits it is down.
+ */
+
+interface LegalPage {
+  id: string;
+  slug: string;
+  title: string;
+  content: string;
+  updatedAt: string;
+}
+
+const SUPPORT_EMAIL = "support@narayanidistributors.com";
+
+function PolicyBody({ page }: { page: LegalPage }) {
+  const html = useMemo(() => renderMarkdown(page.content), [page.content]);
+  return (
+    <div className="rounded-2xl border bg-card p-8 shadow-sm">
+      <h2 className="mb-6 font-serif text-2xl font-bold">{page.title}</h2>
+      <div
+        className="prose prose-neutral max-w-none prose-headings:font-serif prose-headings:text-lg prose-a:text-primary"
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    </div>
+  );
+}
 
 export default function Policies() {
+  const { data: pages, isLoading, isError } = useQuery<LegalPage[]>({
+    queryKey: ["legal-pages"],
+    queryFn: async () => {
+      const res = await fetch("/api/legal");
+      if (!res.ok) throw new Error("Could not load the policies");
+      return res.json();
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  useSeo({
+    title: "Policies — Shipping, Returns, Privacy & Terms",
+    description:
+      "Cancellation and refund, delivery, terms and conditions, privacy and cookie policies for Narayani Distributors.",
+    canonical: "/policies",
+  });
+
   return (
     <SiteShell>
-      <div className="bg-muted/30 py-16 border-b">
-        <div className="container mx-auto px-4 max-w-4xl text-center">
-          <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4">Policies</h1>
+      <div className="border-b bg-muted/30 py-16">
+        <div className="container mx-auto max-w-4xl px-4 text-center">
+          <h1 className="mb-4 font-serif text-4xl font-bold md:text-5xl">Policies</h1>
           <p className="text-muted-foreground">Narayani Distributors</p>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 max-w-4xl py-12">
-        <Tabs defaultValue="cancellation">
-          <TabsList className="flex flex-wrap h-auto gap-2 mb-8 bg-transparent p-0">
-            {sections.map(s => (
-              <TabsTrigger key={s.id} value={s.id} className="rounded-full border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary">
-                {s.label}
-              </TabsTrigger>
+      <div className="container mx-auto max-w-4xl px-4 py-12">
+        {isLoading ? (
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} className="h-9 w-32 rounded-full" />
+              ))}
+            </div>
+            <Skeleton className="h-96 w-full rounded-2xl" />
+          </div>
+        ) : isError || !pages || pages.length === 0 ? (
+          <div className="rounded-2xl border border-dashed bg-muted/20 p-10 text-center">
+            <h2 className="font-serif text-xl font-bold">We could not load our policies.</h2>
+            <p className="mx-auto mt-3 max-w-lg leading-relaxed text-muted-foreground">
+              This is a problem at our end, not yours. Email{" "}
+              <a href={`mailto:${SUPPORT_EMAIL}`} className="font-medium text-primary hover:underline">
+                {SUPPORT_EMAIL}
+              </a>{" "}
+              and we will send you whichever policy you need — cancellation and refund, delivery,
+              terms, privacy or cookies — straight away.
+            </p>
+          </div>
+        ) : (
+          <Tabs defaultValue={pages[0].slug}>
+            <TabsList className="mb-8 flex h-auto flex-wrap gap-2 bg-transparent p-0">
+              {pages.map((p) => (
+                <TabsTrigger
+                  key={p.slug}
+                  value={p.slug}
+                  className="rounded-full border data-[state=active]:border-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                >
+                  {p.title}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            {pages.map((p) => (
+              <TabsContent key={p.slug} value={p.slug}>
+                <PolicyBody page={p} />
+              </TabsContent>
             ))}
-          </TabsList>
-          {sections.map(s => (
-            <TabsContent key={s.id} value={s.id} className="bg-card border rounded-2xl p-8 shadow-sm">
-              {s.content}
-            </TabsContent>
-          ))}
-        </Tabs>
+          </Tabs>
+        )}
 
-        <div className="mt-12 text-center text-sm text-muted-foreground border-t pt-8">
-          <p>For any queries regarding our policies, contact us at <a href="mailto:support@narayanidistributors.com" className="text-primary hover:underline">support@narayanidistributors.com</a></p>
-          <p className="mt-2">Narayani Distributors — Healthy Snacking for Modern India.</p>
+        <div className="mt-12 border-t pt-8 text-center text-sm text-muted-foreground">
+          <p>
+            For any queries regarding our policies, contact us at{" "}
+            <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary hover:underline">
+              {SUPPORT_EMAIL}
+            </a>
+          </p>
+          <p className="mt-2">Narayani Distributors — Merchant Exporter | Distributor | Indian Food Products</p>
         </div>
       </div>
     </SiteShell>

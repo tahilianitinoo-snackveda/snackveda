@@ -12,7 +12,8 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { COUNTRIES, dialCodeFor } from "@/data/geography";
+import { COUNTRIES } from "@/data/geography";
+import { PhoneField, composePhone } from "@/components/ui/phone-field";
 import { generateCataloguePdf, type CataloguePayload } from "@/lib/pdf";
 import { useSeo } from "@/lib/seo";
 import { track } from "@/lib/analytics";
@@ -42,12 +43,16 @@ import { ArrowRight, Check, Download, FileText, Package, Ship } from "lucide-rea
 const leadSchema = z.object({
   fullName: z.string().trim().min(2, "Your name, please").max(120),
   email: z.string().trim().email("Enter an email we can reach you on").max(160),
+  // ISO alpha-2 of the dialling code; the code itself is derived, because +1 is
+  // the US, Canada and Jamaica and could not be a unique key.
+  phoneCountry: z.string().length(2).default("IN"),
+  // The national number only — the code is chosen beside it and joined on submit.
   phone: z
     .string()
     .trim()
-    .min(8, "Enter a phone number we can call back")
-    .max(24)
-    .regex(/^[+\d][\d\s().-]{6,}$/, "Digits only, with an optional country code"),
+    .min(6, "Enter a phone number we can call back")
+    .max(20)
+    .regex(/^[\d][\d\s().-]{4,}$/, "Digits only — pick the country code on the left"),
   companyName: z.string().trim().max(120).optional(),
   country: z.string().trim().max(80).optional(),
   interest: z.string().trim().max(200).optional(),
@@ -75,10 +80,12 @@ export default function Catalogue() {
 
   const form = useForm<LeadValues>({
     resolver: zodResolver(leadSchema),
-    defaultValues: { fullName: "", email: "", phone: "", companyName: "", country: "", interest: "" },
+    defaultValues: {
+      fullName: "", email: "", phoneCountry: "IN", phone: "",
+      companyName: "", country: "", interest: "",
+    },
   });
 
-  const dialCode = dialCodeFor(form.watch("country"));
 
   const onSubmit = async (values: LeadValues) => {
     setSending(true);
@@ -88,6 +95,9 @@ export default function Catalogue() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...values,
+          // Send the number WITH its dialling code, so it can be called back
+          // without anyone having to work out where it came from.
+          phone: composePhone(values.phoneCountry || "IN", values.phone),
           sourcePath: typeof window === "undefined" ? "/catalogue" : window.location.pathname,
         }),
       });
@@ -231,7 +241,17 @@ export default function Catalogue() {
                           <FormLabel>
                             Country <span className="font-normal text-muted-foreground">(optional)</span>
                           </FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
+                          <Select
+                            value={field.value}
+                            onValueChange={(name) => {
+                              field.onChange(name);
+                              // Move the phone code with it, unless they already set one.
+                              const iso = COUNTRIES.find((c) => c.name === name)?.code;
+                              if (iso && !form.formState.dirtyFields.phoneCountry) {
+                                form.setValue("phoneCountry", iso);
+                              }
+                            }}
+                          >
                             <FormControl>
                               <SelectTrigger><SelectValue placeholder="Where you are" /></SelectTrigger>
                             </FormControl>
@@ -249,12 +269,15 @@ export default function Catalogue() {
                         <FormItem>
                           <FormLabel>Phone</FormLabel>
                           <FormControl>
-                            <div className="flex">
-                              <span className="inline-flex select-none items-center rounded-l-md border border-r-0 border-input bg-muted px-3 text-sm text-muted-foreground">
-                                {dialCode}
-                              </span>
-                              <Input type="tel" inputMode="tel" autoComplete="tel" className="rounded-l-none" {...field} />
-                            </div>
+                            {/* Selectable code, same reasoning as the quote form. */}
+                            <PhoneField
+                              value={field.value ?? ""}
+                              onChange={field.onChange}
+                              country={form.watch("phoneCountry") || "IN"}
+                              onCountryChange={(iso) =>
+                                form.setValue("phoneCountry", iso, { shouldDirty: true })
+                              }
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

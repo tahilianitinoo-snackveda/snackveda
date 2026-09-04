@@ -27,7 +27,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { COUNTRIES, INDIAN_STATES, dialCodeFor } from "@/data/geography";
+import { COUNTRIES, INDIAN_STATES } from "@/data/geography";
+import { PhoneField, composePhone } from "@/components/ui/phone-field";
 import { cn } from "@/lib/utils";
 import { useSeo } from "@/lib/seo";
 import { track } from "@/lib/analytics";
@@ -137,12 +138,17 @@ const quoteSchema = z
     state: z.string().trim().max(80).optional(),
     city: z.string().trim().max(80).optional(),
     email: z.string().trim().email("Enter an email address we can reply to").max(160),
+    // ISO alpha-2 for the dialling code. Dial codes are not unique — +1 is the US,
+    // Canada and Jamaica — so the ISO is what is stored and the dial is derived.
+    phoneCountry: z.string().length(2).default("IN"),
+    // The NATIONAL number only; the code is chosen separately and joined on submit.
+    // Six digits is the shortest national number in use anywhere.
     phone: z
       .string()
       .trim()
-      .min(8, "Enter a phone number we can call back")
-      .max(24, "That is longer than any phone number")
-      .regex(/^[+\d][\d\s().-]{6,}$/, "Digits only, with an optional country code"),
+      .min(6, "Enter a phone number we can call back")
+      .max(20, "That is longer than any phone number")
+      .regex(/^[\d][\d\s().-]{4,}$/, "Digits only — pick the country code on the left"),
     productSlugs: z.array(z.string()).default([]),
     otherProducts: z.string().trim().max(600).optional(),
     quantity: z.string().trim().max(200).optional(),
@@ -324,7 +330,9 @@ function buildEnquiry(values: QuoteFormValues, sourceProduct?: string): QuoteEnq
     state: isExport ? undefined : values.state || undefined,
     city: isExport ? undefined : values.city || undefined,
     email: values.email,
-    phone: values.phone,
+    // The stored number carries its dialling code, so it can be called back
+    // without anyone having to work out where it came from.
+    phone: composePhone(values.phoneCountry || "IN", values.phone),
     productSlugs: values.productSlugs ?? [],
     otherProducts: values.otherProducts || undefined,
     quantity: values.quantity || undefined,
@@ -454,6 +462,9 @@ export default function RequestAQuote() {
       state: "",
       city: "",
       email: "",
+      // India is the starting guess because that is where most enquiries come from,
+      // not because it is the only option — the select carries every country.
+      phoneCountry: "IN",
       phone: "",
       // Arriving from a product page pre-selects that product, which is the whole
       // point of the "Buying for business?" link on it.
@@ -471,7 +482,6 @@ export default function RequestAQuote() {
   const enquiryType = form.watch("enquiryType");
   const isExport = enquiryType === "export";
   const selectedSlugs = form.watch("productSlugs") ?? [];
-  const dialCode = dialCodeFor(isExport ? form.watch("country") : INDIA);
 
   /*
     The review screen is far shorter than the form, so without this the buyer is
@@ -855,7 +865,22 @@ export default function RequestAQuote() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Country</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
+                            <Select
+                              value={field.value}
+                              onValueChange={(name) => {
+                                field.onChange(name);
+                                /*
+                                  Move the phone code to match, but only while the
+                                  buyer has not chosen one themselves — overwriting a
+                                  deliberate choice would be worse than not helping.
+                                  They can still change it either way.
+                                */
+                                const iso = COUNTRIES.find((c) => c.name === name)?.code;
+                                if (iso && !form.formState.dirtyFields.phoneCountry) {
+                                  form.setValue("phoneCountry", iso);
+                                }
+                              }}
+                            >
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Where your business is based" />
@@ -949,25 +974,25 @@ export default function RequestAQuote() {
                           <FormLabel>Phone or WhatsApp</FormLabel>
                           <FormControl>
                             {/*
-                              The dialling code is shown, not typed, and follows the
-                              country chosen above. It is a label rather than part of
-                              the value: prefilling the input would have the buyer
-                              deleting it, and half of them would leave a stray "+91"
-                              in front of a UAE number.
+                              The dialling code is a SELECT over every country, not a
+                              fixed label. It used to be a <span> showing the code for
+                              whichever country the buyer had given as their business
+                              address, defaulting to +91 — so a buyer in Dubai opened
+                              the page that exists to collect export enquiries and saw
+                              "+91" welded to the phone field with no way to change it.
+                              See components/ui/phone-field.tsx.
                             */}
-                            <div className="flex">
-                              <span className="inline-flex select-none items-center rounded-l-md border border-r-0 border-input bg-muted px-3 text-sm text-muted-foreground">
-                                {dialCode}
-                              </span>
-                              <Input
-                                type="tel"
-                                inputMode="tel"
-                                autoComplete="tel"
-                                className="rounded-l-none"
-                                placeholder="Your number, without the country code"
-                                {...field}
-                              />
-                            </div>
+                            <PhoneField
+                              value={field.value ?? ""}
+                              onChange={field.onChange}
+                              country={form.watch("phoneCountry") || "IN"}
+                              onCountryChange={(iso) =>
+                                // shouldDirty, so the country select above stops
+                                // overwriting it once the buyer has picked one.
+                                form.setValue("phoneCountry", iso, { shouldDirty: true })
+                              }
+                              placeholder="Your number, without the country code"
+                            />
                           </FormControl>
                           <FormDescription>
                             A quotation usually needs one exchange to settle quantity and

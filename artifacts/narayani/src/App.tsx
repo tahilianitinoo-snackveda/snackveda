@@ -20,6 +20,7 @@ import PrivateLabel from "@/pages/private-label";
 import Quality from "@/pages/quality";
 import Catalogue from "@/pages/catalogue";
 import Wishlist from "@/pages/wishlist";
+import Market from "@/pages/market";
 import RequestAQuote from "@/pages/request-a-quote";
 import About from "@/pages/about";
 import FAQ from "@/pages/faq";
@@ -76,6 +77,7 @@ function Router() {
       <Route path="/quality" component={Quality} />
       <Route path="/catalogue" component={Catalogue} />
       <Route path="/wishlist" component={Wishlist} />
+      <Route path="/markets/:slug" component={Market} />
       <Route path="/export" component={Export} />
       {/* The conversion point every B2B call to action lands on. */}
       <Route path="/request-a-quote" component={RequestAQuote} />

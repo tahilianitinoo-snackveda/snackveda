@@ -479,6 +479,15 @@ export default async function handler(req, res) {
         "/faq",
         "/contact",
         "/policies",
+        // Market landing pages — spec point 29. Must stay in step with MARKETS in
+        // artifacts/narayani/src/data/markets.ts: a slug here that is not there
+        // renders the 404 page, and Google will report it as a soft 404.
+        "/markets/uae",
+        "/markets/uk",
+        "/markets/usa",
+        "/markets/canada",
+        "/markets/australia",
+        "/markets/saudi-arabia",
       ];
       const entries: { loc: string; lastmod: string; priority: string; changefreq: string }[] =
         staticPaths.map(p => ({

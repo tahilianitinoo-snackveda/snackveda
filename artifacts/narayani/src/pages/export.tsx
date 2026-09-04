@@ -2,6 +2,7 @@ import { SiteShell } from "@/components/layout/site-shell";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useSeo } from "@/lib/seo";
+import { MARKETS } from "@/data/markets";
 import {
   ArrowRight,
   Boxes,
@@ -302,6 +303,34 @@ export default function Export() {
               />
             </Link>
           ))}
+        </div>
+      </section>
+
+      {/*
+        Markets — spec point 29. These are landing pages addressed to a buyer in
+        each market, not a claim that we already ship there. The heading says
+        "buyers in", and each page repeats the distinction; see data/markets.ts.
+      */}
+      <section className="border-t border-border py-16">
+        <div className="container mx-auto max-w-4xl px-4">
+          <h2 className="font-serif text-2xl font-bold">Buying from outside India?</h2>
+          <p className="mt-3 leading-relaxed text-muted-foreground">
+            We quote to any destination. These pages cover what an importer in each market
+            usually wants to know first.
+          </p>
+          <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {MARKETS.map((market) => (
+              <li key={market.slug}>
+                <Link
+                  href={`/markets/${market.slug}`}
+                  className="flex items-center justify-between gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm font-medium transition-colors hover:border-primary hover:text-primary"
+                >
+                  {market.country}
+                  <ArrowRight className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 

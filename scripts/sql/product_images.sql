@@ -18,26 +18,26 @@ BEGIN;
 INSERT INTO products (name, slug, category, b2c_price, b2b_price, moq, carton_qty,
                       gst_percent, hsn_code, shelf_life_months, weight_grams,
                       description, stock_qty, status, sort_order)
-VALUES ('Beetroot Chips Cream and Onion', 'beetroot-chips-cream-and-onion', 'healthy_chips', 199.00, 149.00, 5, 1,
+SELECT 'Beetroot Chips Cream and Onion', 'beetroot-chips-cream-and-onion', 'healthy_chips', 199.00, 149.00, 5, 1,
         5, '21069099', 6, 150,
-        'Crunchy beetroot chips layered with creamy onion seasoning for a smooth, savoury finish. Naturally vibrant and delicious, this snack is wholesome, crunchy, and full of flavor.', 50, 'active', 0)
-ON CONFLICT (slug) DO NOTHING;
+        'Crunchy beetroot chips layered with creamy onion seasoning for a smooth, savoury finish. Naturally vibrant and delicious, this snack is wholesome, crunchy, and full of flavor.', 50, 'active', 0
+ WHERE NOT EXISTS (SELECT 1 FROM products WHERE slug = 'beetroot-chips-cream-and-onion');
 
 INSERT INTO products (name, slug, category, b2c_price, b2b_price, moq, carton_qty,
                       gst_percent, hsn_code, shelf_life_months, weight_grams,
                       description, stock_qty, status, sort_order)
-VALUES ('Beetroot Chips Peri Peri', 'beetroot-chips-peri-peri', 'healthy_chips', 199.00, 149.00, 5, 1,
+SELECT 'Beetroot Chips Peri Peri', 'beetroot-chips-peri-peri', 'healthy_chips', 199.00, 149.00, 5, 1,
         5, '21069099', 6, 150,
-        'Crispy beetroot chips seasoned with fiery peri peri for the perfect spicy kick. Naturally vibrant and delicious, this snack delivers bold flavor with every crunchy bite.', 50, 'active', 0)
-ON CONFLICT (slug) DO NOTHING;
+        'Crispy beetroot chips seasoned with fiery peri peri for the perfect spicy kick. Naturally vibrant and delicious, this snack delivers bold flavor with every crunchy bite.', 50, 'active', 0
+ WHERE NOT EXISTS (SELECT 1 FROM products WHERE slug = 'beetroot-chips-peri-peri');
 
 INSERT INTO products (name, slug, category, b2c_price, b2b_price, moq, carton_qty,
                       gst_percent, hsn_code, shelf_life_months, weight_grams,
                       description, stock_qty, status, sort_order)
-VALUES ('Superpuffs Indie Masala', 'superpuffs-indie-masala', 'superpuffs', 47.60, 40.00, 35, 1,
+SELECT 'Superpuffs Indie Masala', 'superpuffs-indie-masala', 'superpuffs', 47.60, 40.00, 35, 1,
         5, '21069099', 9, 50,
-        'Bold Indian masala meets crispy multigrain goodness in Superpuffs Indie Masala. Baked for a light yet satisfying crunch, every pack provides 12.5g protein along with Calcium and Vitamin D2 for added nutrition.', 500, 'active', 0)
-ON CONFLICT (slug) DO NOTHING;
+        'Bold Indian masala meets crispy multigrain goodness in Superpuffs Indie Masala. Baked for a light yet satisfying crunch, every pack provides 12.5g protein along with Calcium and Vitamin D2 for added nutrition.', 500, 'active', 0
+ WHERE NOT EXISTS (SELECT 1 FROM products WHERE slug = 'superpuffs-indie-masala');
 
 
 -- 2. Clear existing imagery for just these SKUs -------------------------------
@@ -281,5 +281,11 @@ UPDATE products p
 --   SELECT p.name, count(i.id) FROM products p
 --     LEFT JOIN product_images i ON i.product_id = p.id
 --    GROUP BY p.name ORDER BY p.name;
+
+-- Report before committing. A 0 anywhere means something above silently failed.
+SELECT 'products total' AS what, count(*)::text AS value FROM products
+UNION ALL SELECT 'the 3 new SKUs', count(*)::text FROM products
+  WHERE slug IN ('beetroot-chips-cream-and-onion','beetroot-chips-peri-peri','superpuffs-indie-masala')
+UNION ALL SELECT 'product_images rows', count(*)::text FROM product_images;
 
 COMMIT;

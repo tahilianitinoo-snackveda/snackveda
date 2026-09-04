@@ -1,18 +1,43 @@
 import { SiteShell } from "@/components/layout/site-shell";
 import { useListProducts } from "@workspace/api-client-react";
+import type { ProductCategory } from "@workspace/api-client-react";
 import { ProductGrid } from "@/components/product/product-grid";
 import { ProductCard } from "@/components/product/product-card";
+import { AudienceSplit } from "@/components/home/audience-split";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { Leaf, Flame, Brain, ShieldCheck, Sparkles, MapPin, ArrowRight } from "lucide-react";
+import { ArrowRight, Boxes, Ship, Store } from "lucide-react";
 import { motion } from "framer-motion";
 import heroImg from "@/assets/images/hero.png";
-const SUPABASE_BASE = "https://lgmphgwravmmyjdmcuou.supabase.co/storage/v1/object/public/Product-image";
-const CATEGORY_IMAGES = {
-  chips: `${SUPABASE_BASE}/chips-home.png`,
-  makhana: `${SUPABASE_BASE}/Makhana-home.png`,
-  superpuffs: `${SUPABASE_BASE}/puffhome.png`,
-};
+import categoryChips from "@/assets/images/category-chips.png";
+import categoryMakhana from "@/assets/images/category-makhana.png";
+import categorySuperpuffs from "@/assets/images/category-superpuffs.png";
+
+/**
+ * The three categories the catalogue actually has. These ids are the
+ * `product_category` enum values the API filters on — do not add a fourth
+ * without a matching category in the database.
+ */
+const CATEGORIES: { id: ProductCategory; label: string; image: string; alt: string }[] = [
+  {
+    id: "healthy_chips",
+    label: "Healthy Chips",
+    image: categoryChips,
+    alt: "A ceramic bowl of baked grain chips on a linen cloth",
+  },
+  {
+    id: "makhana",
+    label: "Makhana",
+    image: categoryMakhana,
+    alt: "A bowl of roasted, lightly spiced makhana seen from above",
+  },
+  {
+    id: "superpuffs",
+    label: "Superpuffs",
+    image: categorySuperpuffs,
+    alt: "A bowl of multicoloured vegetable superpuffs seen from above",
+  },
+];
 
 export default function Home() {
   const { data: products, isLoading } = useListProducts();
@@ -20,116 +45,122 @@ export default function Home() {
 
   return (
     <SiteShell>
-      {/* Hero Section */}
-      <section className="relative bg-primary text-primary-foreground overflow-hidden py-24 lg:py-32">
-        <div className="absolute inset-0 opacity-20 pointer-events-none mix-blend-overlay">
-          <img src={heroImg} alt="Hero Background" className="w-full h-full object-cover" />
-        </div>
-        <div className="container mx-auto px-4 relative z-10 flex flex-col items-center text-center">
-          <motion.h1 
+      {/*
+        Hero. The photography is the point, so it is shown unfiltered beside the
+        type rather than composited under a full-bleed brand wash — see the
+        note in the task-3 report. The warm sand-to-ivory ground picks up the
+        photograph's own cream backdrop.
+      */}
+      <section className="relative overflow-hidden border-b border-border bg-gradient-to-b from-secondary/50 via-background to-background">
+        <div className="container mx-auto grid items-center gap-10 px-4 py-16 lg:grid-cols-2 lg:gap-16 lg:py-24">
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-4xl md:text-6xl lg:text-7xl font-serif font-bold max-w-4xl tracking-tight leading-tight mb-6"
+            transition={{ duration: 0.5 }}
           >
-            Where Mindful Eating Meets Joyful Snacking
-          </motion.h1>
-          <motion.p 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-lg md:text-xl max-w-2xl text-primary-foreground/90 mb-10"
+            <div className="flex items-center gap-3">
+              <span aria-hidden="true" className="h-px w-8 bg-primary" />
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">
+                Merchant Exporter &middot; Distributor
+              </p>
+            </div>
+
+            <h1 className="mt-5 font-serif text-4xl font-bold leading-[1.08] tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+              Indian Food Products. Made for Every Table. Ready for Every Market.
+            </h1>
+
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
+              Discover thoughtfully selected Indian food products for everyday consumers,
+              retailers, distributors and international buyers.
+            </p>
+
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+              <Button size="lg" className="rounded-full px-8" asChild>
+                <Link href="/shop">Shop products</Link>
+              </Button>
+              <Button size="lg" variant="outline" className="rounded-full px-8" asChild>
+                <Link href="/business">Business &amp; export</Link>
+              </Button>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="relative"
           >
-            Clean Ingredients. Bold Indian Flavors. Made for Everyday Life.
-          </motion.p>
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="flex flex-col sm:flex-row gap-4"
-          >
-            <Button size="lg" variant="secondary" className="text-secondary-foreground font-semibold rounded-full px-8" asChild>
-              <Link href="/shop">Shop the Range</Link>
-            </Button>
-            <Button size="lg" variant="outline" className="text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/10 rounded-full px-8" asChild>
-              <Link href="/b2b">Wholesale Inquiry</Link>
-            </Button>
+            <img
+              src={heroImg}
+              alt="Makhana, superpuffs and grain chips served in ceramic bowls beside Indian whole spices"
+              className="aspect-[4/3] w-full rounded-2xl border border-border object-cover shadow-lg lg:aspect-[5/4]"
+            />
           </motion.div>
         </div>
       </section>
 
-      {/* Stats Row */}
-      <section className="bg-card border-b py-10">
-        <div className="container mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8 text-center divide-x divide-border">
-          <div>
-            <div className="text-3xl font-serif font-bold text-primary mb-1">16</div>
-            <div className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Premium SKUs</div>
-          </div>
-          <div>
-            <div className="text-3xl font-serif font-bold text-primary mb-1">3</div>
-            <div className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Categories</div>
-          </div>
-          <div>
-            <div className="text-3xl font-serif font-bold text-primary mb-1">100%</div>
-            <div className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Vegetarian</div>
-          </div>
-          <div>
-            <div className="text-3xl font-serif font-bold text-primary mb-1">Real</div>
-            <div className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Indian Flavors</div>
-          </div>
-        </div>
-      </section>
+      {/* The fork. Consumer and business, equal weight, directly under the hero. */}
+      <AudienceSplit />
 
       {/* Categories */}
-      <section className="py-20 container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">Discover Our Categories</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">Crafted with care to bring you the best of crunch, flavor, and health.</p>
+      <section className="container mx-auto px-4 py-20">
+        <div className="mb-12 text-center">
+          <h2 className="mb-4 font-serif text-3xl font-bold md:text-4xl">Shop by category</h2>
+          <p className="mx-auto max-w-2xl text-muted-foreground">
+            Three ranges, sourced from selected Indian manufacturers and brands.
+          </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <Link href="/shop?category=healthy_chips" className="group relative rounded-2xl overflow-hidden aspect-[4/3] block">
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10 transition-opacity group-hover:opacity-90" />
-            <img src={CATEGORY_IMAGES.chips} alt="Healthy Chips" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-            <div className="absolute bottom-0 left-0 p-8 z-20">
-              <h3 className="text-2xl font-serif font-bold text-white mb-2">Healthy Chips</h3>
-              <p className="text-white/80 text-sm flex items-center gap-2">Explore range <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" /></p>
-            </div>
-          </Link>
-          <Link href="/shop?category=makhana" className="group relative rounded-2xl overflow-hidden aspect-[4/3] block">
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10 transition-opacity group-hover:opacity-90" />
-            <img src={CATEGORY_IMAGES.makhana} alt="Makhana" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-            <div className="absolute bottom-0 left-0 p-8 z-20">
-              <h3 className="text-2xl font-serif font-bold text-white mb-2">Premium Makhana</h3>
-              <p className="text-white/80 text-sm flex items-center gap-2">Explore range <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" /></p>
-            </div>
-          </Link>
-          <Link href="/shop?category=superpuffs" className="group relative rounded-2xl overflow-hidden aspect-[4/3] block">
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10 transition-opacity group-hover:opacity-90" />
-            <img src={CATEGORY_IMAGES.superpuffs} alt="Superpuffs" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-            <div className="absolute bottom-0 left-0 p-8 z-20">
-              <h3 className="text-2xl font-serif font-bold text-white mb-2">Superpuffs</h3>
-              <p className="text-white/80 text-sm flex items-center gap-2">Explore range <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" /></p>
-            </div>
-          </Link>
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+          {CATEGORIES.map((category) => (
+            <Link
+              key={category.id}
+              href={`/shop?category=${category.id}`}
+              className="group relative block aspect-[4/3] overflow-hidden rounded-2xl"
+            >
+              {/*
+                One ink veil across all three tiles. The photographs come from
+                different shoots on different backdrops; the shared scrim is what
+                makes them read as one set.
+              */}
+              <div className="absolute inset-0 z-10 bg-gradient-to-t from-foreground/90 via-foreground/35 to-foreground/10 transition-opacity group-hover:opacity-90" />
+              <img
+                src={category.image}
+                alt={category.alt}
+                className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+              <div className="absolute bottom-0 left-0 z-20 p-5 sm:p-6 lg:p-8">
+                <h3 className="mb-2 font-serif text-xl font-bold text-white lg:text-2xl">
+                  {category.label}
+                </h3>
+                <p className="flex items-center gap-2 text-sm text-white/80">
+                  Explore range
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </p>
+              </div>
+            </Link>
+          ))}
         </div>
       </section>
 
       {/* Featured Products */}
       <section className="bg-muted/30 py-20">
         <div className="container mx-auto px-4">
-          <div className="flex justify-between items-end mb-12">
+          <div className="mb-12 flex items-end justify-between">
             <div>
-              <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">Trending Now</h2>
-              <p className="text-muted-foreground">Our community's favorite picks this week.</p>
+              <h2 className="mb-4 font-serif text-3xl font-bold md:text-4xl">From our range</h2>
+              <p className="text-muted-foreground">A selection from the current catalogue.</p>
             </div>
             <Button variant="link" asChild className="hidden sm:flex">
-              <Link href="/shop">View all <ArrowRight className="w-4 h-4 ml-2" /></Link>
+              <Link href="/shop">
+                View all <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
             </Button>
           </div>
-          
+
           {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="aspect-[3/4] bg-muted animate-pulse rounded-xl" />
+                <div key={i} className="aspect-[3/4] animate-pulse rounded-xl bg-muted" />
               ))}
             </div>
           ) : (
@@ -139,7 +170,7 @@ export default function Home() {
               ))}
             </ProductGrid>
           )}
-          
+
           <div className="mt-8 flex justify-center sm:hidden">
             <Button variant="outline" className="w-full" asChild>
               <Link href="/shop">View all products</Link>
@@ -148,53 +179,65 @@ export default function Home() {
         </div>
       </section>
 
-      {/* B2B Banner */}
-      <section className="bg-primary text-primary-foreground py-16">
-        <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-8">
-          <div className="max-w-2xl text-center md:text-left">
-            <h2 className="text-3xl font-serif font-bold mb-4">Stock Narayani Distributors in Your Store</h2>
-            <p className="text-primary-foreground/90 text-lg">Partner with us to bring premium, healthy snacking to your customers. Enjoy wholesale pricing, dedicated support, and easy ordering.</p>
-          </div>
-          <Button size="lg" variant="secondary" className="shrink-0 rounded-full px-8" asChild>
-            <Link href="/b2b">Become a Retailer</Link>
-          </Button>
+      {/*
+        How we work. Every line here is either in the schema or in the business
+        identity — no certifications, no volumes, no market claims, nothing about
+        manufacturing. Do not add a fourth card unless the business supplies the
+        fact behind it.
+      */}
+      <section className="container mx-auto px-4 py-20">
+        <div className="mb-16 text-center">
+          <h2 className="mb-4 font-serif text-3xl font-bold md:text-4xl">How we work</h2>
+          <p className="mx-auto max-w-2xl text-muted-foreground">
+            Narayani Distributors is a merchant exporter and distributor of Indian packaged
+            foods.
+          </p>
         </div>
-      </section>
 
-      {/* Features */}
-      <section className="py-20 container mx-auto px-4">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">Why Narayani Distributors</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">The Narayani Distributors promise in every bite.</p>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
           {[
-            { icon: Leaf, title: "Clean Ingredients", desc: "No artificial preservatives or hidden nasties. Just real food." },
-            { icon: Flame, title: "Roasted, Not Fried", desc: "Crafted for the perfect crunch without the greasy guilt." },
-            { icon: Brain, title: "Mindful Nutrition", desc: "Balanced macros to keep your energy steady all day." },
-            { icon: ShieldCheck, title: "Quality Assured", desc: "Rigorous testing at every step from sourcing to packaging." },
-            { icon: Sparkles, title: "Authentic Flavors", desc: "Spice blends crafted to honor true Indian culinary heritage." },
-            { icon: MapPin, title: "Locally Sourced", desc: "Supporting local farmers and regional agriculture." },
-          ].map((feature, idx) => (
-            <div key={idx} className="flex flex-col items-center text-center p-6 bg-card rounded-2xl border shadow-sm">
-              <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-6">
-                <feature.icon className="w-6 h-6" />
+            {
+              icon: Boxes,
+              title: "A curated range",
+              desc: "We source from selected Indian manufacturers and brands and stock a focused range of snacks and packaged foods.",
+            },
+            {
+              icon: Store,
+              title: "Retail and wholesale",
+              desc: "Buy a single pack online, or order at wholesale volumes — pricing and minimum order quantities are set per product.",
+            },
+            {
+              icon: Ship,
+              title: "Export enquiries welcome",
+              desc: "Retailers, distributors and international buyers can talk to us directly about supply, distribution and export.",
+            },
+          ].map((feature) => (
+            <div
+              key={feature.title}
+              className="flex flex-col items-center rounded-2xl border bg-card p-6 text-center shadow-sm"
+            >
+              <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <feature.icon className="h-6 w-6" aria-hidden="true" />
               </div>
-              <h3 className="text-xl font-serif font-bold mb-3">{feature.title}</h3>
-              <p className="text-muted-foreground text-sm leading-relaxed">{feature.desc}</p>
+              <h3 className="mb-3 font-serif text-xl font-bold">{feature.title}</h3>
+              <p className="text-sm leading-relaxed text-muted-foreground">{feature.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="bg-muted py-24 text-center">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-5xl font-serif font-bold mb-6">Ready to snack better?</h2>
-          <p className="text-lg text-muted-foreground mb-10 max-w-xl mx-auto">Join thousands of mindful snackers who have made the switch to Narayani Distributors.</p>
-          <Button size="lg" className="rounded-full px-10 text-lg h-14" asChild>
-            <Link href="/shop">Start Shopping</Link>
+      {/* Closing business invitation */}
+      <section className="bg-primary py-16 text-primary-foreground">
+        <div className="container mx-auto flex flex-col items-center justify-between gap-8 px-4 md:flex-row">
+          <div className="max-w-2xl text-center md:text-left">
+            <h2 className="mb-4 font-serif text-3xl font-bold">Sourcing for a shop, a route or a market</h2>
+            <p className="text-lg text-primary-foreground/90">
+              Wholesale supply for retailers and distributors, and export enquiries from
+              international buyers. Tell us what you need and we will come back with pricing.
+            </p>
+          </div>
+          <Button size="lg" variant="secondary" className="shrink-0 rounded-full px-8" asChild>
+            <Link href="/business">Business &amp; export</Link>
           </Button>
         </div>
       </section>

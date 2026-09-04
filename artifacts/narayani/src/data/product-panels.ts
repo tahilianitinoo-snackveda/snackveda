@@ -119,6 +119,15 @@ const SUPERPUFFS_RDA_ADVISORY =
 const SUPERPUFFS_FOOTNOTE_ADVISORY =
   "%RDA is printed as a bare number with no % sign. † marks the rows whose %RDA the pack attributes to ICMR 2020 (women, moderate work); “-” marks nutrients for which the pack states no RDA is established.";
 
+/**
+ * Both Superpuffs transcriptions came off the 150 g jar — the panel prints
+ * "Servings Per Jar : 3" against its 50 g serve. Superpuffs is also sold as a
+ * 50 g pouch, and both pack sizes render this same panel, so both have to say
+ * where it was read from.
+ */
+const SUPERPUFFS_PACK_PROVENANCE_ADVISORY =
+  "This panel was photographed on the 150 g jar, which prints “Servings Per Jar : 3”. Superpuffs is also sold in a 50 g pouch; it is the same food and the panel's own serving size is 50 g, so the figures carry over unchanged. The pouch's own printed panel has not been photographed.";
+
 const PACK_DISCLOSURES: Readonly<Record<string, PackDisclosure>> = {
   // ── Chips ────────────────────────────────────────────────────────────────
   // All six chip packs print no allergen declaration at all. Their supplier
@@ -188,6 +197,7 @@ const PACK_DISCLOSURES: Readonly<Record<string, PackDisclosure>> = {
     alsoManufacturedBy: SWASTHUM_WELLNESS,
     allergen: SUPERPUFFS_ALLERGEN,
     advisories: [
+      SUPERPUFFS_PACK_PROVENANCE_ADVISORY,
       SUPERPUFFS_RDA_ADVISORY,
       SUPERPUFFS_FOOTNOTE_ADVISORY,
       "The pack prints no flavour name on this panel, and the ingredient list on this Cream & Onion pack declares no dairy or cream component.",
@@ -198,6 +208,7 @@ const PACK_DISCLOSURES: Readonly<Record<string, PackDisclosure>> = {
     alsoManufacturedBy: SWASTHUM_WELLNESS,
     allergen: SUPERPUFFS_ALLERGEN,
     advisories: [
+      SUPERPUFFS_PACK_PROVENANCE_ADVISORY,
       SUPERPUFFS_RDA_ADVISORY,
       SUPERPUFFS_FOOTNOTE_ADVISORY,
       "The pack prints no flavour name on this panel.",
@@ -253,6 +264,31 @@ export interface PackPanel extends PackPanelRecord {
 const PANELS = rawPanels as Record<string, PackPanelRecord>;
 
 /**
+ * The same flavour sold in two pack sizes, sharing one transcription.
+ *
+ * This is the ONE exception to "a slug with no transcription of its own renders
+ * no panel", and it is narrow on purpose. It may only be used where the two
+ * slugs are the identical food from the identical maker, differing solely in how
+ * much of it is in the pack — never between two flavours, two suppliers or two
+ * recipes, however similar their panels look.
+ *
+ * It is sound here because the Superpuffs panel is quoted per 100 g and per a
+ * 50 g serve, and 50 g is the serving size on both the pouch and the jar: the
+ * ingredient sentence, the allergen line, the licences and every figure in the
+ * table are the same numbers on both packs. The only jar-specific line is
+ * "Servings Per Jar : 3", which lives in `notes` and is never rendered — and
+ * SUPERPUFFS_PACK_PROVENANCE_ADVISORY tells the reader which pack the photograph
+ * came from either way.
+ *
+ * If a pouch panel is ever photographed and differs, delete the alias and give
+ * the pouch its own entry in the JSON. Do not reconcile the two by hand.
+ */
+const PACK_SIZE_ALIASES: Readonly<Record<string, string>> = {
+  "superpuffs-cream-n-onion-150g": "superpuffs-cream-and-onion",
+  "superpuffs-hot-n-sweet-chilli-150g": "superpuffs-hot-n-sweet-chilli",
+};
+
+/**
  * The pack panel for a product slug, or `null` when we hold no transcription for
  * it. Returning `null` is the whole point: a product with no panel must render
  * no panel section rather than borrow a sibling's ingredients or nutrition.
@@ -260,15 +296,21 @@ const PANELS = rawPanels as Record<string, PackPanelRecord>;
 export function getPackPanel(slug: string | undefined | null): PackPanel | null {
   if (!slug) return null;
 
-  // `Object.prototype.hasOwnProperty` rather than a truthiness check on the
-  // lookup: a slug like "constructor" would otherwise return a function.
-  if (!Object.prototype.hasOwnProperty.call(PANELS, slug)) return null;
+  // A second pack size of the same food reads the other size's transcription,
+  // disclosures included — see PACK_SIZE_ALIASES for why that is allowed here
+  // and nowhere else. `hasOwnProperty` rather than a truthiness check on every
+  // lookup below: a slug like "constructor" would otherwise return a function.
+  const key = Object.prototype.hasOwnProperty.call(PACK_SIZE_ALIASES, slug)
+    ? PACK_SIZE_ALIASES[slug]
+    : slug;
 
-  const record = PANELS[slug];
+  if (!Object.prototype.hasOwnProperty.call(PANELS, key)) return null;
+
+  const record = PANELS[key];
   if (!record) return null;
 
-  const disclosure = Object.prototype.hasOwnProperty.call(PACK_DISCLOSURES, slug)
-    ? PACK_DISCLOSURES[slug]
+  const disclosure = Object.prototype.hasOwnProperty.call(PACK_DISCLOSURES, key)
+    ? PACK_DISCLOSURES[key]
     : undefined;
 
   return {

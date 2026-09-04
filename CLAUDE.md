@@ -47,18 +47,38 @@ Deploy is automatic: push to `main` → Vercel builds → live in ~35s. Vercel a
   `strictNullChecks` off, zod infers every field as optional, which forced two workarounds in
   `api/index.ts`. Turning it on surfaces exactly one error: the `slugify` bug above.
 - **Vercel env secrets are write-only.** `vercel env pull` returns `DATABASE_URL`,
-  `JWT_SECRET`, `RESEND_API_KEY` as `""`. There is no CLI route to the database — schema and
-  data changes go through the Supabase SQL editor as files in `scripts/sql/`.
+  `JWT_SECRET`, `RESEND_API_KEY` as `""`. Put the real connection string in `.env.local`
+  (gitignored) by hand, once, from the Supabase dashboard.
+- **Rotating the database password means updating Vercel in the same sitting.** Vercel holds
+  its own copy of `DATABASE_URL`; rotating without updating it authenticates production out of
+  its own database and every route 500s. This has happened.
 - **Transactional email is currently failing** — the sending domain is not verified in
   Resend. Failures are now logged loudly rather than swallowed.
 - Money is `Intl.NumberFormat('en-IN', {style:'currency', currency:'INR'})`. Dates are
   DD MMM YYYY via `date-fns`. Server logs use `req.log` / `logger`, never `console.log`.
 
-## Unrun SQL in `scripts/sql/`
+## Talking to the database
 
-These are written but **not applied**. Check before assuming database state:
-`rebrand_narayani.sql` (changes the admin login), `product_images.sql` (68 images, creates
-3 SKUs), `fix_quinoa_weight.sql`.
+There is a CLI route. Both scripts read `DATABASE_URL` from `.env.local`, route the
+IPv6-only direct host through the IPv4 pooler, split the connection string rather than
+parsing it as a URL (the password contains `?`), and scrub the password from any error.
+
+```bash
+node scripts/query-db.mjs "select name, b2c_price from products order by name"
+node scripts/run-sql.mjs scripts/sql/<file>.sql        # add --dry to test the connection only
+```
+
+`query-db.mjs` refuses anything that is not a single SELECT. Writes go through a reviewed
+file in `scripts/sql/`, which is also what the Supabase SQL editor takes if you prefer it.
+
+### State of `scripts/sql/`
+
+| File | State |
+|---|---|
+| `product_images.sql` | **Applied** 04 Sep 2026. 68 images, created 3 SKUs. |
+| `pricing_sheet_2026-09-04.sql` | **Applied** 04 Sep 2026. Prices from the supplied sheet; added the 150 g Superpuffs can line. |
+| `fix_quinoa_weight.sql` | **Superseded** — the pricing migration set every chip to 150 g / 6 months. |
+| `rebrand_narayani.sql` | **Not applied.** Changes the admin login. |
 
 ## Working on the rebuild
 

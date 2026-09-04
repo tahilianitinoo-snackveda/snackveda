@@ -15,6 +15,14 @@ import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getPackPanel } from "@/data/product-panels";
 import { MOQ_BANNER, MOQ_SPEC } from "@/lib/trade-terms";
+import { useSeo, SITE_URL } from "@/lib/seo";
+
+/** Category storage keys are not words a person reads. Shared with the crumb trail. */
+const CATEGORY_LABELS: Record<string, string> = {
+  healthy_chips: "Healthy Chips",
+  makhana: "Makhana",
+  superpuffs: "Superpuffs",
+};
 import type { PackEntity, PackPanel } from "@/data/product-panels";
 
 // Image gallery component with thumbnail strip
@@ -538,6 +546,95 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(minQty);
 
   const showStrikethrough = discountPercent > 0 && !isB2BApproved && !!user;
+
+  /*
+    ─── SEO (spec point 27) ──────────────────────────────────────────────────
+    Twenty product pages were shipping with the site-wide default title, the
+    site-wide default description and a canonical pointing at the homepage, so
+    to a crawler they were twenty copies of one page. Each now carries its own
+    title, description, canonical, Product schema and a breadcrumb trail.
+
+    ─── b2bPrice MUST NOT APPEAR HERE ────────────────────────────────────────
+    The Offer below quotes `b2cPrice` and nothing else. JSON-LD is rendered into
+    the document for every visitor regardless of who they are, so putting the
+    trade price in it would publish the wholesale price list to anyone who views
+    source — exactly the leak the isB2BApproved gate elsewhere in this file
+    exists to prevent. `displayPrice` is also wrong here: it carries the signed-in
+    customer's personal discount, which is not the offer being made to the public.
+
+    Nothing is invented. Availability comes from the real stock and status
+    fields; `sku` is the slug because there is no SKU column; the panel's brand
+    is used when we hold a transcription and omitted when we do not. No rating
+    or review schema is emitted at all — there are no reviews, and inventing
+    aggregate ratings is the single most common way a food site earns a manual
+    action from Google.
+  */
+  const primaryImage =
+    (product as any)?.images?.find((i: any) => i.isPrimary)?.url ??
+    (product as any)?.images?.[0]?.url ??
+    product?.imageUrl ??
+    undefined;
+
+  const categoryName = product ? CATEGORY_LABELS[product.category] ?? product.category : "";
+
+  useSeo({
+    title: product
+      ? `${product.name} — ${product.weightGrams}g | Narayani Distributors`
+      : "Product | Narayani Distributors",
+    description: product
+      ? (product.description?.trim()
+          ? `${product.description.trim().slice(0, 150)}`
+          : `Buy ${product.name} (${product.weightGrams}g) online. Ingredients, nutrition and allergen information as printed on the pack. Retail and wholesale from Narayani Distributors.`)
+      : undefined,
+    canonical: product ? `/shop/${product.slug}` : undefined,
+    image: primaryImage,
+    jsonLd: product
+      ? {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Product",
+              name: product.name,
+              description: product.description || undefined,
+              image: primaryImage ? [primaryImage] : undefined,
+              sku: product.slug,
+              category: categoryName,
+              weight: product.weightGrams
+                ? { "@type": "QuantitativeValue", value: product.weightGrams, unitCode: "GRM" }
+                : undefined,
+              ...(packPanel?.brand
+                ? { brand: { "@type": "Brand", name: packPanel.brand } }
+                : {}),
+              offers: {
+                "@type": "Offer",
+                url: `${SITE_URL}/shop/${product.slug}`,
+                priceCurrency: "INR",
+                price: product.b2cPrice,
+                availability:
+                  product.status === "active" && (product.stockQty ?? 0) > 0
+                    ? "https://schema.org/InStock"
+                    : "https://schema.org/OutOfStock",
+                seller: { "@type": "Organization", name: "Narayani Distributors" },
+              },
+            },
+            {
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+                { "@type": "ListItem", position: 2, name: "Shop", item: `${SITE_URL}/shop` },
+                {
+                  "@type": "ListItem",
+                  position: 3,
+                  name: categoryName,
+                  item: `${SITE_URL}/shop?category=${product.category}`,
+                },
+                { "@type": "ListItem", position: 4, name: product.name },
+              ],
+            },
+          ],
+        }
+      : null,
+  });
 
   // Reset quantity if product changes
   if (product && isB2BApproved && product.moq && quantity < product.moq) {

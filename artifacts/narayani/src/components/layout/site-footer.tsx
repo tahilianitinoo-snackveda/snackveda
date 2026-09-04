@@ -1,4 +1,24 @@
 import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+
+/**
+ * Business information for the footer — spec point 40.
+ *
+ * Read from site_settings via GET /api/settings, which omits any key the admin has
+ * left blank. A registration that has not been entered does not render: no label
+ * with nothing after it, no placeholder, no "coming soon". If none are entered the
+ * whole strip is absent and the footer looks exactly as it did before.
+ *
+ * Order matters — GSTIN first, because that is the one an Indian buyer looks for,
+ * then FSSAI, then the export registrations.
+ */
+const FOOTER_REGISTRATIONS = [
+  { key: "gstin", label: "GST" },
+  { key: "fssai", label: "FSSAI" },
+  { key: "iec", label: "IEC" },
+  { key: "apeda_rcmc", label: "APEDA RCMC" },
+  { key: "cin", label: "CIN" },
+];
 
 // Storefronts and trade directories carrying our products. These leave the site,
 // so they are plain anchors rather than wouter links.
@@ -10,6 +30,20 @@ const MARKETPLACES = [
 ];
 
 export function SiteFooter() {
+  const { data: settings } = useQuery<Record<string, string>>({
+    queryKey: ["site-settings"],
+    queryFn: async () => {
+      const res = await fetch("/api/settings");
+      if (!res.ok) return {};
+      return res.json();
+    },
+    // On every page, and these change roughly never.
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const registrations = FOOTER_REGISTRATIONS.filter((r) => settings?.[r.key]?.trim());
+  const contact = [settings?.support_email, settings?.support_phone].filter(Boolean);
+
   return (
     <footer className="bg-muted py-12 mt-auto">
       <div className="container mx-auto px-4">
@@ -41,6 +75,7 @@ export function SiteFooter() {
               <li><Link href="/business" className="hover:text-foreground transition-colors">Business Overview</Link></li>
               <li><Link href="/wholesale" className="hover:text-foreground transition-colors">Wholesale</Link></li>
               <li><Link href="/export" className="hover:text-foreground transition-colors">Export / International</Link></li>
+              <li><Link href="/private-label" className="hover:text-foreground transition-colors">Private Label</Link></li>
               <li><Link href="/request-a-quote" className="hover:text-foreground transition-colors">Request a Quote</Link></li>
             </ul>
           </div>
@@ -48,6 +83,7 @@ export function SiteFooter() {
             <h3 className="font-semibold mb-4">Company</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link href="/about" className="hover:text-foreground transition-colors">About Us</Link></li>
+              <li><Link href="/quality" className="hover:text-foreground transition-colors">Quality &amp; Compliance</Link></li>
               <li><Link href="/blog" className="hover:text-foreground transition-colors">Resources</Link></li>
             </ul>
           </div>
@@ -60,6 +96,52 @@ export function SiteFooter() {
             </ul>
           </div>
         </div>
+
+        {/*
+          Business information — spec point 40. Renders only what the admin has
+          entered in Admin → Settings. Nothing here has a fallback, because a
+          fabricated registration number is worse than an absent one.
+        */}
+        {(registrations.length > 0 || contact.length > 0) && (
+          <div className="mb-6 border-t border-border pt-8">
+            <h3 className="mb-3 text-sm font-semibold">Business information</h3>
+            <ul className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
+              {registrations.map((reg) => (
+                <li key={reg.key}>
+                  <span className="uppercase tracking-wide">{reg.label}</span>{" "}
+                  <span className="font-mono text-foreground">{settings?.[reg.key]}</span>
+                </li>
+              ))}
+              {settings?.support_email && (
+                <li>
+                  <a
+                    href={`mailto:${settings.support_email}`}
+                    className="transition-colors hover:text-foreground"
+                  >
+                    {settings.support_email}
+                  </a>
+                </li>
+              )}
+              {settings?.support_phone && (
+                <li>
+                  <a
+                    href={`tel:${settings.support_phone.replace(/[^\d+]/g, "")}`}
+                    className="transition-colors hover:text-foreground"
+                  >
+                    {settings.support_phone}
+                  </a>
+                </li>
+              )}
+              {registrations.length > 0 && (
+                <li>
+                  <Link href="/quality" className="text-primary hover:underline">
+                    Verify these
+                  </Link>
+                </li>
+              )}
+            </ul>
+          </div>
+        )}
         <div className="pt-8 border-t border-border flex flex-col sm:flex-row sm:items-center gap-x-6 gap-y-3 mb-6">
           <h3 className="font-semibold text-sm shrink-0">Also available on</h3>
           <ul className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">

@@ -27,11 +27,15 @@ const SECONDARY_LINKS = [
   { href: "/contact", label: "Contact" },
 ];
 
-// Flat order for the mobile sheet: Home, Shop, Business, Export, About, Resources, Contact.
+// Flat order for the mobile sheet: Home, Shop, Business, Wholesale, Export, Private
+// Label, About, Resources, Contact. The desktop dropdown groups the four business
+// pages; mobile has no room for a nested menu, so it lists them.
 const MOBILE_LINKS = [
   ...PRIMARY_LINKS,
   { href: "/business", label: "Business" },
+  { href: "/wholesale", label: "Wholesale" },
   { href: "/export", label: "Export" },
+  { href: "/private-label", label: "Private Label" },
   ...SECONDARY_LINKS,
 ];
 
@@ -53,8 +57,13 @@ export function SiteHeader() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const isBusinessSection =
-    location.startsWith("/business") || location === "/export" || location === "/request-a-quote";
+  const isBusinessSection = [
+    "/business",
+    "/wholesale",
+    "/export",
+    "/private-label",
+    "/request-a-quote",
+  ].some((href) => location === href || location.startsWith(`${href}/`));
 
   const navLinkClass = (href: string) =>
     `text-sm font-medium transition-colors hover:text-primary ${
@@ -67,8 +76,9 @@ export function SiteHeader() {
     const q = searchQuery.trim();
     setIsSearchOpen(false);
     setSearchQuery("");
-    // shop.tsx does not read `search` yet — this is chrome ahead of that wiring,
-    // the same "link before the page exists" pattern used for /business and /export.
+    // shop.tsx reads `search` and filters on it. Keep the parameter name in step
+    // with the one it reads — this box was chrome over a page that ignored it for
+    // long enough that every search silently returned the whole catalogue.
     setLocation(q ? `/shop?search=${encodeURIComponent(q)}` : "/shop");
   };
 
@@ -136,7 +146,13 @@ export function SiteHeader() {
                 <Link href="/business">Business overview</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
+                <Link href="/wholesale">Wholesale</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
                 <Link href="/export">Export</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/private-label">Private Label</Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>

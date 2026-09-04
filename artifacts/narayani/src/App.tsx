@@ -14,6 +14,8 @@ import B2B from "@/pages/b2b";
 import Business from "@/pages/business";
 import Export from "@/pages/export";
 import Wholesale from "@/pages/wholesale";
+import PrivateLabel from "@/pages/private-label";
+import Quality from "@/pages/quality";
 import RequestAQuote from "@/pages/request-a-quote";
 import About from "@/pages/about";
 import FAQ from "@/pages/faq";
@@ -34,6 +36,7 @@ import AdminOrders from "@/pages/admin/orders";
 import AdminPayments from "@/pages/admin/payments";
 import AdminBlog from "@/pages/admin/blog";
 import AdminEnquiries from "@/pages/admin/enquiries";
+import AdminSettings from "@/pages/admin/settings";
 import NotFound from "@/pages/not-found";
 
 // Ensure credentials flow for auth
@@ -63,6 +66,8 @@ function Router() {
       */}
       <Route path="/business" component={Business} />
       <Route path="/wholesale" component={Wholesale} />
+      <Route path="/private-label" component={PrivateLabel} />
+      <Route path="/quality" component={Quality} />
       <Route path="/export" component={Export} />
       {/* The conversion point every B2B call to action lands on. */}
       <Route path="/request-a-quote" component={RequestAQuote} />
@@ -88,6 +93,7 @@ function Router() {
       <Route path="/admin/payments" component={AdminPayments} />
       <Route path="/admin/blog" component={AdminBlog} />
       <Route path="/admin/enquiries" component={AdminEnquiries} />
+      <Route path="/admin/settings" component={AdminSettings} />
       
       <Route component={NotFound} />
     </Switch>

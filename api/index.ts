@@ -18,7 +18,7 @@ import { computeQuote, type QuoteItem } from "./_lib/pricing";
 import {
   usersTable, productsTable, productImagesTable, addressesTable,
   ordersTable, orderItemsTable, paymentsTable, invoicesTable, blogPostsTable,
-  quoteEnquiriesTable,
+  quoteEnquiriesTable, siteSettingsTable,
 } from "./_lib/schema";
 import { signToken, verifyToken, profileUser } from "./_lib/auth";
 import { sendEmail, sendSMS, emailBase, notifyRegistration, notifyOrderPlaced, notifyShipping, notifyQuoteEnquiry } from "./_lib/notify";
@@ -391,9 +391,11 @@ export default async function handler(req, res) {
         "/business",
         "/wholesale",
         "/export",
+        "/private-label",
         "/request-a-quote",
         "/b2b",
         "/about",
+        "/quality",
         "/blog",
         "/faq",
         "/contact",
@@ -442,6 +444,20 @@ export default async function handler(req, res) {
       return sendRaw(xml, "application/xml; charset=utf-8");
     }
 
+    // ── SITE SETTINGS ────────────────────────────────────────────────────────
+    // Public. Only PUBLIC_SETTING_KEYS are returned, and only keys the admin has
+    // actually filled in: an empty value is omitted entirely so the storefront
+    // renders nothing rather than an empty label. Banking details are NOT public.
+    if (path === "/settings" && method === "GET") {
+      const db = getDb();
+      const rows = await db.select().from(siteSettingsTable);
+      const out: Record<string, string> = {};
+      for (const r of rows) {
+        if (PUBLIC_SETTING_KEYS.has(r.key) && r.value.trim()) out[r.key] = r.value.trim();
+      }
+      return ok(out);
+    }
+
     // ── QUOTE ENQUIRIES (RFQ) ────────────────────────────────────────────────
     // Public: /request-a-quote posts here. Persist first, notify second — email
     // is unreliable on this project and an enquiry lost is a customer lost.
@@ -458,6 +474,13 @@ export default async function handler(req, res) {
       // the browser, because the browser is not a place to enforce anything.
       if (d.enquiryType === "export" && !d.destinationCountry?.trim()) {
         return err("destinationCountry: required for an export enquiry", "VALIDATION_ERROR", 400);
+      }
+
+      // An enquiry naming nothing to quote is not an enquiry. Either field satisfies
+      // this — a buyer asking for something the catalogue does not carry writes it in
+      // `otherProducts`, and that is a lead, not an error.
+      if (!d.productSlugs?.length && !d.otherProducts?.trim()) {
+        return err("products: pick at least one product, or describe what you need quoted", "VALIDATION_ERROR", 400);
       }
 
       const db = getDb();
@@ -629,7 +652,34 @@ export default async function handler(req, res) {
       const db = getDb();
       let [inv] = await db.select().from(invoicesTable).where(eq(invoicesTable.orderId, order.id)).limit(1);
       if (!inv) { const invoiceNumber = await generateInvoiceNumber(); [inv] = await db.insert(invoicesTable).values({ orderId: order.id, invoiceNumber }).returning(); }
-      return ok({ invoiceNumber: inv.invoiceNumber, issuedAt: inv.createdAt.toISOString(), seller: { name: "Narayani Distributors", brand: "Narayani Distributors", address: "Indore, Madhya Pradesh, India", gstNumber: "23AAAAA0000A1Z5", phone: "+91 90000 00000", email: "hello@narayanidistributors.com" }, order });
+      /*
+        The seller block was hardcoded, and what it hardcoded was fiction: the GSTIN
+        "23AAAAA0000A1Z5" is the format example from the GST documentation, the phone
+        was "+91 90000 00000" and the email address did not exist — all three printed
+        on tax invoices issued to real customers.
+
+        It now comes from site_settings, which the business fills in itself. A field
+        that has not been filled in is OMITTED rather than defaulted: an invoice with
+        no GSTIN line is a document with a gap someone will notice and fix, whereas
+        an invoice with a fabricated GSTIN is a document that looks correct and is
+        not. Only `name` has a fallback, because a seller with no name at all would
+        break the invoice layout.
+      */
+      const settings = await loadSettings(db);
+      const seller: Record<string, string> = { name: settings.legal_name || "Narayani Distributors" };
+      if (settings.registered_address) seller.address = settings.registered_address;
+      if (settings.gstin) seller.gstNumber = settings.gstin;
+      if (settings.pan) seller.pan = settings.pan;
+      if (settings.fssai) seller.fssai = settings.fssai;
+      if (settings.iec) seller.iec = settings.iec;
+      if (settings.support_phone) seller.phone = settings.support_phone;
+      if (settings.support_email) seller.email = settings.support_email;
+      if (settings.bank_name) seller.bankName = settings.bank_name;
+      if (settings.bank_account) seller.bankAccount = settings.bank_account;
+      if (settings.bank_ifsc) seller.bankIfsc = settings.bank_ifsc;
+      if (settings.upi_id) seller.upiId = settings.upi_id;
+
+      return ok({ invoiceNumber: inv.invoiceNumber, issuedAt: inv.createdAt.toISOString(), seller, order });
     }
 
     // ── ACCOUNT ──────────────────────────────────────────────────────────────
@@ -851,6 +901,39 @@ export default async function handler(req, res) {
         return ok({ ok: true, status: "dispatched", orderId: updatedOrder.id });
       }
 
+      // ── SITE SETTINGS (admin) ──────────────────────────────────────────────
+      if (path === "/admin/settings" && method === "GET") {
+        const rows = await db.select().from(siteSettingsTable);
+        const out: Record<string, string> = {};
+        for (const key of ALL_SETTING_KEYS) out[key] = "";
+        for (const r of rows) if (ALL_SETTING_KEYS.has(r.key)) out[r.key] = r.value;
+        return ok(out);
+      }
+
+      if (path === "/admin/settings" && method === "PUT") {
+        const b = z.record(z.string().max(500)).safeParse(parsedBody);
+        if (!b.success) return err("Invalid settings", "VALIDATION_ERROR", 400);
+
+        // Only known keys are writable. Without this the endpoint is an arbitrary
+        // key/value store that anyone with an admin token can fill.
+        const entries = Object.entries(b.data).filter(([k]) => ALL_SETTING_KEYS.has(k));
+        if (!entries.length) return err("No known settings supplied", "VALIDATION_ERROR", 400);
+
+        for (const [key, value] of entries) {
+          await db.insert(siteSettingsTable)
+            .values({ key, value: value.trim(), updatedAt: new Date() })
+            .onConflictDoUpdate({
+              target: siteSettingsTable.key,
+              set: { value: value.trim(), updatedAt: new Date() },
+            });
+        }
+        const rows = await db.select().from(siteSettingsTable);
+        const out: Record<string, string> = {};
+        for (const key of ALL_SETTING_KEYS) out[key] = "";
+        for (const r of rows) if (ALL_SETTING_KEYS.has(r.key)) out[r.key] = r.value;
+        return ok(out);
+      }
+
       // ── QUOTE ENQUIRIES (admin) ────────────────────────────────────────────
       if (path === "/admin/rfq" && method === "GET") {
         const rows = await db.select().from(quoteEnquiriesTable).orderBy(desc(quoteEnquiriesTable.createdAt));
@@ -972,6 +1055,33 @@ const LoginBody = z.object({ email: z.string(), password: z.string() });
 // here rather than at the three call sites keeps the explanation next to the cause.
 const OrderItemSchema = z.object({ productId: z.string(), quantity: z.number() }) as unknown as z.ZodType<QuoteItem>;
 const QuoteBody = z.object({ orderType: z.enum(["b2c","b2b"]), items: z.array(OrderItemSchema) });
+
+/**
+ * Business identity, editable in Admin → Settings.
+ *
+ * PUBLIC_SETTING_KEYS is the allowlist `GET /settings` will serve. Banking details
+ * are deliberately not in it: they are needed on an invoice to a customer who has
+ * ordered, not on a public endpoint anyone can curl. ALL_SETTING_KEYS is what the
+ * admin PUT will accept — anything not named here is silently ignored, so the
+ * endpoint cannot be used as an arbitrary key/value store.
+ */
+const PUBLIC_SETTING_KEYS = new Set([
+  "legal_name", "gstin", "iec", "fssai", "apeda_rcmc", "cin", "pan",
+  "registered_address", "support_email", "support_phone", "whatsapp",
+]);
+
+const ALL_SETTING_KEYS = new Set([
+  ...PUBLIC_SETTING_KEYS,
+  "bank_name", "bank_account", "bank_ifsc", "upi_id",
+]);
+
+/** Settings as a plain map, for the invoice. Missing or blank keys come back "". */
+async function loadSettings(db: ReturnType<typeof getDb>): Promise<Record<string, string>> {
+  const rows = await db.select().from(siteSettingsTable);
+  const out: Record<string, string> = {};
+  for (const r of rows) out[r.key] = (r.value || "").trim();
+  return out;
+}
 
 /**
  * The wire contract for POST /rfq.

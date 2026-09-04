@@ -1,99 +1,248 @@
 import { SiteShell } from "@/components/layout/site-shell";
+import { Link } from "wouter";
+import { Button } from "@/components/ui/button";
+import { useSeo } from "@/lib/seo";
+import {
+  ArrowRight,
+  Boxes,
+  Building2,
+  FileText,
+  Globe,
+  Layers,
+  Search,
+  Ship,
+  ShoppingCart,
+  Store,
+  Truck,
+} from "lucide-react";
+
+/**
+ * /about — who Narayani Distributors is.
+ *
+ * ─── WHAT THIS PAGE REPLACED, AND WHY ───────────────────────────────────────
+ * The previous version opened "Narayani Distributors is a proudly Indore-born
+ * healthy snacking brand, created for people who want snacks that are healthier".
+ * That is the About page of a brand that makes food. Narayani does not make food.
+ * It also promised, in Narayani's own voice, that every product is "100%
+ * Vegetarian", "Baked, not deep-fried", "Free from artificial colors" and "Free
+ * from unnecessary additives" — blanket claims across a catalogue sourced from
+ * three different manufacturers, at least one of which prints a milk allergen and
+ * another of which declares peanuts. Those are the manufacturer's claims to make on
+ * the pack, not ours to make on their behalf.
+ *
+ * ─── THE RULE FOR ANYTHING ADDED HERE ───────────────────────────────────────
+ * Narayani is a merchant exporter, distributor and sourcing company. Every sentence
+ * on this page must survive the question "would this be true if we sold someone
+ * else's biscuits tomorrow?" — because that is the business. Nothing about recipes,
+ * kitchens, factories, production or "our ingredients". See
+ * docs/decisions/0002-never-imply-manufacturing.md.
+ *
+ * No certifications, registration numbers, years in business, countries served,
+ * volumes or client names appear here, because the business has supplied none of
+ * them. A credentials block belongs on /quality once it does.
+ */
+
+/** Spec point 22 — Why Narayani. Each of these is a description of the model, not a claim. */
+const WHY = [
+  {
+    icon: Layers,
+    title: "A curated portfolio",
+    desc: "A focused range of Indian packaged foods rather than a catalogue of everything, drawn from manufacturers and brands we choose to work with.",
+  },
+  {
+    icon: Search,
+    title: "Sourcing, not manufacturing",
+    desc: "We select the products and coordinate the supply. The company named on the pack is the company that made it, and we print who that is.",
+  },
+  {
+    icon: Building2,
+    title: "One partner, several categories",
+    desc: "One point of contact across the manufacturer or brand, the paperwork and the dispatch, instead of a separate relationship per product.",
+  },
+  {
+    icon: ShoppingCart,
+    title: "Consumer and business",
+    desc: "The same range a household buys one pack of is the range a shop buys by the case and an importer buys by the pallet.",
+  },
+  {
+    icon: Globe,
+    title: "Built for export",
+    desc: "Merchant export is a vertical of this business, not an afterthought — specifications, packaging and documentation are part of the quotation.",
+  },
+  {
+    icon: FileText,
+    title: "Product information in full",
+    desc: "Ingredients, nutrition, allergens and the manufacturer's own details are reproduced from the pack, including where the pack contradicts itself.",
+  },
+];
+
+/** Who the business is set up to serve. Intent, not a customer list. */
+const AUDIENCES = [
+  { icon: ShoppingCart, label: "Consumers" },
+  { icon: Store, label: "Retailers" },
+  { icon: Boxes, label: "Wholesale buyers" },
+  { icon: Truck, label: "Distributors" },
+  { icon: Ship, label: "Importers" },
+  { icon: Building2, label: "Food-service buyers" },
+];
 
 export default function About() {
+  useSeo({
+    title: "About Narayani Distributors — Merchant Exporter & Distributor",
+    description:
+      "Narayani Distributors is a merchant exporter, distributor and sourcing company for Indian packaged foods, supplying consumers, retailers, distributors and international buyers.",
+    canonical: "/about",
+  });
+
   return (
     <SiteShell>
-      <div className="bg-muted/30 py-16 border-b">
-        <div className="container mx-auto px-4 max-w-4xl text-center">
-          <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4">About Narayani Distributors</h1>
-          <p className="text-muted-foreground text-lg">Proudly Indore-born. Built for better snacking.</p>
+      {/* Hero */}
+      <section className="border-b border-border bg-gradient-to-b from-secondary/50 via-background to-background">
+        <div className="container mx-auto max-w-4xl px-4 py-16 text-center lg:py-24">
+          <div className="flex items-center justify-center gap-3">
+            <span aria-hidden="true" className="h-px w-8 bg-primary" />
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">
+              About Us
+            </p>
+            <span aria-hidden="true" className="h-px w-8 bg-primary" />
+          </div>
+
+          <h1 className="mt-5 font-serif text-4xl font-bold leading-[1.08] tracking-tight text-foreground sm:text-5xl">
+            Connecting Indian food products with more people and more markets.
+          </h1>
+
+          <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
+            Narayani Distributors is a merchant exporter, distributor and sourcing company for
+            Indian packaged foods. We work with selected Indian manufacturers and brands to make
+            their products available to consumers, retailers, distributors and international
+            buyers.
+          </p>
         </div>
-      </div>
+      </section>
 
-      <div className="container mx-auto px-4 max-w-4xl py-16 space-y-16">
-
-        {/* About */}
-        <section className="space-y-4">
-          <p className="text-lg leading-relaxed">
-            <strong>Narayani Distributors</strong> is a proudly Indore-born healthy snacking brand, created for people who want snacks that are healthier, tastier, and more trustworthy.
+      <div className="container mx-auto max-w-4xl px-4 py-16 lg:py-20">
+        {/* What we actually do */}
+        <section className="space-y-5">
+          <h2 className="font-serif text-3xl font-bold">What we do</h2>
+          <p className="text-lg leading-relaxed text-muted-foreground">
+            We do not make food. We find it, we buy it, and we get it to the people who want it
+            — a household ordering one pack, a shop ordering a case, an importer ordering a
+            container.
           </p>
-          <p className="text-muted-foreground leading-relaxed">
-            At Narayani Distributors, we bring wholesome and delicious snacks straight to your doorstep—carefully sourced from genuine manufacturers who meet our standards for quality, purity, and taste. Every product we offer is selected with one simple promise in mind: <strong>better snacking for better living</strong>.
+          <p className="leading-relaxed text-muted-foreground">
+            That means our work sits in three places: choosing which products are worth carrying,
+            handling the commercial and documentary side of moving them, and presenting them
+            honestly enough that a buyer can decide without ringing us first. The company that
+            manufactured a product is named on its page, with its own licence number, exactly as
+            it is printed on the pack.
           </p>
-          <p className="text-muted-foreground leading-relaxed">
-            We believe snacking should never be a compromise. It should be tasty, nourishing, and made with ingredients you can trust.
-          </p>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 pt-4">
-            {["100% Vegetarian","Pure, quality ingredients","Healthy and guilt-free","Tasty and satisfying","Baked, not fried","Chosen for everyday wellness"].map(item => (
-              <div key={item} className="bg-muted border border-border rounded-xl p-3 text-sm text-foreground font-medium text-center">{item}</div>
-            ))}
-          </div>
-        </section>
-
-        {/* Our Range */}
-        <section className="bg-card border rounded-2xl p-8 shadow-sm">
-          <h2 className="text-2xl font-serif font-bold mb-2">Our Range</h2>
-          <p className="text-muted-foreground mb-6">Narayani Distributors offers a wide and exciting range of snacks for every taste and every age group—from children to adults to seniors.</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {["Millet Chips","Protein Chips","Roasted Snacks","Makhana","Gud Chana","Protein Bars","Hazelnut Chocolate Laddoo","Sweet & Savory Functional Snacks"].map(item => (
-              <div key={item} className="bg-muted rounded-xl p-3 text-sm font-medium text-center">{item}</div>
-            ))}
-          </div>
-          <p className="text-muted-foreground text-sm mt-6">Perfect for school tiffins, office breaks, travel munching, post-workout fuel, evening chai, and mindful snacking for seniors.</p>
-        </section>
-
-        {/* Mission */}
-        <section className="space-y-4">
-          <h2 className="text-2xl font-serif font-bold">Our Mission</h2>
-          <p className="text-muted-foreground leading-relaxed">
-            At Narayani Distributors, our mission is to redefine Indian snacking by making healthy snacks more enjoyable, accessible, and flavorful for every household.
-          </p>
-          <p className="text-muted-foreground leading-relaxed">
-            We are here to prove that clean ingredients and great taste can go hand in hand. Healthy snacking should never feel boring or restrictive—it should be exciting, satisfying, and full of flavor in every bite.
-          </p>
-          <p className="text-muted-foreground leading-relaxed">
-            Our goal is to build a smarter snacking culture in India where people no longer have to choose between taste and health.
-          </p>
-        </section>
-
-        {/* Sourcing */}
-        <section className="bg-muted/30 rounded-2xl p-8 space-y-4">
-          <h2 className="text-2xl font-serif font-bold">Our Sourcing</h2>
-          <p className="text-muted-foreground leading-relaxed">
-            We work with trusted manufacturers and sourcing partners who share our commitment to quality, hygiene, and authenticity. Every ingredient is carefully selected to ensure freshness, consistency, and nutritional value.
-          </p>
-          <div className="grid md:grid-cols-3 gap-4 pt-2">
+          <div className="grid gap-4 pt-2 sm:grid-cols-3">
             {[
-              { title: "Quality you can trust", desc: "Every product meets our strict quality standards before it reaches you." },
-              { title: "Ingredients you can recognize", desc: "Simple, clean ingredients — no confusing additives." },
-              { title: "Freshness in every pack", desc: "Carefully sourced and packaged for maximum freshness." },
-            ].map(item => (
-              <div key={item.title} className="bg-card border rounded-xl p-4">
-                <p className="font-semibold text-primary mb-1">{item.title}</p>
-                <p className="text-sm text-muted-foreground">{item.desc}</p>
+              {
+                title: "Sourcing",
+                desc: "Selecting products and the manufacturers and brands behind them.",
+              },
+              {
+                title: "Distribution",
+                desc: "Supplying consumers, retailers, wholesale buyers and distributors in India.",
+              },
+              {
+                title: "Merchant export",
+                desc: "Quoting, coordinating and shipping to buyers outside India.",
+              },
+            ].map((item) => (
+              <div key={item.title} className="rounded-2xl border border-border bg-card p-5">
+                <p className="font-semibold text-foreground">{item.title}</p>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{item.desc}</p>
               </div>
             ))}
           </div>
         </section>
 
-        {/* Promise */}
-        <section className="border-t pt-12 space-y-4">
-          <h2 className="text-2xl font-serif font-bold">Our Promise</h2>
-          <p className="text-muted-foreground leading-relaxed">At Narayani Distributors, what you see is what you get—honest snacking made simple. We promise snacks that are:</p>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {["100% Vegetarian","Baked, not deep-fried","Clean and genuine ingredients","Free from artificial colors","Free from unnecessary additives","Made for guilt-free everyday snacking"].map(item => (
-              <div key={item} className="flex items-start gap-2 bg-green-50 border border-green-100 rounded-xl p-3">
-                <span className="text-green-600 mt-0.5">✓</span>
-                <span className="text-sm text-green-800">{item}</span>
+        {/* Who we serve */}
+        <section className="mt-16 rounded-3xl border border-border bg-secondary/40 p-8 lg:p-10">
+          <h2 className="font-serif text-2xl font-bold">Who we supply</h2>
+          <p className="mt-2 leading-relaxed text-muted-foreground">
+            The same catalogue serves all of them. What changes is the quantity, the pricing and
+            the paperwork.
+          </p>
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {AUDIENCES.map((item) => (
+              <div
+                key={item.label}
+                className="flex items-center gap-2.5 rounded-xl border border-border bg-card px-4 py-3"
+              >
+                <item.icon className="h-4 w-4 shrink-0 text-primary" strokeWidth={1.75} aria-hidden="true" />
+                <span className="text-sm font-medium">{item.label}</span>
               </div>
             ))}
           </div>
-          <p className="text-muted-foreground text-center pt-4 font-medium">No shortcuts. No compromise. No confusing ingredients. Just clean, tasty, and better snacks you can trust.</p>
         </section>
 
-        <div className="text-center py-8 border-t">
-          <p className="text-lg font-serif text-primary italic">"Narayani Distributors is more than a snack brand. It is a smarter way to snack—rooted in trust, powered by taste, and built for modern India."</p>
-        </div>
+        {/* Why Narayani — spec point 22 */}
+        <section className="mt-16">
+          <h2 className="font-serif text-3xl font-bold">Why work with us</h2>
+          <div className="mt-8 grid gap-6 sm:grid-cols-2">
+            {WHY.map((item) => (
+              <div key={item.title} className="flex gap-4">
+                <span
+                  aria-hidden="true"
+                  className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"
+                >
+                  <item.icon className="h-4.5 w-4.5" strokeWidth={1.75} />
+                </span>
+                <div>
+                  <p className="font-semibold text-foreground">{item.title}</p>
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* The one thing we are careful about */}
+        <section className="mt-16 rounded-3xl border border-border bg-card p-8 shadow-sm lg:p-10">
+          <h2 className="font-serif text-2xl font-bold">On what we do and do not claim</h2>
+          <p className="mt-3 leading-relaxed text-muted-foreground">
+            We are a distributor. We do not manufacture, and we do not describe ourselves as
+            though we do. Where a product page shows ingredients, nutrition or an allergen line,
+            those are reproduced from the manufacturer's own pack — including, where it happens,
+            the places where a pack is inconsistent with itself. We say so on the page rather
+            than quietly correcting it, because the pack is the legal document and you should be
+            able to see what it says.
+          </p>
+          <p className="mt-4 leading-relaxed text-muted-foreground">
+            For the same reason there are no certification badges anywhere on this site that we
+            cannot evidence, and no claim about markets served or volumes shipped. When we have
+            something to show you, it will be on the page with the number that proves it.
+          </p>
+        </section>
+
+        {/* Split CTA — the two journeys, same as the homepage */}
+        <section className="mt-16 grid gap-5 sm:grid-cols-2">
+          <div className="flex flex-col rounded-3xl border border-border bg-card p-7 shadow-sm">
+            <h3 className="font-serif text-xl font-bold">Buying for yourself</h3>
+            <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">
+              The full range, priced in rupees, delivered across India.
+            </p>
+            <Button className="mt-5 rounded-full" asChild>
+              <Link href="/shop">
+                Shop products <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+              </Link>
+            </Button>
+          </div>
+          <div className="flex flex-col rounded-3xl border border-border bg-secondary/60 p-7">
+            <h3 className="font-serif text-xl font-bold">Buying for a business</h3>
+            <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">
+              Wholesale in India, or export to your market. Tell us what to price.
+            </p>
+            <Button variant="outline" className="mt-5 rounded-full" asChild>
+              <Link href="/business">
+                Business &amp; export <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+              </Link>
+            </Button>
+          </div>
+        </section>
       </div>
     </SiteShell>
   );

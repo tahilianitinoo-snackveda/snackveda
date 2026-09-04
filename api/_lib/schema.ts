@@ -111,6 +111,25 @@ export const productImagesTable = pgTable("product_images", {
 });
 
 /**
+ * Business identity and registration numbers, editable from Admin → Settings.
+ *
+ * These were hardcoded. `GET /orders/:id/invoice` shipped a seller block carrying
+ * the GSTIN "23AAAAA0000A1Z5", a phone number of "+91 90000 00000" and an email
+ * address that does not exist — on documents issued to real customers under real
+ * GST. Registration numbers are the business's to enter and to change, and they
+ * must never again live in a deployment.
+ *
+ * Key/value rather than columns: the set of registrations a merchant exporter
+ * carries grows (IEC, then RCMC, then a Spice Board number), and each one should
+ * be a row someone types, not a migration someone ships.
+ */
+export const siteSettingsTable = pgTable("site_settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull().default(""),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
  * A wholesale or export enquiry from /request-a-quote.
  *
  * Persisted BEFORE any notification is attempted, because transactional email has

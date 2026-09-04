@@ -11,6 +11,9 @@ import ProductDetail from "@/pages/product-detail";
 import Cart from "@/pages/cart";
 import Checkout from "@/pages/checkout";
 import B2B from "@/pages/b2b";
+import Business from "@/pages/business";
+import Export from "@/pages/export";
+import Wholesale from "@/pages/wholesale";
 import About from "@/pages/about";
 import FAQ from "@/pages/faq";
 import Contact from "@/pages/contact";
@@ -51,6 +54,14 @@ function Router() {
       <Route path="/shop/:slug" component={ProductDetail} />
       <Route path="/cart" component={Cart} />
       <Route path="/checkout" component={Checkout} />
+      {/*
+        The business surface. /business is the hub; /wholesale and /export are its
+        depth. /b2b predates them and is no longer linked from the header or footer —
+        it stays routed so existing links and bookmarks do not 404.
+      */}
+      <Route path="/business" component={Business} />
+      <Route path="/wholesale" component={Wholesale} />
+      <Route path="/export" component={Export} />
       <Route path="/b2b" component={B2B} />
       <Route path="/about" component={About} />
       <Route path="/faq" component={FAQ} />

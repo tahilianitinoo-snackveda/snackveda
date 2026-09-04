@@ -169,7 +169,7 @@ const sections = [
     content: (
       <div className="space-y-8">
         <h2 className="text-2xl font-serif font-bold mb-4">Our Services</h2>
-        <p className="text-muted-foreground">Narayani Distributors is a healthy snacking brand offering premium-quality snacks crafted with better ingredients and delicious flavors.</p>
+        <p className="text-muted-foreground">Narayani Distributors is a merchant exporter and distributor of Indian packaged foods, sourcing premium-quality snacks made with better ingredients by selected manufacturers and brands.</p>
         <div className="space-y-3">
           <h3 className="text-lg font-semibold">We Offer</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">

@@ -24,7 +24,7 @@ export default function About() {
             We believe snacking should never be a compromise. It should be tasty, nourishing, and made with ingredients you can trust.
           </p>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 pt-4">
-            {["100% Vegetarian","Pure, quality ingredients","Healthy and guilt-free","Tasty and satisfying","Baked, not fried","Crafted for everyday wellness"].map(item => (
+            {["100% Vegetarian","Pure, quality ingredients","Healthy and guilt-free","Tasty and satisfying","Baked, not fried","Chosen for everyday wellness"].map(item => (
               <div key={item} className="bg-muted border border-border rounded-xl p-3 text-sm text-foreground font-medium text-center">{item}</div>
             ))}
           </div>

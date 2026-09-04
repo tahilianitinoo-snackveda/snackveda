@@ -6,7 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -17,19 +18,59 @@ import { Switch } from "@/components/ui/switch";
 import { Price } from "@/components/ui/price";
 import { useState } from "react";
 
+/**
+ * Spec point 42 — everything needed to publish a product without a developer.
+ *
+ * ─── INGREDIENTS AND NUTRITION: READ BEFORE TYPING ANYTHING IN THEM ─────────
+ * `artifacts/narayani/src/data/product-panels.json` holds careful transcriptions
+ * of fourteen physical packs, complete with the disclosures that explain where a
+ * pack contradicts itself. That file TAKES PRECEDENCE over the fields here, and
+ * the product page renders it in preference. These fields are for products with no
+ * transcription — do not use them to retype a panel that already has one, or the
+ * two will drift and only one of them will be on the page.
+ *
+ * ─── EVERY OPTIONAL FIELD MEANS "SHOW NOTHING" WHEN BLANK ──────────────────
+ * Not a dash, not a placeholder. A blank allergen box on a live product means the
+ * page shows no allergen line at all, which is the correct behaviour for a pack
+ * that declares none and the correct behaviour for one nobody has got to yet.
+ */
 const productSchema = z.object({
   name: z.string().min(2),
   slug: z.string().min(2),
   description: z.string().optional(),
   category: z.enum(["healthy_chips", "makhana", "superpuffs"]),
+  subcategory: z.string().optional(),
   b2cPrice: z.coerce.number().min(1),
   b2bPrice: z.coerce.number().optional(),
+  mrp: z.coerce.number().optional(),
   moq: z.coerce.number().optional(),
+  cartonQty: z.coerce.number().optional(),
   weightGrams: z.coerce.number().min(1),
   stockQty: z.coerce.number().min(0),
   gstPercent: z.coerce.number().min(0).max(100),
   hsnCode: z.string().optional(),
   shelfLifeMonths: z.coerce.number().min(1).optional(),
+  sku: z.string().optional(),
+
+  // Spec 43 — multi-brand. These three are different companies and must stay so.
+  brand: z.string().optional(),
+  manufacturer: z.string().optional(),
+  manufacturerFssai: z.string().optional(),
+  countryOfOrigin: z.string().optional(),
+
+  ingredients: z.string().optional(),
+  nutrition: z.string().optional(),
+  allergens: z.string().optional(),
+  storage: z.string().optional(),
+  highlights: z.string().optional(),
+
+  wholesaleAvailable: z.boolean().optional(),
+  exportAvailable: z.boolean().optional(),
+  privateLabelAvailable: z.boolean().optional(),
+
+  seoTitle: z.string().optional(),
+  metaDescription: z.string().optional(),
+  status: z.enum(["active", "inactive", "out_of_stock"]).optional(),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -162,54 +203,108 @@ function ProductsInner() {
   const [isOpen, setIsOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
 
+  /** A new product starts empty everywhere the storefront can show nothing. */
+  const EMPTY: ProductFormValues = {
+    name: "", slug: "", description: "", category: "healthy_chips", subcategory: "",
+    b2cPrice: 0, weightGrams: 60, stockQty: 100, gstPercent: 5, hsnCode: "210690",
+    sku: "", brand: "", manufacturer: "", manufacturerFssai: "", countryOfOrigin: "India",
+    ingredients: "", nutrition: "", allergens: "", storage: "", highlights: "",
+    wholesaleAvailable: true, exportAvailable: true, privateLabelAvailable: false,
+    seoTitle: "", metaDescription: "", status: "active",
+  };
+
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
-    defaultValues: {
-      name: "", slug: "", description: "", category: "healthy_chips", b2cPrice: 0,
-      weightGrams: 60, stockQty: 100, gstPercent: 5, hsnCode: "210690"
-    }
+    defaultValues: EMPTY,
   });
 
   const openEdit = (p: any) => {
     setEditingProduct(p);
     form.reset({
+      ...EMPTY,
       name: p.name,
       slug: p.slug,
       description: p.description ?? "",
       category: p.category,
+      subcategory: p.subcategory ?? "",
       b2cPrice: p.b2cPrice,
       b2bPrice: p.b2bPrice,
+      mrp: p.mrp ?? undefined,
       moq: p.moq,
+      cartonQty: p.cartonQty,
       weightGrams: p.weightGrams,
       stockQty: p.stockQty,
       gstPercent: p.gstPercent,
       hsnCode: p.hsnCode ?? "210690",
       shelfLifeMonths: p.shelfLifeMonths ?? 6,
+      sku: p.sku ?? "",
+      brand: p.brand ?? "",
+      manufacturer: p.manufacturer ?? "",
+      manufacturerFssai: p.manufacturerFssai ?? "",
+      countryOfOrigin: p.countryOfOrigin ?? "",
+      ingredients: p.ingredients ?? "",
+      nutrition: p.nutrition ?? "",
+      allergens: p.allergens ?? "",
+      storage: p.storage ?? "",
+      highlights: p.highlights ?? "",
+      wholesaleAvailable: p.wholesaleAvailable ?? true,
+      exportAvailable: p.exportAvailable ?? true,
+      privateLabelAvailable: p.privateLabelAvailable ?? false,
+      seoTitle: p.seoTitle ?? "",
+      metaDescription: p.metaDescription ?? "",
+      status: p.status ?? "active",
     });
     setIsOpen(true);
   };
 
   const openCreate = () => {
     setEditingProduct(null);
-    form.reset({ name: "", slug: "", description: "", category: "healthy_chips", b2cPrice: 0, weightGrams: 60, stockQty: 100, gstPercent: 5, hsnCode: "210690" });
+    form.reset(EMPTY);
     setIsOpen(true);
   };
 
   const onSubmit = (values: ProductFormValues) => {
+    /*
+      An empty text box means "clear this field", which has to reach the API as
+      null — not as "" and not as an absent key. The API distinguishes the three:
+      undefined leaves a column alone, null clears it. Sending "" instead would
+      put an empty string in a column the storefront then treats as present.
+    */
+    const orNull = (v: string | undefined) => (v && v.trim() ? v.trim() : null);
+
     const data = {
       name: values.name,
       slug: values.slug,
       category: values.category,
-      description: values.description ?? null,
+      description: orNull(values.description),
       b2cPrice: values.b2cPrice,
       b2bPrice: values.b2bPrice ?? values.b2cPrice * 0.75,
       moq: values.moq ?? 1,
-      cartonQty: 1,
+      cartonQty: values.cartonQty ?? 1,
       weightGrams: values.weightGrams,
       stockQty: values.stockQty,
       gstPercent: values.gstPercent,
       hsnCode: values.hsnCode ?? "210690",
       shelfLifeMonths: Number(values.shelfLifeMonths) || 6,
+      status: values.status ?? "active",
+
+      subcategory: orNull(values.subcategory),
+      sku: orNull(values.sku),
+      mrp: values.mrp ? Number(values.mrp) : null,
+      brand: orNull(values.brand),
+      manufacturer: orNull(values.manufacturer),
+      manufacturerFssai: orNull(values.manufacturerFssai),
+      countryOfOrigin: orNull(values.countryOfOrigin),
+      ingredients: orNull(values.ingredients),
+      nutrition: orNull(values.nutrition),
+      allergens: orNull(values.allergens),
+      storage: orNull(values.storage),
+      highlights: orNull(values.highlights),
+      wholesaleAvailable: values.wholesaleAvailable ?? true,
+      exportAvailable: values.exportAvailable ?? true,
+      privateLabelAvailable: values.privateLabelAvailable ?? false,
+      seoTitle: orNull(values.seoTitle),
+      metaDescription: orNull(values.metaDescription),
     };
 
     if (editingProduct) {
@@ -324,6 +419,158 @@ function ProductsInner() {
                     <FormItem><FormLabel>Shelf Life (Months)</FormLabel><FormControl><Input type="number" min="1" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                 </div>
+
+                {/*
+                  Spec point 42 — the rest of it. Collapsed behind three headings
+                  rather than added to the flat list above: a form with thirty
+                  visible fields is a form nobody fills in correctly.
+
+                  Every field below is optional and every one of them renders
+                  NOTHING on the storefront when left blank. That is the contract —
+                  see the comment on productSchema.
+                */}
+                <div className="grid grid-cols-2 gap-4 border-t pt-5">
+                  <FormField control={form.control} name="cartonQty" render={({ field }) => (
+                    <FormItem><FormLabel>Carton Qty</FormLabel><FormControl><Input type="number" min="1" {...field} /></FormControl><FormMessage /></FormItem>
+                  )} />
+                  <FormField control={form.control} name="mrp" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>MRP (₹)</FormLabel>
+                      <FormControl><Input type="number" step="0.01" {...field} /></FormControl>
+                      <FormDescription className="text-xs">Printed on the pack. Not the same as the selling price.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                </div>
+
+                <details className="rounded-lg border bg-muted/20 p-4" open>
+                  <summary className="cursor-pointer text-sm font-semibold">Brand &amp; manufacturer</summary>
+                  <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                    Narayani distributes; it does not manufacture. The brand on the pack and
+                    the company that made it are two different things, and both are shown on
+                    the product page against their own names.
+                  </p>
+                  <div className="mt-4 space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField control={form.control} name="brand" render={({ field }) => (
+                        <FormItem><FormLabel>Brand on the pack</FormLabel><FormControl><Input placeholder="e.g. Twirtles" {...field} /></FormControl><FormMessage /></FormItem>
+                      )} />
+                      <FormField control={form.control} name="sku" render={({ field }) => (
+                        <FormItem><FormLabel>SKU</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                      )} />
+                    </div>
+                    <FormField control={form.control} name="manufacturer" render={({ field }) => (
+                      <FormItem><FormLabel>Manufactured by</FormLabel><FormControl><Input placeholder="Company name as printed" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField control={form.control} name="manufacturerFssai" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Their FSSAI licence</FormLabel>
+                          <FormControl><Input {...field} /></FormControl>
+                          <FormDescription className="text-xs">The manufacturer's, not ours.</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+                      <FormField control={form.control} name="countryOfOrigin" render={({ field }) => (
+                        <FormItem><FormLabel>Country of origin</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                      )} />
+                    </div>
+                    <FormField control={form.control} name="subcategory" render={({ field }) => (
+                      <FormItem><FormLabel>Subcategory</FormLabel><FormControl><Input placeholder="Free text, for grouping within a category" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                  </div>
+                </details>
+
+                <details className="rounded-lg border bg-muted/20 p-4">
+                  <summary className="cursor-pointer text-sm font-semibold">Pack information</summary>
+                  <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                    Fourteen products already have a transcribed pack panel in the code, and
+                    that <strong>takes precedence over anything typed here</strong>. Use these
+                    fields for products that do not have one. Copy exactly what the pack says,
+                    including anything on it that looks wrong.
+                  </p>
+                  <div className="mt-4 space-y-4">
+                    <FormField control={form.control} name="ingredients" render={({ field }) => (
+                      <FormItem><FormLabel>Ingredients</FormLabel><FormControl><Textarea rows={3} {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name="allergens" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Allergen declaration</FormLabel>
+                        <FormControl><Input placeholder="Exactly as printed" {...field} /></FormControl>
+                        <FormDescription className="text-xs">Leave blank if the pack declares none. Do not write "none".</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="nutrition" render={({ field }) => (
+                      <FormItem><FormLabel>Nutrition</FormLabel><FormControl><Textarea rows={4} placeholder="One nutrient per line, as printed" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField control={form.control} name="storage" render={({ field }) => (
+                        <FormItem><FormLabel>Storage</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                      )} />
+                      <FormField control={form.control} name="highlights" render={({ field }) => (
+                        <FormItem><FormLabel>Highlights</FormLabel><FormControl><Input placeholder="Comma separated" {...field} /></FormControl><FormMessage /></FormItem>
+                      )} />
+                    </div>
+                  </div>
+                </details>
+
+                <details className="rounded-lg border bg-muted/20 p-4">
+                  <summary className="cursor-pointer text-sm font-semibold">Channels &amp; SEO</summary>
+                  <div className="mt-4 space-y-4">
+                    <div className="space-y-2">
+                      {([
+                        ["wholesaleAvailable", "Offer for wholesale"],
+                        ["exportAvailable", "Offer for export"],
+                        ["privateLabelAvailable", "Available for private label"],
+                      ] as const).map(([key, label]) => (
+                        <FormField key={key} control={form.control} name={key} render={({ field }) => (
+                          <FormItem className="flex flex-row items-center gap-2 space-y-0">
+                            <FormControl>
+                              <input
+                                type="checkbox"
+                                className="h-4 w-4 rounded border-input"
+                                checked={!!field.value}
+                                onChange={(e) => field.onChange(e.target.checked)}
+                              />
+                            </FormControl>
+                            <FormLabel className="font-normal">{label}</FormLabel>
+                          </FormItem>
+                        )} />
+                      ))}
+                    </div>
+                    <FormField control={form.control} name="status" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <FormControl>
+                          <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" {...field}>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="out_of_stock">Out of stock</option>
+                          </select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="seoTitle" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>SEO title</FormLabel>
+                        <FormControl><Input {...field} /></FormControl>
+                        <FormDescription className="text-xs">Blank keeps the title the page builds from the product name and weight.</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="metaDescription" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Meta description</FormLabel>
+                        <FormControl><Textarea rows={2} {...field} /></FormControl>
+                        <FormDescription className="text-xs">Around 150 characters. Blank falls back to the product description.</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                  </div>
+                </details>
+
                 <Button type="submit" className="w-full" disabled={createProduct.isPending || updateProduct.isPending}>
                   {(createProduct.isPending || updateProduct.isPending) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} {editingProduct ? "Save Changes" : "Create Product"}
                 </Button>

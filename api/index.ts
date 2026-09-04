@@ -88,8 +88,70 @@ async function getProductImages(productId: string) {
   }
 }
 function serializeProduct(p: typeof productsTable.$inferSelect, images?: any[]) {
-  return { id: p.id, name: p.name, slug: p.slug, category: p.category, variant: p.variant, b2cPrice: Number(p.b2cPrice), b2bPrice: Number(p.b2bPrice), moq: p.moq, cartonQty: p.cartonQty, gstPercent: Number(p.gstPercent), hsnCode: p.hsnCode, shelfLifeMonths: p.shelfLifeMonths, weightGrams: p.weightGrams, description: p.description, stockQty: p.stockQty, status: p.status, sortOrder: p.sortOrder, imageUrl: p.imageUrl, images: images ?? [] };
+  return {
+    id: p.id, name: p.name, slug: p.slug, category: p.category, variant: p.variant,
+    b2cPrice: Number(p.b2cPrice), b2bPrice: Number(p.b2bPrice),
+    moq: p.moq, cartonQty: p.cartonQty, gstPercent: Number(p.gstPercent), hsnCode: p.hsnCode,
+    shelfLifeMonths: p.shelfLifeMonths, weightGrams: p.weightGrams, description: p.description,
+    stockQty: p.stockQty, status: p.status, sortOrder: p.sortOrder, imageUrl: p.imageUrl,
+
+    // Spec 42 / 43. Null stays null all the way to the page — a field nobody has
+    // filled in must render as absent, not as an empty string that looks answered.
+    brand: p.brand, manufacturer: p.manufacturer, manufacturerFssai: p.manufacturerFssai,
+    countryOfOrigin: p.countryOfOrigin, subcategory: p.subcategory, sku: p.sku,
+    mrp: p.mrp == null ? null : Number(p.mrp),
+    ingredients: p.ingredients, nutrition: p.nutrition, allergens: p.allergens,
+    storage: p.storage, highlights: p.highlights,
+    wholesaleAvailable: p.wholesaleAvailable, exportAvailable: p.exportAvailable,
+    privateLabelAvailable: p.privateLabelAvailable,
+    seoTitle: p.seoTitle, metaDescription: p.metaDescription,
+
+    images: images ?? [],
+  };
 }
+
+/**
+ * The product fields spec point 42 asks the admin to be able to set, over and above
+ * the ones the create/update bodies already carried. Shared by POST and PATCH so
+ * the two can never drift — the previous pair had already drifted (`sortOrder` was
+ * settable on create and not on update).
+ *
+ * Everything is `.nullish()`: clearing a field is a real edit, and an admin who
+ * empties the allergen box means "this pack declares none", which must reach the
+ * database as NULL rather than being ignored as a missing key.
+ */
+const ProductExtraFields = {
+  brand: z.string().nullish(),
+  manufacturer: z.string().nullish(),
+  manufacturerFssai: z.string().nullish(),
+  countryOfOrigin: z.string().nullish(),
+  subcategory: z.string().nullish(),
+  sku: z.string().nullish(),
+  mrp: z.number().nullish(),
+  ingredients: z.string().nullish(),
+  nutrition: z.string().nullish(),
+  allergens: z.string().nullish(),
+  storage: z.string().nullish(),
+  highlights: z.string().nullish(),
+  wholesaleAvailable: z.boolean().optional(),
+  exportAvailable: z.boolean().optional(),
+  privateLabelAvailable: z.boolean().optional(),
+  seoTitle: z.string().nullish(),
+  metaDescription: z.string().nullish(),
+};
+
+/**
+ * Turn a validated body into the columns to write, dropping keys the caller did not
+ * send. `undefined` means "not supplied, leave it alone"; `null` means "clear it".
+ * Without this distinction a PATCH of one field would blank every other.
+ */
+function pickSupplied<T extends Record<string, unknown>>(body: T, keys: string[]): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const key of keys) if (body[key] !== undefined) out[key] = body[key];
+  return out;
+}
+
+const PRODUCT_EXTRA_KEYS = Object.keys(ProductExtraFields);
 
 /**
  * A review as the storefront sees it.
@@ -855,7 +917,7 @@ export default async function handler(req, res) {
         return ok(rows.map(p => serializeProduct(p, allImages.filter(i => i.productId === p.id).map(i => ({ id: i.id, url: i.url, altText: i.altText, isPrimary: i.isPrimary, sortOrder: i.sortOrder })))));
       }
       if (path === "/admin/products" && method === "POST") {
-        const b = z.object({ name: z.string(), slug: z.string(), category: z.string(), variant: z.string().nullish(), b2cPrice: z.number(), b2bPrice: z.number(), moq: z.number().default(1), cartonQty: z.number().default(1), gstPercent: z.number().default(5), hsnCode: z.string().default("21069099"), shelfLifeMonths: z.number().default(6), weightGrams: z.number().default(60), description: z.string().nullish(), stockQty: z.number().default(100), status: z.string().default("active"), sortOrder: z.number().default(0), imageUrl: z.string().nullish() }).safeParse(parsedBody);
+        const b = z.object({ name: z.string(), slug: z.string(), category: z.string(), variant: z.string().nullish(), b2cPrice: z.number(), b2bPrice: z.number(), moq: z.number().default(1), cartonQty: z.number().default(1), gstPercent: z.number().default(5), hsnCode: z.string().default("21069099"), shelfLifeMonths: z.number().default(6), weightGrams: z.number().default(60), description: z.string().nullish(), stockQty: z.number().default(100), status: z.string().default("active"), sortOrder: z.number().default(0), imageUrl: z.string().nullish(), ...ProductExtraFields }).safeParse(parsedBody);
         if (!b.success) return err("Invalid product data", "VALIDATION_ERROR", 400);
         const p = b.data;
         // name/slug/category/moq/cartonQty/hsnCode/shelfLifeMonths/weightGrams are restated
@@ -865,15 +927,21 @@ export default async function handler(req, res) {
         // value is a no-op at runtime — the schema requires or defaults every one of them, so a
         // successful parse always carries all eight — but it keeps the insert fully checked, so
         // adding a new required column still fails here instead of being silently dropped.
-        const [row] = await db.insert(productsTable).values({ ...p, name: p.name, slug: p.slug, category: p.category, moq: p.moq, cartonQty: p.cartonQty, hsnCode: p.hsnCode, shelfLifeMonths: p.shelfLifeMonths, weightGrams: p.weightGrams, b2cPrice: String(p.b2cPrice), b2bPrice: String(p.b2bPrice), gstPercent: String(p.gstPercent) }).returning();
+        // `mrp` is numeric in the database and arrives as a JSON number, so it needs
+        // the same String() treatment as the two prices. Null stays null.
+        const [row] = await db.insert(productsTable).values({ ...p, name: p.name, slug: p.slug, category: p.category, moq: p.moq, cartonQty: p.cartonQty, hsnCode: p.hsnCode, shelfLifeMonths: p.shelfLifeMonths, weightGrams: p.weightGrams, b2cPrice: String(p.b2cPrice), b2bPrice: String(p.b2bPrice), gstPercent: String(p.gstPercent), mrp: p.mrp == null ? null : String(p.mrp) }).returning();
         return ok(serializeProduct(row), 201);
       }
       const adminProductMatch = path.match(/^\/admin\/products\/([^/]+)$/);
       if (adminProductMatch && method === "PATCH") {
-        const b = z.object({ name: z.string().optional(), slug: z.string().optional(), variant: z.string().nullish(), category: z.string().optional(), b2cPrice: z.number().optional(), b2bPrice: z.number().optional(), moq: z.number().optional(), cartonQty: z.number().optional(), stockQty: z.number().optional(), gstPercent: z.number().optional(), hsnCode: z.string().optional(), shelfLifeMonths: z.number().optional(), weightGrams: z.number().optional(), status: z.string().optional(), description: z.string().nullish(), imageUrl: z.string().nullish() }).safeParse(parsedBody);
+        const b = z.object({ name: z.string().optional(), slug: z.string().optional(), variant: z.string().nullish(), category: z.string().optional(), b2cPrice: z.number().optional(), b2bPrice: z.number().optional(), moq: z.number().optional(), cartonQty: z.number().optional(), stockQty: z.number().optional(), gstPercent: z.number().optional(), hsnCode: z.string().optional(), shelfLifeMonths: z.number().optional(), weightGrams: z.number().optional(), status: z.string().optional(), sortOrder: z.number().optional(), description: z.string().nullish(), imageUrl: z.string().nullish(), ...ProductExtraFields }).safeParse(parsedBody);
         if (!b.success) return err("Invalid data", "VALIDATION_ERROR", 400);
-        const update: any = {};
         const d = b.data;
+        // Only keys the caller actually sent. `undefined` means "leave it alone",
+        // `null` means "clear it" — an admin emptying the allergen box means the pack
+        // declares none, and that has to reach the column rather than be ignored.
+        const update: any = pickSupplied(d as Record<string, unknown>, PRODUCT_EXTRA_KEYS);
+        if (update.mrp !== undefined && update.mrp !== null) update.mrp = String(update.mrp);
         if (d.name !== undefined) update.name = d.name;
         if (d.slug !== undefined) update.slug = d.slug;
         if (d.variant !== undefined) update.variant = d.variant;
@@ -890,6 +958,8 @@ export default async function handler(req, res) {
         if (d.status !== undefined) update.status = d.status;
         if (d.description !== undefined) update.description = d.description;
         if (d.imageUrl !== undefined) update.imageUrl = d.imageUrl;
+        if (d.sortOrder !== undefined) update.sortOrder = d.sortOrder;
+        update.updatedAt = new Date();
         const [row] = await db.update(productsTable).set(update).where(eq(productsTable.id, adminProductMatch[1])).returning();
         if (!row) return err("Product not found", "NOT_FOUND", 404);
         const images = await getProductImages(row.id);

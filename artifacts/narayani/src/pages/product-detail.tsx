@@ -26,6 +26,183 @@ const CATEGORY_LABELS: Record<string, string> = {
   superpuffs: "Superpuffs",
 };
 
+/**
+ * Pack information entered in Admin → Products, for a product with no transcribed
+ * panel — spec point 42.
+ *
+ * ─── THIS IS THE FALLBACK, NOT THE SOURCE OF RECORD ─────────────────────────
+ * `product-panels.json` is the source of record: fourteen products have a careful
+ * transcription of the physical pack, with the disclosures that explain where the
+ * pack contradicts itself, and `PackPanelSection` renders those. This component
+ * renders ONLY when `getPackPanel` returned null. The two never appear together,
+ * so a shopper is never shown two different ingredient lists for one product.
+ *
+ * It is visibly plainer than the transcribed panel on purpose. The transcribed one
+ * can say "the %RDA footnote on this pack cites a serving weight its own figures do
+ * not use"; this one can only repeat what somebody typed. Presenting typed-in text
+ * with the same authority as a photographed panel would overstate what we know.
+ *
+ * Every field is conditional. Nothing renders a heading with nothing under it.
+ */
+function AdminPackInfo({ product }: { product: Product }) {
+  const p = product as Product & {
+    brand?: string | null; manufacturer?: string | null; manufacturerFssai?: string | null;
+    countryOfOrigin?: string | null; ingredients?: string | null; nutrition?: string | null;
+    allergens?: string | null; storage?: string | null; highlights?: string | null;
+    mrp?: number | null;
+  };
+
+  const hasAny =
+    p.ingredients || p.nutrition || p.allergens || p.storage || p.highlights ||
+    p.manufacturer || p.brand || p.countryOfOrigin;
+  if (!hasAny) return null;
+
+  return (
+    <section aria-labelledby="pack-info-heading" className="mt-12 border-t border-border pt-12">
+      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">
+        On the pack
+      </p>
+      <h2 id="pack-info-heading" className="mt-2 font-serif text-3xl font-bold text-foreground">
+        Ingredients &amp; product information
+      </h2>
+
+      <div className="mt-8 grid gap-8 lg:grid-cols-2">
+        <div className="space-y-6">
+          {p.ingredients && (
+            <div>
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                Ingredients
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-foreground">{p.ingredients}</p>
+            </div>
+          )}
+
+          {/*
+            An allergen line renders only when one was entered. Blank does NOT mean
+            "contains no allergens" — it means nobody has recorded what the pack
+            says, and printing "no allergens" off the back of an empty column would
+            be inventing a safety claim.
+          */}
+          {p.allergens && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-amber-900">
+                <AlertTriangle className="h-4 w-4" aria-hidden="true" />
+                Allergen information
+              </h3>
+              <p className="mt-1.5 text-sm font-medium leading-relaxed text-amber-900">
+                {p.allergens}
+              </p>
+            </div>
+          )}
+
+          {p.storage && (
+            <div>
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                Storage
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-foreground">{p.storage}</p>
+            </div>
+          )}
+
+          {p.highlights && (
+            <div>
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                Highlights
+              </h3>
+              <ul className="mt-2 flex flex-wrap gap-2">
+                {p.highlights.split(",").map((h) => h.trim()).filter(Boolean).map((h) => (
+                  <li key={h} className="rounded-full border border-border bg-secondary px-3 py-1 text-xs font-medium">
+                    {h}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-6">
+          {p.nutrition && (
+            <div>
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                Nutrition
+              </h3>
+              <pre className="mt-2 whitespace-pre-wrap rounded-xl border border-border bg-card p-4 font-sans text-sm leading-relaxed text-foreground">
+                {p.nutrition}
+              </pre>
+            </div>
+          )}
+
+          {/*
+            Spec point 43. Brand, distributor and manufacturer are three separate
+            companies and each is labelled as what it is. Narayani appears as the
+            distributor and nothing else — the single most important line on this
+            page for a business that does not make anything.
+          */}
+          {(p.brand || p.manufacturer || p.countryOfOrigin || p.mrp) && (
+            <div className="rounded-xl border border-border bg-card p-5">
+              <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                <Factory className="h-4 w-4" aria-hidden="true" />
+                Who makes it
+              </h3>
+              <dl className="mt-3 space-y-3 text-sm">
+                {p.brand && (
+                  <div>
+                    <dt className="text-xs uppercase tracking-wide text-muted-foreground">Brand</dt>
+                    <dd className="mt-0.5 font-medium text-foreground">{p.brand}</dd>
+                  </div>
+                )}
+                {p.manufacturer && (
+                  <div>
+                    <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                      Manufactured by
+                    </dt>
+                    <dd className="mt-0.5 font-medium text-foreground">{p.manufacturer}</dd>
+                    {p.manufacturerFssai && (
+                      <dd className="mt-0.5 font-mono text-xs text-muted-foreground">
+                        FSSAI {p.manufacturerFssai}
+                      </dd>
+                    )}
+                  </div>
+                )}
+                <div>
+                  <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                    Distributed by
+                  </dt>
+                  <dd className="mt-0.5 font-medium text-foreground">Narayani Distributors</dd>
+                </div>
+                {p.countryOfOrigin && (
+                  <div>
+                    <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                      Country of origin
+                    </dt>
+                    <dd className="mt-0.5 font-medium text-foreground">{p.countryOfOrigin}</dd>
+                  </div>
+                )}
+                {p.mrp != null && (
+                  <div>
+                    <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                      MRP printed on pack
+                    </dt>
+                    <dd className="mt-0.5 font-medium text-foreground">
+                      &#8377;{p.mrp} <span className="font-normal text-muted-foreground">(incl. of all taxes)</span>
+                    </dd>
+                  </div>
+                )}
+              </dl>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <p className="mt-8 text-xs leading-relaxed text-muted-foreground">
+        Reproduced from the manufacturer's pack. Narayani Distributors is a merchant exporter
+        and distributor and does not manufacture these products. Always check the pack in hand
+        before relying on any figure, particularly if you have an allergy.
+      </p>
+    </section>
+  );
+}
+
 // Image gallery component with thumbnail strip
 function ProductImageGallery({ product, getCategoryGradient }: { product: any; getCategoryGradient: (c: string) => string }) {
   const images = product.images?.length > 0 ? product.images : (product.imageUrl ? [{ id: "main", url: product.imageUrl, altText: product.name, isPrimary: true }] : []);
@@ -809,8 +986,15 @@ export default function ProductDetail() {
             </div>
           </div>
 
-          {/* Full width, below the buy box: the table needs the room. */}
-          {packPanel && <PackPanelSection panel={packPanel} />}
+          {/*
+            Full width, below the buy box: the table needs the room.
+
+            Exactly one of these renders. The transcribed panel is the source of
+            record and wins; AdminPackInfo is the fallback for a product nobody has
+            photographed yet. Showing both would put two ingredient lists on one
+            page, and a shopper has no way to know which one binds.
+          */}
+          {packPanel ? <PackPanelSection panel={packPanel} /> : <AdminPackInfo product={product} />}
 
           {/*
             Reviews sit below the pack panel deliberately. What is printed on the

@@ -37,6 +37,46 @@ export const productsTable = pgTable("products", {
   status: text("status").notNull().default("active"),
   sortOrder: integer("sort_order").notNull().default(0),
   imageUrl: text("image_url"),
+
+  /*
+    Spec point 42 — everything the admin screen needs to publish a product without
+    a developer, and spec point 43 — multi-brand.
+
+    `brand` is the brand printed on the pack, which is NOT Narayani: this business
+    distributes other companies' products, and a product page must be able to say
+    whose. `manufacturer` is the company that actually made it, which is a third
+    thing again. Keeping distributor, brand owner and maker distinct is the whole
+    point of these three columns.
+
+    Ingredients, nutrition and allergens: `artifacts/narayani/src/data/
+    product-panels.json` holds careful transcriptions of fourteen physical packs
+    and TAKES PRECEDENCE over these columns. They exist so a product with no
+    transcription can still carry its legally required information.
+
+    Everything here is nullable with no default. A field nobody has filled in
+    renders as absent, never as a plausible-looking blank.
+  */
+  brand: text("brand"),
+  manufacturer: text("manufacturer"),
+  manufacturerFssai: text("manufacturer_fssai"),
+  countryOfOrigin: text("country_of_origin"),
+  subcategory: text("subcategory"),
+  sku: text("sku"),
+  /** The printed maximum retail price. A legal declaration, not b2cPrice. */
+  mrp: numeric("mrp", { precision: 10, scale: 2 }),
+  ingredients: text("ingredients"),
+  nutrition: text("nutrition"),
+  allergens: text("allergens"),
+  storage: text("storage"),
+  highlights: text("highlights"),
+  wholesaleAvailable: boolean("wholesale_available").notNull().default(true),
+  exportAvailable: boolean("export_available").notNull().default(true),
+  /** A claim about what a manufacturing partner will do. Off unless set per product. */
+  privateLabelAvailable: boolean("private_label_available").notNull().default(false),
+  /** Overrides only. Blank keeps the title the product page generates for itself. */
+  seoTitle: text("seo_title"),
+  metaDescription: text("meta_description"),
+
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

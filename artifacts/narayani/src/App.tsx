@@ -14,6 +14,7 @@ import B2B from "@/pages/b2b";
 import Business from "@/pages/business";
 import Export from "@/pages/export";
 import Wholesale from "@/pages/wholesale";
+import RequestAQuote from "@/pages/request-a-quote";
 import About from "@/pages/about";
 import FAQ from "@/pages/faq";
 import Contact from "@/pages/contact";
@@ -62,6 +63,8 @@ function Router() {
       <Route path="/business" component={Business} />
       <Route path="/wholesale" component={Wholesale} />
       <Route path="/export" component={Export} />
+      {/* The conversion point every B2B call to action lands on. */}
+      <Route path="/request-a-quote" component={RequestAQuote} />
       <Route path="/b2b" component={B2B} />
       <Route path="/about" component={About} />
       <Route path="/faq" component={FAQ} />

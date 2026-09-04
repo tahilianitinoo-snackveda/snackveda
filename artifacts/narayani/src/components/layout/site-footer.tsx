@@ -13,30 +13,47 @@ export function SiteFooter() {
   return (
     <footer className="bg-muted py-12 mt-auto">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-          <div>
-            <Link href="/" className="flex flex-col items-start mb-4">
+        <div className="grid grid-cols-2 gap-8 mb-8 lg:grid-cols-6">
+          <div className="col-span-2 lg:col-span-2">
+            <Link href="/" className="flex flex-col items-start mb-3">
               <span className="font-serif text-2xl font-bold tracking-tight text-primary">Narayani Distributors</span>
             </Link>
+            <p className="text-sm font-medium text-foreground mb-3">
+              Narayani Distributors — Merchant Exporter | Distributor | Indian Food Products
+            </p>
             <p className="text-muted-foreground text-sm max-w-xs">
-              Clean Ingredients. Bold Indian Flavors. Made for Everyday Life. Premium snacks crafted for mindful eating and joyful moments.
+              Clean Ingredients. Bold Indian Flavors. Thoughtfully sourced and distributed for
+              mindful eating and joyful moments, every day.
             </p>
           </div>
           <div>
             <h3 className="font-semibold mb-4">Shop</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link href="/shop" className="hover:text-foreground transition-colors">All Products</Link></li>
-              <li><Link href="/shop?category=chips" className="hover:text-foreground transition-colors">Healthy Chips</Link></li>
+              <li><Link href="/shop?category=healthy_chips" className="hover:text-foreground transition-colors">Healthy Chips</Link></li>
               <li><Link href="/shop?category=makhana" className="hover:text-foreground transition-colors">Makhana</Link></li>
               <li><Link href="/shop?category=superpuffs" className="hover:text-foreground transition-colors">Superpuffs</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="font-semibold mb-4">Business</h3>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li><Link href="/business" className="hover:text-foreground transition-colors">Business Overview</Link></li>
+              <li><Link href="/wholesale" className="hover:text-foreground transition-colors">Wholesale</Link></li>
+              <li><Link href="/export" className="hover:text-foreground transition-colors">Export / International</Link></li>
+              <li><Link href="/request-a-quote" className="hover:text-foreground transition-colors">Request a Quote</Link></li>
             </ul>
           </div>
           <div>
             <h3 className="font-semibold mb-4">Company</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link href="/about" className="hover:text-foreground transition-colors">About Us</Link></li>
-              <li><Link href="/b2b" className="hover:text-foreground transition-colors">Wholesale & B2B</Link></li>
-              <li><Link href="/blog" className="hover:text-foreground transition-colors">Blog</Link></li>
+              <li><Link href="/blog" className="hover:text-foreground transition-colors">Resources</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="font-semibold mb-4">Support</h3>
+            <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link href="/faq" className="hover:text-foreground transition-colors">FAQ</Link></li>
               <li><Link href="/policies" className="hover:text-foreground transition-colors">Policies</Link></li>
               <li><Link href="/contact" className="hover:text-foreground transition-colors">Contact</Link></li>

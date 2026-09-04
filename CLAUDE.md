@@ -94,7 +94,8 @@ All of these are idempotent — safe to re-run — except where noted.
 | `analytics_settings.sql` | **Applied.** GA4 / Pixel / LinkedIn / GSC keys, empty. |
 | `pricing_rules_settings.sql` | **Applied.** Discount tiers and thresholds, seeded with the values already live. |
 | `fix_quinoa_weight.sql` | **Superseded** — the pricing migration set every chip to 150 g / 6 months. |
-| `rebrand_narayani.sql` | **Not applied.** Changes the admin login. |
+| `fix_blog_authorship.sql` | **Applied** 05 Sep 2026. One post credited to "SnackVeda Team". |
+| `rebrand_narayani.sql` | **Applied** 05 Sep 2026. Admin login is now `admin@narayanidistributors.com`; the password hash was not touched. No SnackVeda string remains in `users`, `blog_posts` or `products`. |
 
 ## What the business controls without a developer
 

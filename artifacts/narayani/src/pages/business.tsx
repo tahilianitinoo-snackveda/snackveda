@@ -85,8 +85,8 @@ const TERMS = [
   },
   {
     icon: Package,
-    title: "Minimum order quantity per product",
-    desc: "Every product carries its own MOQ, and wholesale quantities go up in multiples of it.",
+    title: "Minimum order quantity",
+    desc: "A minimum applies to wholesale and export, agreed with you per enquiry rather than fixed per product — it moves with the destination and the mix.",
   },
   {
     icon: Receipt,

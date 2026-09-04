@@ -54,7 +54,7 @@ export default function Shop() {
         {isB2BApproved && (
           <div className="mb-8 bg-primary/10 text-primary border border-primary/20 p-4 rounded-xl flex items-center gap-3">
             <Zap className="h-5 w-5 shrink-0" />
-            <div className="text-sm font-medium">Trade pricing active. You are viewing wholesale rates. Minimum Order Quantities (MOQ) apply per item.</div>
+            <div className="text-sm font-medium">Trade pricing active. You are viewing wholesale rates. Minimum order quantities apply, agreed per enquiry.</div>
           </div>
         )}
 

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { formatInvoiceNumber, formatOrderNumber, orderNumberPrefix } from "./orderNumbers";
+import {
+  formatEnquiryReference,
+  formatInvoiceNumber,
+  formatOrderNumber,
+  orderNumberPrefix,
+} from "./orderNumbers";
 
 describe("orderNumberPrefix", () => {
   it("builds the ND prefix from order type and year", () => {
@@ -35,5 +40,17 @@ describe("formatInvoiceNumber", () => {
   it("does not truncate at the five-digit boundary", () => {
     expect(formatInvoiceNumber(2026, 99999)).toBe("INV-2026-99999");
     expect(formatInvoiceNumber(2026, 100000)).toBe("INV-2026-100000");
+  });
+});
+
+describe("formatEnquiryReference", () => {
+  it("pads the sequence to four digits", () => {
+    expect(formatEnquiryReference(2026, 1)).toBe("RFQ-2026-0001");
+    expect(formatEnquiryReference(2026, 137)).toBe("RFQ-2026-0137");
+  });
+
+  it("does not share a series with orders, so an enquiry can never be read as one", () => {
+    expect(formatEnquiryReference(2026, 1).startsWith("ND-")).toBe(false);
+    expect(formatEnquiryReference(2026, 1)).not.toBe(formatOrderNumber("b2b", 2026, 1));
   });
 });

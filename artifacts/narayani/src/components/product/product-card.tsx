@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { Product } from "@workspace/api-client-react";
 import { Price } from "@/components/ui/price";
 import { Badge } from "@/components/ui/badge";
+import { MOQ_SHORT } from "@/lib/trade-terms";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/lib/store";
 import { useAuth } from "@/hooks/use-auth";
@@ -111,7 +112,7 @@ export function ProductCard({ product }: ProductCardProps) {
               <span className="text-[10px] text-muted-foreground">excl. GST</span>
             </div>
             {isB2B && (
-              <span className="text-[10px] text-muted-foreground uppercase tracking-wide">MOQ: {product.moq}</span>
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wide">{MOQ_SHORT}</span>
             )}
             {discountPercent > 0 && !isB2B && !!user && (
               <span className="text-[10px] text-green-600 font-medium">{discountPercent}% off</span>

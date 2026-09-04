@@ -110,6 +110,42 @@ export const productImagesTable = pgTable("product_images", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/**
+ * A wholesale or export enquiry from /request-a-quote.
+ *
+ * Persisted BEFORE any notification is attempted, because transactional email has
+ * been failing (see CLAUDE.md) and a notify-only implementation would drop enquiries
+ * on the floor. The row is the record; the email is a convenience.
+ */
+export const quoteEnquiriesTable = pgTable("quote_enquiries", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  reference: text("reference").notNull(),
+  enquiryType: text("enquiry_type").notNull(),
+  companyName: text("company_name").notNull(),
+  contactPerson: text("contact_person").notNull(),
+  country: text("country").notNull(),
+  state: text("state"),
+  city: text("city"),
+  email: text("email").notNull(),
+  phone: text("phone").notNull(),
+  /** Slugs the buyer picked from the catalogue, comma-separated. */
+  productSlugs: text("product_slugs"),
+  /** Anything they wanted quoted that is not in the catalogue yet. */
+  otherProducts: text("other_products"),
+  quantity: text("quantity"),
+  destinationCountry: text("destination_country"),
+  destinationPort: text("destination_port"),
+  packaging: text("packaging"),
+  privateLabel: text("private_label").notNull().default("unsure"),
+  message: text("message"),
+  sourceProduct: text("source_product"),
+  sourcePath: text("source_path"),
+  status: text("status").notNull().default("new"),
+  adminNotes: text("admin_notes"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const blogPostsTable = pgTable("blog_posts", {
   id: uuid("id").primaryKey().defaultRandom(),
   title: text("title").notNull(),

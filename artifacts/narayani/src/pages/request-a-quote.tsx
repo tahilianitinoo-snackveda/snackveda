@@ -1,6 +1,7 @@
 import { SiteShell } from "@/components/layout/site-shell";
 import { Link } from "wouter";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useListProducts } from "@workspace/api-client-react";
 import { useForm } from "react-hook-form";
 import type { Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,6 +19,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { COUNTRIES, INDIAN_STATES, dialCodeFor } from "@/data/geography";
 import { cn } from "@/lib/utils";
 import { useSeo } from "@/lib/seo";
 import { toast } from "sonner";
@@ -34,43 +44,36 @@ import {
 
 /* ────────────────────────────────────────────────────────────────────────────
  *
- *  ⚠️  TODO(sub-plan 4) — THERE IS NO RFQ ENDPOINT. THIS FORM DOES NOT POST.
+ *  This form posts to `POST /api/rfq`, which stores the enquiry in
+ *  `quote_enquiries` and then attempts two notification emails. The row is the
+ *  record; the email is a convenience, because the Resend sending domain is
+ *  still unverified (see CLAUDE.md) and a notify-only design would lose enquiries
+ *  silently. Admin → Enquiries reads the same rows.
  *
- *  Nothing in `api/index.ts` accepts an enquiry, and `lib/api-spec/openapi.yaml`
- *  does not describe one. Until `POST /rfq` exists, a submitted enquiry reaches
- *  the business ONLY because the buyer clicks the email button on the success
- *  screen. That is a real, working path — but it is a human step, not a request.
+ *  ─── THE EMAIL FALLBACK IS NOT DEAD CODE ──────────────────────────────────
+ *  If the request fails, the review screen says so in those words and offers the
+ *  mailto: path that is the only thing this page had before the endpoint existed.
+ *  Nine calls to action across the site land here; an enquiry that looks submitted
+ *  and is not is worse for this business than no form at all. Never let the
+ *  success copy claim receipt without `submitted.reference`, which only the server
+ *  can supply.
  *
- *  What has to be built, in this order:
- *    1. `lib/api-spec/openapi.yaml` — add `POST /rfq` taking the `QuoteEnquiry`
- *       shape defined below, returning `{ id, reference }`. Regenerate the client.
- *    2. `api/_lib/schema.ts` + a migration in `scripts/sql/` — a `quote_enquiries`
- *       table, so an enquiry survives a failed email.
- *    3. `api/index.ts` — the handler. Persist FIRST, notify second: transactional
- *       email is currently failing (the Resend sending domain is unverified, see
- *       CLAUDE.md), so a notify-only implementation would lose enquiries silently.
- *    4. `api/_lib/notify.ts` — the internal notification.
- *    5. Here — replace `onSubmit`'s local handling with the generated mutation.
- *       KEEP the email fallback visible on failure. Do not replace a working
- *       manual path with a network call that can fail into nothing.
- *
- *  Until then: do not "wire this up" by adding a fetch to an endpoint that does
- *  not exist, and do not change the success copy to say the enquiry was sent.
- *  Nine calls to action across the site land on this page; an enquiry that looks
- *  submitted and is not is worse for this business than no form at all.
- *
- * ────────────────────────────────────────────────────────────────────────────
+ *  ─── WHY THE FIELDS ARE SHAPED THE WAY THEY ARE ───────────────────────────
+ *  Country, destination and product selection are chosen from lists rather than
+ *  typed, and phone is required. Free-text versions of all four produced enquiries
+ *  that cost an email each to make sense of before a quotation could be started.
+ *  `otherProducts` stays free text on purpose — a buyer asking for something not
+ *  in the catalogue is a lead, not a validation error.
  *
  *  Omitted on purpose: the file-upload field in spec point 19. It needs object
  *  storage that does not exist in this project — there is no bucket, no signed
  *  upload route and no `attachments` table. Rather than a field that drops the
- *  file, the success screen asks the buyer to attach specifications to the email.
+ *  file, the review screen asks the buyer to attach specifications to the email.
  *
  *  No claim is made anywhere on this page about certifications, registration
  *  numbers, markets served, volumes, lead times or response times, and nothing
  *  implies Narayani manufactures anything. See
- *  docs/decisions/0002-never-imply-manufacturing.md and
- *  docs/superpowers/plans/2026-09-04-subplan-1-visible-site.md.
+ *  docs/decisions/0002-never-imply-manufacturing.md.
  */
 
 /** The address on /contact and in api/index.ts. The only one this repository knows. */
@@ -90,16 +93,37 @@ const ENQUIRY_STORAGE_KEY = "narayani:quote-enquiry:last";
 const MAILTO_MAX_HREF = 1900;
 
 const DESTINATION_COUNTRY_REQUIRED = "Which country is the shipment going to?";
+const STATE_REQUIRED = "Which state are you buying for?";
+const PRODUCTS_REQUIRED = "Pick at least one product, or describe what you need quoted";
 
 /**
- * Required: company name, contact person, country, email, wholesale-or-export, and
- * the products the enquiry is about. Everything else is optional by design — see
- * the reasoning in .superpowers/sdd/task-8-report.md. The short version: we need to
- * know who is asking, how to reply, and what they want priced. A buyer who cannot
- * yet answer "which port" or "how many cases" still has an enquiry worth having.
+ * A wholesale enquiry is by definition inside India, so the buyer's country is not
+ * a question — asking it produced "india", "Indian", "IN" and worse. Export buyers
+ * pick from the list. Both write the same `country` field.
+ */
+const INDIA = "India";
+
+/**
+ * Required: company name, contact person, country, email, PHONE, wholesale-or-export,
+ * and the products the enquiry is about. Everything else is optional by design: we
+ * need to know who is asking, how to reach them, and what they want priced. A buyer
+ * who cannot yet answer "which port" or "how many cases" still has an enquiry worth
+ * having.
  *
- * Destination country is the one conditional requirement. It is asked only of export
- * buyers, who always know it, and it changes the quotation.
+ * Phone is required rather than optional. A quotation is a conversation — packaging,
+ * quantity and terms all move — and an enquiry that leaves only an email address
+ * cannot be progressed the same day.
+ *
+ * ─── WHY SO MANY OF THESE ARE ENUMS AND ARRAYS, NOT STRINGS ─────────────────
+ * Every field a buyer could type free-hand, they did: countries as "duabi", products
+ * as "snacks", phone numbers as "call me". The fields that decide whether a quotation
+ * is even possible — country, destination, which products — are now chosen from the
+ * catalogue and the country list, so what arrives is usable without a follow-up email.
+ * `otherProducts` remains free text on purpose: a buyer asking for something we do not
+ * stock yet is a lead, not an error.
+ *
+ * Three conditional requirements: destination country for export, state for wholesale
+ * inside India, and at least one of the two product fields either way.
  */
 const quoteSchema = z
   .object({
@@ -109,13 +133,17 @@ const quoteSchema = z
     companyName: z.string().trim().min(2, "Company name is required").max(120),
     contactPerson: z.string().trim().min(2, "Please tell us who to reply to").max(120),
     country: z.string().trim().min(2, "Country is required").max(80),
+    state: z.string().trim().max(80).optional(),
+    city: z.string().trim().max(80).optional(),
     email: z.string().trim().email("Enter an email address we can reply to").max(160),
-    phone: z.string().trim().max(40).optional(),
-    productsOfInterest: z
+    phone: z
       .string()
       .trim()
-      .min(3, "Tell us which products or categories to quote for")
-      .max(600),
+      .min(8, "Enter a phone number we can call back")
+      .max(24, "That is longer than any phone number")
+      .regex(/^[+\d][\d\s().-]{6,}$/, "Digits only, with an optional country code"),
+    productSlugs: z.array(z.string()).default([]),
+    otherProducts: z.string().trim().max(600).optional(),
     quantity: z.string().trim().max(200).optional(),
     destinationCountry: z.string().trim().max(80).optional(),
     destinationPort: z.string().trim().max(120).optional(),
@@ -130,6 +158,12 @@ const quoteSchema = z
         path: ["destinationCountry"],
         message: DESTINATION_COUNTRY_REQUIRED,
       });
+    }
+    if (data.enquiryType === "wholesale" && !data.state) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["state"], message: STATE_REQUIRED });
+    }
+    if (!data.productSlugs?.length && !data.otherProducts?.trim()) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["otherProducts"], message: PRODUCTS_REQUIRED });
     }
   });
 
@@ -151,35 +185,49 @@ const runQuoteSchema = zodResolver(quoteSchema);
 
 const quoteResolver: Resolver<QuoteFormValues> = async (values, context, options) => {
   const result = await runQuoteSchema(values, context, options);
-  if (values.enquiryType !== "export" || values.destinationCountry?.trim()) {
-    return result;
+
+  const conditional: Record<string, { type: string; message: string }> = {};
+  if (values.enquiryType === "export" && !values.destinationCountry?.trim()) {
+    conditional.destinationCountry = { type: "custom", message: DESTINATION_COUNTRY_REQUIRED };
   }
-  return {
-    values: {},
-    errors: {
-      ...result.errors,
-      destinationCountry: result.errors.destinationCountry ?? {
-        type: "custom",
-        message: DESTINATION_COUNTRY_REQUIRED,
-      },
-    },
-  };
+  if (values.enquiryType === "wholesale" && !values.state?.trim()) {
+    conditional.state = { type: "custom", message: STATE_REQUIRED };
+  }
+  if (!values.productSlugs?.length && !values.otherProducts?.trim()) {
+    conditional.otherProducts = { type: "custom", message: PRODUCTS_REQUIRED };
+  }
+
+  const keys = Object.keys(conditional);
+  if (!keys.length) return result;
+
+  const errors = { ...result.errors };
+  for (const key of keys) {
+    if (!(errors as Record<string, unknown>)[key]) {
+      (errors as Record<string, unknown>)[key] = conditional[key];
+    }
+  }
+  return { values: {}, errors };
 };
 
 /**
- * The wire shape `POST /rfq` will have to accept. Written out rather than reusing
- * `QuoteFormValues` because it is a contract, not a form: export-only fields are
- * dropped from a wholesale enquiry, and the last three fields are provenance the
- * form never asks for.
+ * The wire shape `POST /rfq` accepts, mirrored by `RfqBody` in `api/index.ts`.
+ * Written out rather than reusing `QuoteFormValues` because it is a contract, not a
+ * form: export-only fields are dropped from a wholesale enquiry and vice versa, and
+ * the last three fields are provenance the form never asks for.
  */
 export interface QuoteEnquiry {
   enquiryType: "wholesale" | "export";
   companyName: string;
   contactPerson: string;
   country: string;
+  state?: string;
+  city?: string;
   email: string;
-  phone?: string;
-  productsOfInterest: string;
+  phone: string;
+  /** Slugs chosen from the live catalogue. */
+  productSlugs: string[];
+  /** Anything wanted that the catalogue does not carry. */
+  otherProducts?: string;
   quantity?: string;
   destinationCountry?: string;
   destinationPort?: string;
@@ -191,7 +239,20 @@ export interface QuoteEnquiry {
   /** Where on the site the buyer was sent from. */
   sourcePath: string;
   submittedAt: string;
+  /**
+   * Set only once the server has accepted and stored the enquiry. Its absence is
+   * how the review screen knows the enquiry is NOT yet with us and the email
+   * fallback is the buyer's real path.
+   */
+  reference?: string;
 }
+
+/**
+ * Product names for the slugs on an enquiry, kept alongside it purely so the review
+ * screen and the email fallback can print "Makhana Peri Peri" rather than a slug.
+ * Not part of the wire contract — the server resolves the names itself.
+ */
+type ProductLabels = Record<string, string>;
 
 /** The one choice that changes the shape of the form, so it is the first thing asked. */
 const ENQUIRY_TYPES = [
@@ -208,6 +269,13 @@ const ENQUIRY_TYPES = [
     desc: "Importing into a market outside India.",
   },
 ];
+
+/** Category slugs are storage keys; these are what a buyer should read. */
+const CATEGORY_LABELS: Record<string, string> = {
+  healthy_chips: "Healthy Chips",
+  makhana: "Makhana",
+  superpuffs: "Superpuffs",
+};
 
 const PRIVATE_LABEL_LABEL: Record<QuoteEnquiry["privateLabel"], string> = {
   unsure: "Not decided yet",
@@ -247,13 +315,18 @@ function buildEnquiry(values: QuoteFormValues, sourceProduct?: string): QuoteEnq
     enquiryType: values.enquiryType,
     companyName: values.companyName,
     contactPerson: values.contactPerson,
-    country: values.country,
+    // A wholesale enquiry is inside India by definition; the form never asks.
+    country: isExport ? values.country : INDIA,
+    // India-only fields never travel on an export enquiry, and export-only fields
+    // never travel on a wholesale one — even if the buyer filled them in before
+    // switching the enquiry type.
+    state: isExport ? undefined : values.state || undefined,
+    city: isExport ? undefined : values.city || undefined,
     email: values.email,
-    phone: values.phone || undefined,
-    productsOfInterest: values.productsOfInterest,
+    phone: values.phone,
+    productSlugs: values.productSlugs ?? [],
+    otherProducts: values.otherProducts || undefined,
     quantity: values.quantity || undefined,
-    // Export-only fields never travel on a wholesale enquiry, even if the buyer
-    // typed them before switching the enquiry type.
     destinationCountry: isExport ? values.destinationCountry || undefined : undefined,
     destinationPort: isExport ? values.destinationPort || undefined : undefined,
     packaging: values.packaging || undefined,
@@ -268,16 +341,26 @@ function buildEnquiry(values: QuoteFormValues, sourceProduct?: string): QuoteEnq
   };
 }
 
+/** The products on an enquiry as one readable line: chosen names, then anything extra. */
+function productsLine(enquiry: QuoteEnquiry, labels: ProductLabels = {}): string | undefined {
+  const chosen = enquiry.productSlugs.map((slug) => labels[slug] ?? slugToLabel(slug));
+  const parts = [chosen.join(", "), enquiry.otherProducts].filter(Boolean);
+  return parts.length ? parts.join(" — also: ") : undefined;
+}
+
 /** The enquiry as text a person can read — the email body, and the copy-to-clipboard block. */
-function enquiryToText(enquiry: QuoteEnquiry): string {
+function enquiryToText(enquiry: QuoteEnquiry, labels: ProductLabels = {}): string {
   const rows: Array<[string, string | undefined]> = [
+    ["Reference", enquiry.reference],
     ["Enquiry type", enquiry.enquiryType === "export" ? "Export" : "Wholesale (India)"],
     ["Company", enquiry.companyName],
     ["Contact person", enquiry.contactPerson],
     ["Country", enquiry.country],
+    ["State", enquiry.state],
+    ["City", enquiry.city],
     ["Email", enquiry.email],
     ["Phone / WhatsApp", enquiry.phone],
-    ["Products of interest", enquiry.productsOfInterest],
+    ["Products of interest", productsLine(enquiry, labels)],
     ["Estimated quantity", enquiry.quantity],
     ["Destination country", enquiry.destinationCountry],
     ["Destination port", enquiry.destinationPort],
@@ -296,11 +379,11 @@ function enquiryToText(enquiry: QuoteEnquiry): string {
     .join("\r\n");
 }
 
-function mailtoHref(enquiry: QuoteEnquiry): string {
+function mailtoHref(enquiry: QuoteEnquiry, labels: ProductLabels = {}): string {
   const subject = `Quote request — ${enquiry.companyName} (${
     enquiry.enquiryType === "export" ? "Export" : "Wholesale"
   })`;
-  const body = enquiryToText(enquiry);
+  const body = enquiryToText(enquiry, labels);
   const build = (text: string) =>
     `mailto:${ENQUIRY_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`;
 
@@ -320,6 +403,7 @@ export default function RequestAQuote() {
   const [sourceProduct] = useState(() => readProductParam(search));
   const [submitted, setSubmitted] = useState<QuoteEnquiry | null>(null);
   const [copied, setCopied] = useState(false);
+  const [sending, setSending] = useState(false);
 
   /*
     Called before the `if (submitted)` early return below, so the hook order is the
@@ -337,6 +421,28 @@ export default function RequestAQuote() {
     canonical: "/request-a-quote",
   });
 
+  /*
+    The catalogue, so the buyer picks products instead of describing them. If the
+    request fails the picker renders nothing and the free-text box carries the whole
+    enquiry — the form must never be blocked by a list that did not load.
+  */
+  const { data: catalogue } = useListProducts();
+  const productLabels: ProductLabels = useMemo(() => {
+    const map: ProductLabels = {};
+    for (const p of catalogue ?? []) map[p.slug] = p.name;
+    return map;
+  }, [catalogue]);
+
+  const productsByCategory = useMemo(() => {
+    const groups = new Map<string, { slug: string; name: string }[]>();
+    for (const p of catalogue ?? []) {
+      const key = CATEGORY_LABELS[p.category] ?? p.category;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push({ slug: p.slug, name: p.name });
+    }
+    return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b));
+  }, [catalogue]);
+
   const form = useForm<QuoteFormValues>({
     resolver: quoteResolver,
     defaultValues: {
@@ -344,9 +450,14 @@ export default function RequestAQuote() {
       companyName: "",
       contactPerson: "",
       country: "",
+      state: "",
+      city: "",
       email: "",
       phone: "",
-      productsOfInterest: sourceProduct ? slugToLabel(sourceProduct) : "",
+      // Arriving from a product page pre-selects that product, which is the whole
+      // point of the "Buying for business?" link on it.
+      productSlugs: sourceProduct ? [sourceProduct] : [],
+      otherProducts: "",
       quantity: "",
       destinationCountry: "",
       destinationPort: "",
@@ -357,6 +468,9 @@ export default function RequestAQuote() {
   });
 
   const enquiryType = form.watch("enquiryType");
+  const isExport = enquiryType === "export";
+  const selectedSlugs = form.watch("productSlugs") ?? [];
+  const dialCode = dialCodeFor(isExport ? form.watch("country") : INDIA);
 
   /*
     The review screen is far shorter than the form, so without this the buyer is
@@ -368,26 +482,63 @@ export default function RequestAQuote() {
     if (submitted) window.scrollTo(0, 0);
   }, [submitted]);
 
-  const onSubmit = (values: QuoteFormValues) => {
+  const onSubmit = async (values: QuoteFormValues) => {
     const enquiry = buildEnquiry(values, sourceProduct);
+    setSending(true);
 
-    // 1. Log it. With no endpoint, this is the only automatic record that exists.
-    //    Deliberate console use on a page that otherwise has none — see the TODO above.
-    // eslint-disable-next-line no-console
-    console.info(
-      "[narayani] Quote enquiry captured. No RFQ endpoint exists yet, so this was NOT transmitted:",
-      enquiry
-    );
-
-    // 2. Keep the buyer's own copy on their device, so a reload does not destroy a
-    //    form that took ten minutes to fill in.
+    // Keep the buyer's own copy on their device first, so a failed request or a
+    // reload does not destroy a form that took ten minutes to fill in.
     try {
       window.localStorage.setItem(ENQUIRY_STORAGE_KEY, JSON.stringify(enquiry));
     } catch {
       // Private browsing, or storage disabled. The review screen still works.
     }
 
-    // 3. Hand them a channel that actually delivers today.
+    /*
+      Post it. On success the review screen says the enquiry has arrived and shows
+      the reference; on failure it keeps the mailto: path that has always been here
+      and says plainly that nothing was transmitted.
+
+      This is why the request is not allowed to throw past this point: the buyer
+      reaches a working screen either way, and the one thing they must never see is
+      a page claiming their enquiry was sent when it was not.
+    */
+    try {
+      const res = await fetch("/api/rfq", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          enquiryType: enquiry.enquiryType,
+          companyName: enquiry.companyName,
+          contactPerson: enquiry.contactPerson,
+          country: enquiry.country,
+          state: enquiry.state,
+          city: enquiry.city,
+          email: enquiry.email,
+          phone: enquiry.phone,
+          productSlugs: enquiry.productSlugs,
+          otherProducts: enquiry.otherProducts,
+          quantity: enquiry.quantity,
+          destinationCountry: enquiry.destinationCountry,
+          destinationPort: enquiry.destinationPort,
+          packaging: enquiry.packaging,
+          privateLabel: enquiry.privateLabel,
+          message: enquiry.message,
+          sourceProduct: enquiry.sourceProduct,
+          sourcePath: enquiry.sourcePath,
+        }),
+      });
+      if (res.ok) {
+        const body = (await res.json()) as { reference?: string };
+        if (body?.reference) enquiry.reference = body.reference;
+      } else {
+        console.error("RFQ submit failed:", res.status, await res.text().catch(() => ""));
+      }
+    } catch (e) {
+      console.error("RFQ submit failed:", e);
+    }
+
+    setSending(false);
     setSubmitted(enquiry);
     setCopied(false);
   };
@@ -395,7 +546,7 @@ export default function RequestAQuote() {
   const onCopy = async () => {
     if (!submitted) return;
     try {
-      await navigator.clipboard.writeText(enquiryToText(submitted));
+      await navigator.clipboard.writeText(enquiryToText(submitted, productLabels));
       setCopied(true);
       toast.success("Enquiry copied");
     } catch {
@@ -413,25 +564,52 @@ export default function RequestAQuote() {
               <Check className="h-6 w-6" strokeWidth={2} aria-hidden="true" />
             </span>
 
+            {/*
+              Two different screens, decided by one fact: whether the server gave us
+              back a reference. This page has never claimed an enquiry was received
+              when it was not, and it still does not — the difference now is that
+              most of the time it genuinely has been.
+            */}
             <h1 className="mt-6 font-serif text-3xl font-bold leading-tight tracking-tight text-foreground sm:text-4xl">
-              Your enquiry is ready to send.
+              {submitted.reference ? "We have your enquiry." : "Your enquiry is ready to send."}
             </h1>
 
-            {/*
-              This screen never says "received" or "we will be in touch", because
-              nothing has received it. It says exactly what is true and puts the
-              action that actually delivers directly under the sentence.
-            */}
-            <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
-              We have put everything you entered into an email addressed to our team. Send it
-              and it reaches us directly &mdash; nothing has left this page yet.
-            </p>
+            {submitted.reference ? (
+              <>
+                <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
+                  It is with our team. Quote this reference in any reply and we will find it
+                  straight away.
+                </p>
+                <p className="mt-5 inline-flex items-center gap-3 rounded-xl border border-border bg-card px-5 py-3">
+                  <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    Reference
+                  </span>
+                  <span className="font-mono text-lg font-semibold text-foreground">
+                    {submitted.reference}
+                  </span>
+                </p>
+                <p className="mt-4 text-sm text-muted-foreground">
+                  A copy has gone to {submitted.email}. If it does not arrive, the enquiry is
+                  saved with us regardless &mdash; the reference above is all we need.
+                </p>
+              </>
+            ) : (
+              <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
+                We could not reach our server, so nothing has left this page. Everything you
+                entered is in the email below &mdash; send it and it reaches us directly.
+              </p>
+            )}
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button size="lg" className="rounded-full px-8" asChild>
-                <a href={mailtoHref(submitted)}>
+              <Button
+                size="lg"
+                className="rounded-full px-8"
+                variant={submitted.reference ? "outline" : "default"}
+                asChild
+              >
+                <a href={mailtoHref(submitted, productLabels)}>
                   <Mail className="mr-2 h-4 w-4" aria-hidden="true" />
-                  Send this enquiry by email
+                  {submitted.reference ? "Email us as well" : "Send this enquiry by email"}
                 </a>
               </Button>
               <Button
@@ -469,9 +647,11 @@ export default function RequestAQuote() {
         </section>
 
         <section className="container mx-auto max-w-3xl px-4 py-12 lg:py-16">
-          <h2 className="font-serif text-2xl font-bold">What you are sending</h2>
+          <h2 className="font-serif text-2xl font-bold">
+            {submitted.reference ? "What we have" : "What you are sending"}
+          </h2>
           <pre className="mt-5 overflow-x-auto whitespace-pre-wrap rounded-2xl border border-border bg-card p-6 font-sans text-sm leading-relaxed text-foreground shadow-sm">
-            {enquiryToText(submitted)}
+            {enquiryToText(submitted, productLabels)}
           </pre>
 
           {/*
@@ -565,7 +745,15 @@ export default function RequestAQuote() {
                                 // enquiry, and clear any error they left behind.
                                 form.setValue("destinationCountry", "");
                                 form.setValue("destinationPort", "");
-                                form.clearErrors(["destinationCountry", "destinationPort"]);
+                                form.setValue("country", INDIA);
+                                form.clearErrors(["destinationCountry", "destinationPort", "country"]);
+                              } else {
+                                // And do not carry an Indian state onto an export
+                                // enquiry, where the country question is asked instead.
+                                form.setValue("state", "");
+                                form.setValue("city", "");
+                                form.setValue("country", "");
+                                form.clearErrors(["state", "city"]);
                               }
                             }}
                             className="grid gap-3 sm:grid-cols-2"
@@ -637,22 +825,85 @@ export default function RequestAQuote() {
                         </FormItem>
                       )}
                     />
-                    <FormField
-                      control={form.control}
-                      name="country"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Country</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Where your business is based" {...field} />
-                          </FormControl>
-                          <FormDescription>
-                            Tells us whether this is a domestic or an export quotation.
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    {/*
+                      A wholesale enquiry is inside India by definition, so it asks
+                      for state and city instead of a country. An export enquiry asks
+                      for the country the buyer is in. Both write `country`, and
+                      buildEnquiry drops whichever pair does not apply.
+                    */}
+                    {isExport ? (
+                      <FormField
+                        control={form.control}
+                        name="country"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Country</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Where your business is based" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent className="max-h-72">
+                                {COUNTRIES.map((c) => (
+                                  <SelectItem key={c.code} value={c.name}>
+                                    {c.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormDescription>Where your business is registered.</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    ) : (
+                      <>
+                        <FormField
+                          control={form.control}
+                          name="state"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>State</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select your state" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent className="max-h-72">
+                                  {INDIAN_STATES.map((s) => (
+                                    <SelectItem key={s} value={s}>
+                                      {s}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormDescription>
+                                Freight and GST both depend on it.
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="city"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                City{" "}
+                                <span className="font-normal text-muted-foreground">(optional)</span>
+                              </FormLabel>
+                              <FormControl>
+                                <Input placeholder="Where the goods are delivered" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </>
+                    )}
                     <FormField
                       control={form.control}
                       name="email"
@@ -678,21 +929,32 @@ export default function RequestAQuote() {
                       name="phone"
                       render={({ field }) => (
                         <FormItem className="md:col-span-2">
-                          <FormLabel>
-                            Phone or WhatsApp{" "}
-                            <span className="font-normal text-muted-foreground">(optional)</span>
-                          </FormLabel>
+                          <FormLabel>Phone or WhatsApp</FormLabel>
                           <FormControl>
-                            <Input
-                              type="tel"
-                              inputMode="tel"
-                              autoComplete="tel"
-                              placeholder="Include your country code"
-                              {...field}
-                            />
+                            {/*
+                              The dialling code is shown, not typed, and follows the
+                              country chosen above. It is a label rather than part of
+                              the value: prefilling the input would have the buyer
+                              deleting it, and half of them would leave a stray "+91"
+                              in front of a UAE number.
+                            */}
+                            <div className="flex">
+                              <span className="inline-flex select-none items-center rounded-l-md border border-r-0 border-input bg-muted px-3 text-sm text-muted-foreground">
+                                {dialCode}
+                              </span>
+                              <Input
+                                type="tel"
+                                inputMode="tel"
+                                autoComplete="tel"
+                                className="rounded-l-none"
+                                placeholder="Your number, without the country code"
+                                {...field}
+                              />
+                            </div>
                           </FormControl>
                           <FormDescription>
-                            Useful for anything quicker to settle in a message than in an email.
+                            A quotation usually needs one exchange to settle quantity and
+                            packaging, and that is faster on a call than over email.
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -706,21 +968,117 @@ export default function RequestAQuote() {
                   <h2 className="font-serif text-2xl font-bold">What you want priced</h2>
 
                   <div className="mt-6 space-y-5">
+                    {/*
+                      Picked from the live catalogue rather than typed. What used to
+                      arrive here was "snacks", "chips please" and product names that
+                      matched nothing we sell, every one of which cost an email to
+                      resolve before a quotation could even be started.
+
+                      The list is not required to load. If the request failed there is
+                      simply nothing to tick, and the free-text box below carries the
+                      whole enquiry — which is also the box for anything we do not
+                      stock yet.
+                    */}
+                    {productsByCategory.length > 0 && (
+                      <FormField
+                        control={form.control}
+                        name="productSlugs"
+                        render={({ field }) => (
+                          <FormItem>
+                            <div className="flex flex-wrap items-baseline justify-between gap-2">
+                              <FormLabel>Products to quote</FormLabel>
+                              {selectedSlugs.length > 0 && (
+                                <button
+                                  type="button"
+                                  className="text-xs font-medium text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                                  onClick={() => field.onChange([])}
+                                >
+                                  Clear {selectedSlugs.length} selected
+                                </button>
+                              )}
+                            </div>
+                            <div className="mt-2 space-y-5 rounded-lg border border-border bg-card p-4">
+                              {productsByCategory.map(([category, items]) => {
+                                const slugs = items.map((i) => i.slug);
+                                const allChosen = slugs.every((s) => field.value?.includes(s));
+                                return (
+                                  <div key={category}>
+                                    <div className="mb-2 flex items-baseline justify-between gap-2">
+                                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                        {category}
+                                      </p>
+                                      <button
+                                        type="button"
+                                        className="text-xs text-primary underline underline-offset-2"
+                                        onClick={() =>
+                                          field.onChange(
+                                            allChosen
+                                              ? (field.value ?? []).filter((s) => !slugs.includes(s))
+                                              : [...new Set([...(field.value ?? []), ...slugs])]
+                                          )
+                                        }
+                                      >
+                                        {allChosen ? "Clear category" : "Select all"}
+                                      </button>
+                                    </div>
+                                    <div className="grid gap-x-4 gap-y-2 sm:grid-cols-2">
+                                      {items.map((item) => {
+                                        const checked = field.value?.includes(item.slug) ?? false;
+                                        return (
+                                          <label
+                                            key={item.slug}
+                                            className="flex cursor-pointer items-start gap-2 text-sm"
+                                          >
+                                            <Checkbox
+                                              checked={checked}
+                                              onCheckedChange={(next) =>
+                                                field.onChange(
+                                                  next
+                                                    ? [...(field.value ?? []), item.slug]
+                                                    : (field.value ?? []).filter((s) => s !== item.slug)
+                                                )
+                                              }
+                                              className="mt-0.5"
+                                            />
+                                            <span className="leading-snug">{item.name}</span>
+                                          </label>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            <FormDescription>
+                              Tick everything you want priced. Quantities can be per product
+                              later — this is what goes on the quotation.
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
                     <FormField
                       control={form.control}
-                      name="productsOfInterest"
+                      name="otherProducts"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Products of interest</FormLabel>
+                          <FormLabel>
+                            Anything else{" "}
+                            <span className="font-normal text-muted-foreground">
+                              {productsByCategory.length > 0 ? "(optional)" : ""}
+                            </span>
+                          </FormLabel>
                           <FormControl>
                             <Textarea
                               rows={3}
-                              placeholder="Products, categories or a description of what you are looking for"
+                              placeholder="Products or categories not listed above — tell us what you are looking for"
                               {...field}
                             />
                           </FormControl>
                           <FormDescription>
-                            A category is enough if you have not picked specific items yet.
+                            We source beyond what is on the site. If you need something we do
+                            not list, describe it here.
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -768,9 +1126,20 @@ export default function RequestAQuote() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Destination country</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Where the goods are landing" {...field} />
-                            </FormControl>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Where the goods are landing" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent className="max-h-72">
+                                {COUNTRIES.map((c) => (
+                                  <SelectItem key={c.code} value={c.name}>
+                                    {c.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -904,8 +1273,13 @@ export default function RequestAQuote() {
                   </p>
                 </div>
 
-                <Button type="submit" size="lg" className="h-14 w-full rounded-full text-lg">
-                  Review and send enquiry
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="h-14 w-full rounded-full text-lg"
+                  disabled={sending}
+                >
+                  {sending ? "Sending enquiry…" : "Send enquiry"}
                 </Button>
               </form>
             </Form>

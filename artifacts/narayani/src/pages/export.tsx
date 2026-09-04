@@ -71,7 +71,7 @@ const SERVICES = [
   {
     icon: Store,
     title: "Minimum order quantities",
-    desc: "Every product carries a minimum order quantity and is ordered in multiples of it. The MOQ is shown against each product in the catalogue.",
+    desc: "A minimum applies, agreed with you per enquiry rather than published per product — an importer taking a mixed container and a retailer taking one category are not held to the same figure.",
   },
   {
     icon: FileText,

@@ -68,3 +68,86 @@ export async function notifyShipping(order: NotifyOrder, user: NotifyUser, couri
   await sendEmail(user.email, `Your Order is Shipped — ${order.orderNumber}`, html);
   if (user.phone) await sendSMS(user.phone, `Narayani Distributors: Order ${order.orderNumber} shipped via ${courier}. AWB: ${trackingNumber}. Track: ${trackingLink}`);
 }
+
+/* ─── QUOTE ENQUIRIES ───────────────────────────────────────────────────────
+ *
+ * A wholesale or export enquiry from /request-a-quote. Two mails: an
+ * acknowledgement to the buyer and the enquiry itself to us.
+ *
+ * Both are best-effort. The row in `quote_enquiries` is the record — the handler
+ * persists BEFORE calling this, and a send failure here must never fail the
+ * request. The Resend sending domain is still unverified (see CLAUDE.md), so at
+ * the time of writing both of these log an error rather than arrive.
+ *
+ * The acknowledgement deliberately promises no response time. We do not know
+ * what it is, and a business enquiry that says "within 24 hours" and then does not
+ * is worse than one that says nothing.
+ */
+type NotifyEnquiry = {
+  reference: string;
+  enquiryType: string;
+  companyName: string;
+  contactPerson: string;
+  country: string;
+  state?: string | null;
+  city?: string | null;
+  email: string;
+  phone: string;
+  products: string;
+  quantity?: string | null;
+  destinationCountry?: string | null;
+  destinationPort?: string | null;
+  packaging?: string | null;
+  privateLabel: string;
+  message?: string | null;
+};
+
+/** HTML-escape a value that came from a form. These strings reach an inbox. */
+function esc(value: unknown): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+const row = (label: string, value: unknown) =>
+  value ? `<div class="row"><span class="lbl">${esc(label)}</span><span class="val">${esc(value)}</span></div>` : "";
+
+export async function notifyQuoteEnquiry(enquiry: NotifyEnquiry): Promise<void> {
+  const isExport = enquiry.enquiryType === "export";
+  const kind = isExport ? "Export" : "Wholesale";
+
+  const detail =
+    row("Reference", enquiry.reference) +
+    row("Enquiry type", kind) +
+    row("Company", enquiry.companyName) +
+    row("Contact", enquiry.contactPerson) +
+    row("Email", enquiry.email) +
+    row("Phone", enquiry.phone) +
+    row("Country", enquiry.country) +
+    row("State", enquiry.state) +
+    row("City", enquiry.city) +
+    row("Products", enquiry.products) +
+    row("Quantity", enquiry.quantity) +
+    row("Destination country", enquiry.destinationCountry) +
+    row("Destination port", enquiry.destinationPort) +
+    row("Packaging", enquiry.packaging) +
+    row("Private label", enquiry.privateLabel);
+
+  const adminHtml = emailBase(
+    `<h2>New ${esc(kind)} Enquiry</h2>` +
+    `<p>${esc(enquiry.contactPerson)} at ${esc(enquiry.companyName)} has asked for a quotation.</p>` +
+    `<div class="box">${detail}</div>` +
+    (enquiry.message ? `<p><strong>Message</strong><br>${esc(enquiry.message)}</p>` : "") +
+    `<p style="color:#64748B;font-size:12px">This enquiry is saved on the site. If this email failed, it is still in Admin &rarr; Enquiries.</p>`
+  );
+  await sendEmail(ADMIN_EMAIL, `${kind} enquiry ${enquiry.reference} — ${enquiry.companyName}`, adminHtml);
+
+  const buyerHtml = emailBase(
+    `<h2>We have your enquiry</h2>` +
+    `<p>Thank you, ${esc(enquiry.contactPerson)}. Your ${esc(kind.toLowerCase())} enquiry has reached us and is with our team.</p>` +
+    `<div class="box">${row("Your reference", enquiry.reference)}${row("Products", enquiry.products)}${row("Quantity", enquiry.quantity)}</div>` +
+    `<p>Quote this reference in any reply and we will find your enquiry straight away.</p>` +
+    `<p style="color:#64748B;font-size:12px">Narayani Distributors is a merchant exporter and distributor of Indian packaged foods. We source from selected manufacturers and brands; we do not manufacture.</p>`
+  );
+  await sendEmail(enquiry.email, `Your enquiry ${enquiry.reference} — Narayani Distributors`, buyerHtml);
+}

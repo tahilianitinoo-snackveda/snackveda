@@ -14,6 +14,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getPackPanel } from "@/data/product-panels";
+import { MOQ_BANNER, MOQ_SPEC } from "@/lib/trade-terms";
 import type { PackEntity, PackPanel } from "@/data/product-panels";
 
 // Image gallery component with thumbnail strip
@@ -105,7 +106,10 @@ function ProductImageGallery({ product, getCategoryGradient }: { product: any; g
  */
 function BusinessEnquiryBlock({ product, isB2BApproved }: { product: Product; isB2BApproved: boolean }) {
   const specs: { label: string; value: string }[] = [];
-  if (product.moq) specs.push({ label: "Minimum order quantity", value: `${product.moq} units` });
+  // Not `${product.moq} units`. The stored number drives the cart's step size; it is
+  // not a published commitment, and printing it as one misrepresented the terms in
+  // both directions. See src/lib/trade-terms.ts.
+  specs.push({ label: "Minimum order quantity", value: MOQ_SPEC });
   if (product.cartonQty) specs.push({ label: "Carton quantity", value: `${product.cartonQty} units per carton` });
   if (product.shelfLifeMonths) specs.push({ label: "Shelf life", value: `${product.shelfLifeMonths} months` });
   if (product.weightGrams) specs.push({ label: "Net weight", value: `${product.weightGrams} g per pack` });
@@ -630,8 +634,8 @@ export default function ProductDetail() {
                 
                 {isB2BApproved ? (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted p-2 rounded mt-2">
-                    <Info className="w-4 h-4" />
-                    Wholesale price applied. Minimum Order Quantity (MOQ): {product.moq} units
+                    <Info className="w-4 h-4 shrink-0" />
+                    <span>Wholesale price applied. {MOQ_BANNER}</span>
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground">Price excl. GST (5% added at checkout)</p>

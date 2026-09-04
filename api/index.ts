@@ -18,10 +18,11 @@ import { computeQuote, type QuoteItem } from "./_lib/pricing";
 import {
   usersTable, productsTable, productImagesTable, addressesTable,
   ordersTable, orderItemsTable, paymentsTable, invoicesTable, blogPostsTable,
+  quoteEnquiriesTable,
 } from "./_lib/schema";
 import { signToken, verifyToken, profileUser } from "./_lib/auth";
-import { sendEmail, sendSMS, emailBase, notifyRegistration, notifyOrderPlaced, notifyShipping } from "./_lib/notify";
-import { formatOrderNumber, formatInvoiceNumber, orderNumberPrefix } from "./_lib/orderNumbers";
+import { sendEmail, sendSMS, emailBase, notifyRegistration, notifyOrderPlaced, notifyShipping, notifyQuoteEnquiry } from "./_lib/notify";
+import { formatOrderNumber, formatInvoiceNumber, orderNumberPrefix, formatEnquiryReference } from "./_lib/orderNumbers";
 
 // ─── DB ───────────────────────────────────────────────────────────────────────
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -88,6 +89,22 @@ async function getProductImages(productId: string) {
 }
 function serializeProduct(p: typeof productsTable.$inferSelect, images?: any[]) {
   return { id: p.id, name: p.name, slug: p.slug, category: p.category, variant: p.variant, b2cPrice: Number(p.b2cPrice), b2bPrice: Number(p.b2bPrice), moq: p.moq, cartonQty: p.cartonQty, gstPercent: Number(p.gstPercent), hsnCode: p.hsnCode, shelfLifeMonths: p.shelfLifeMonths, weightGrams: p.weightGrams, description: p.description, stockQty: p.stockQty, status: p.status, sortOrder: p.sortOrder, imageUrl: p.imageUrl, images: images ?? [] };
+}
+
+function serializeEnquiry(e: typeof quoteEnquiriesTable.$inferSelect) {
+  return {
+    id: e.id, reference: e.reference, enquiryType: e.enquiryType,
+    companyName: e.companyName, contactPerson: e.contactPerson,
+    country: e.country, state: e.state, city: e.city,
+    email: e.email, phone: e.phone,
+    productSlugs: (e.productSlugs || "").split(",").map(s => s.trim()).filter(Boolean),
+    otherProducts: e.otherProducts, quantity: e.quantity,
+    destinationCountry: e.destinationCountry, destinationPort: e.destinationPort,
+    packaging: e.packaging, privateLabel: e.privateLabel, message: e.message,
+    sourceProduct: e.sourceProduct, sourcePath: e.sourcePath,
+    status: e.status, adminNotes: e.adminNotes,
+    createdAt: e.createdAt.toISOString(), updatedAt: e.updatedAt.toISOString(),
+  };
 }
 
 // ─── BLOG ─────────────────────────────────────────────────────────────────────
@@ -425,6 +442,104 @@ export default async function handler(req, res) {
       return sendRaw(xml, "application/xml; charset=utf-8");
     }
 
+    // ── QUOTE ENQUIRIES (RFQ) ────────────────────────────────────────────────
+    // Public: /request-a-quote posts here. Persist first, notify second — email
+    // is unreliable on this project and an enquiry lost is a customer lost.
+    if (path === "/rfq" && method === "POST") {
+      const b = RfqBody.safeParse(parsedBody);
+      if (!b.success) {
+        const first = b.error.issues[0];
+        return err(first ? `${first.path.join(".")}: ${first.message}` : "Invalid enquiry", "VALIDATION_ERROR", 400);
+      }
+      const d = b.data;
+
+      // Export enquiries must say where the goods are going; it is the field that
+      // decides whether a quotation is possible at all. Checked here as well as in
+      // the browser, because the browser is not a place to enforce anything.
+      if (d.enquiryType === "export" && !d.destinationCountry?.trim()) {
+        return err("destinationCountry: required for an export enquiry", "VALIDATION_ERROR", 400);
+      }
+
+      const db = getDb();
+      const year = new Date().getFullYear();
+
+      // The reference is derived from a count, which races under concurrency. The
+      // unique index on `reference` turns that race into an error rather than a
+      // duplicate, so retry a few times before giving up.
+      let saved: typeof quoteEnquiriesTable.$inferSelect | undefined;
+      for (let attempt = 0; attempt < 5 && !saved; attempt++) {
+        const [{ c }] = await db
+          .select({ c: sql<number>`count(*)::int` })
+          .from(quoteEnquiriesTable)
+          .where(like(quoteEnquiriesTable.reference, `RFQ-${year}-%`));
+        const reference = formatEnquiryReference(year, c + 1 + attempt);
+        try {
+          [saved] = await db.insert(quoteEnquiriesTable).values({
+            reference,
+            enquiryType: d.enquiryType,
+            companyName: d.companyName,
+            contactPerson: d.contactPerson,
+            country: d.country,
+            state: d.state || null,
+            city: d.city || null,
+            email: d.email,
+            phone: d.phone,
+            productSlugs: d.productSlugs?.length ? d.productSlugs.join(",") : null,
+            otherProducts: d.otherProducts || null,
+            quantity: d.quantity || null,
+            destinationCountry: d.destinationCountry || null,
+            destinationPort: d.destinationPort || null,
+            packaging: d.packaging || null,
+            privateLabel: d.privateLabel,
+            message: d.message || null,
+            sourceProduct: d.sourceProduct || null,
+            sourcePath: d.sourcePath || null,
+          }).returning();
+        } catch (e: any) {
+          // 23505 = unique_violation on the reference. Anything else is real.
+          if (e?.code !== "23505") throw e;
+        }
+      }
+      if (!saved) return err("Could not save the enquiry. Please email us instead.", "INTERNAL_ERROR", 500);
+
+      // Resolve slugs to names so the notification is readable by a human rather
+      // than a list of URL fragments.
+      let productLabel = d.otherProducts || "";
+      if (d.productSlugs?.length) {
+        const rows = await db.select({ name: productsTable.name })
+          .from(productsTable)
+          .where(inArray(productsTable.slug, d.productSlugs));
+        const names = rows.map(r => r.name);
+        productLabel = [names.join(", "), d.otherProducts].filter(Boolean).join(" — also: ");
+      }
+
+      // Never let a notification failure lose an enquiry that is already saved.
+      try {
+        await notifyQuoteEnquiry({
+          reference: saved.reference,
+          enquiryType: saved.enquiryType,
+          companyName: saved.companyName,
+          contactPerson: saved.contactPerson,
+          country: saved.country,
+          state: saved.state,
+          city: saved.city,
+          email: saved.email,
+          phone: saved.phone,
+          products: productLabel || "(not specified)",
+          quantity: saved.quantity,
+          destinationCountry: saved.destinationCountry,
+          destinationPort: saved.destinationPort,
+          packaging: saved.packaging,
+          privateLabel: saved.privateLabel,
+          message: saved.message,
+        });
+      } catch (e: any) {
+        console.error("RFQ saved but notification failed:", saved.reference, e?.message);
+      }
+
+      return ok({ id: saved.id, reference: saved.reference }, 201);
+    }
+
     // ── CART QUOTE ───────────────────────────────────────────────────────────
     if (path === "/cart/quote" && method === "POST") {
       const b = QuoteBody.safeParse(parsedBody);
@@ -736,6 +851,28 @@ export default async function handler(req, res) {
         return ok({ ok: true, status: "dispatched", orderId: updatedOrder.id });
       }
 
+      // ── QUOTE ENQUIRIES (admin) ────────────────────────────────────────────
+      if (path === "/admin/rfq" && method === "GET") {
+        const rows = await db.select().from(quoteEnquiriesTable).orderBy(desc(quoteEnquiriesTable.createdAt));
+        return ok(rows.map(serializeEnquiry));
+      }
+
+      const adminRfqMatch = path.match(/^\/admin\/rfq\/([^/]+)$/);
+      if (adminRfqMatch && method === "PATCH") {
+        const b = z.object({
+          status: z.enum(["new", "contacted", "quoted", "won", "lost"]).optional(),
+          adminNotes: z.string().max(4000).nullish(),
+        }).safeParse(parsedBody);
+        if (!b.success) return err("Invalid enquiry update", "VALIDATION_ERROR", 400);
+        const patch: Record<string, unknown> = { updatedAt: new Date() };
+        if (b.data.status !== undefined) patch.status = b.data.status;
+        if (b.data.adminNotes !== undefined) patch.adminNotes = b.data.adminNotes;
+        const [updated] = await db.update(quoteEnquiriesTable).set(patch)
+          .where(eq(quoteEnquiriesTable.id, adminRfqMatch[1])).returning();
+        if (!updated) return err("Enquiry not found", "NOT_FOUND", 404);
+        return ok(serializeEnquiry(updated));
+      }
+
       // ── BLOG (admin) ───────────────────────────────────────────────────────
       if (path === "/admin/blog" && method === "GET") {
         const rows = await db.select().from(blogPostsTable).orderBy(desc(blogPostsTable.createdAt));
@@ -835,6 +972,38 @@ const LoginBody = z.object({ email: z.string(), password: z.string() });
 // here rather than at the three call sites keeps the explanation next to the cause.
 const OrderItemSchema = z.object({ productId: z.string(), quantity: z.number() }) as unknown as z.ZodType<QuoteItem>;
 const QuoteBody = z.object({ orderType: z.enum(["b2c","b2b"]), items: z.array(OrderItemSchema) });
+
+/**
+ * The wire contract for POST /rfq.
+ *
+ * The browser validates the same rules, but this is the enforcement: a form is a
+ * convenience for a person, not a security boundary, and this endpoint is public.
+ * The bounds are what a genuine enquiry needs, sized so a bot cannot use the table
+ * as free storage — every text field is capped, and `productSlugs` is capped at the
+ * catalogue's plausible size.
+ */
+const RfqBody = z.object({
+  enquiryType: z.enum(["wholesale", "export"]),
+  companyName: z.string().trim().min(2).max(120),
+  contactPerson: z.string().trim().min(2).max(120),
+  country: z.string().trim().min(2).max(80),
+  state: z.string().trim().max(80).optional(),
+  city: z.string().trim().max(80).optional(),
+  email: z.string().trim().email().max(160),
+  // Digits, spaces, and the punctuation real numbers are written with. Eight is the
+  // shortest national number in general use; 20 covers a dial code plus the longest.
+  phone: z.string().trim().min(8).max(24).regex(/^[+\d][\d\s().-]{6,}$/, "Enter a phone number we can call back"),
+  productSlugs: z.array(z.string().trim().max(80)).max(60).optional(),
+  otherProducts: z.string().trim().max(600).optional(),
+  quantity: z.string().trim().max(200).optional(),
+  destinationCountry: z.string().trim().max(80).optional(),
+  destinationPort: z.string().trim().max(120).optional(),
+  packaging: z.string().trim().max(400).optional(),
+  privateLabel: z.enum(["unsure", "yes", "no"]),
+  message: z.string().trim().max(1200).optional(),
+  sourceProduct: z.string().trim().max(80).optional(),
+  sourcePath: z.string().trim().max(200).optional(),
+});
 const ShippingSchema = z.object({ fullName: z.string(), phone: z.string(), line1: z.string(), line2: z.string().nullish(), city: z.string(), state: z.string(), pincode: z.string() });
 const B2cOrderBody = z.object({ items: z.array(OrderItemSchema), shippingAddress: ShippingSchema, paymentMethod: z.enum(["upi","bank_transfer","payment_link"]), paymentReference: z.string().nullish(), notes: z.string().nullish() });
 const B2bOrderBody = z.object({ items: z.array(OrderItemSchema), shippingAddress: ShippingSchema, paymentMethod: z.enum(["upi","bank_transfer","payment_link"]), notes: z.string().nullish() });

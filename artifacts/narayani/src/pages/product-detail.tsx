@@ -1,6 +1,7 @@
 import { SiteShell } from "@/components/layout/site-shell";
 import { useRoute, Link, useLocation } from "wouter";
 import { useGetProductBySlug, getGetProductBySlugQueryKey } from "@workspace/api-client-react";
+import type { Product } from "@workspace/api-client-react";
 import { useCartStore } from "@/lib/store";
 import { useAuth } from "@/hooks/use-auth";
 import { Price } from "@/components/ui/price";
@@ -8,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ProductCard } from "@/components/product/product-card";
 import { ProductGrid } from "@/components/product/product-grid";
-import { Minus, Plus, ShoppingBag, ArrowLeft, Info, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, Building2, Minus, Plus, ShoppingBag, ArrowLeft, Info, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -64,6 +65,125 @@ function ProductImageGallery({ product, getCategoryGradient }: { product: any; g
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * "Buying for business?" — the bridge from a single pack to a trade enquiry.
+ *
+ * ─── WHERE THE NUMBERS COME FROM ────────────────────────────────────────────
+ * Every value below is a real column on the product record — see `productsTable`
+ * in `api/_lib/schema.ts`, serialised by `serializeProduct` in `api/index.ts`:
+ *   moq ............... minimum order quantity, enforced in api/_lib/pricing.ts
+ *   cartonQty ......... units per master carton
+ *   shelfLifeMonths ... shelf life
+ *   weightGrams ....... net pack weight
+ * Nothing here is derived, rounded, defaulted or guessed. A field that is absent
+ * or zero renders nothing at all rather than a plausible-looking fallback.
+ *
+ * ─── WHAT IS DELIBERATELY ABSENT ────────────────────────────────────────────
+ * No ingredients, nutrition, allergens, manufacturer name, country of origin and
+ * no HS code. The business has supplied none of them, and the only HS code in the
+ * database is a single shared placeholder (`21069099`) repeated on every row — so
+ * presenting it as this product's export classification would be a fabrication of
+ * a legally significant field, not a copy shortcut. See the "What the business has
+ * not supplied" table in
+ * docs/superpowers/plans/2026-09-04-subplan-1-visible-site.md. Do not add one of
+ * these because a buyer asked; add it when the business supplies the data.
+ *
+ * ─── TRADE PRICING IS NOT PUBLIC ────────────────────────────────────────────
+ * `product.b2bPrice` is the wholesale price list. It renders ONLY inside the
+ * `isB2BApproved` branch below. `isB2BApproved` comes from `useAuth()` and is
+ * `user?.role === "b2b_customer"` (hooks/use-auth.ts) — false for an anonymous
+ * visitor and false for a retail customer, both of whom therefore never receive
+ * the markup at all. Do not hoist that value into a prop, a `title`, a `data-*`
+ * attribute, a tooltip, an aria-label or a JSON-LD block: those all reach the DOM
+ * regardless of what is painted, and publishing them hands the trade price to
+ * competitors.
+ */
+function BusinessEnquiryBlock({ product, isB2BApproved }: { product: Product; isB2BApproved: boolean }) {
+  const specs: { label: string; value: string }[] = [];
+  if (product.moq) specs.push({ label: "Minimum order quantity", value: `${product.moq} units` });
+  if (product.cartonQty) specs.push({ label: "Carton quantity", value: `${product.cartonQty} units per carton` });
+  if (product.shelfLifeMonths) specs.push({ label: "Shelf life", value: `${product.shelfLifeMonths} months` });
+  if (product.weightGrams) specs.push({ label: "Net weight", value: `${product.weightGrams} g per pack` });
+
+  return (
+    <section
+      aria-labelledby="business-enquiry-heading"
+      className="mt-10 rounded-2xl border border-border bg-secondary/50 p-6"
+    >
+      <div className="flex items-start gap-3">
+        <span
+          aria-hidden="true"
+          className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"
+        >
+          <Building2 className="h-4 w-4" />
+        </span>
+        <div>
+          <h2 id="business-enquiry-heading" className="font-serif text-xl font-bold text-foreground">
+            Buying for business?
+          </h2>
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+            Wholesale, distribution and export enquiries for this product. Below is the trade
+            specification we hold against it.
+          </p>
+        </div>
+      </div>
+
+      {specs.length > 0 && (
+        <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-4 border-t border-border pt-5">
+          {specs.map((spec) => (
+            <div key={spec.label}>
+              <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{spec.label}</dt>
+              <dd className="mt-1 font-medium text-foreground">{spec.value}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+
+      {/* Trade price — signed-in business accounts only. See the header of this file. */}
+      {isB2BApproved && product.b2bPrice ? (
+        <div className="mt-5 rounded-xl border border-border bg-card p-4">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Your trade price</p>
+          <p className="mt-1 flex flex-wrap items-baseline gap-2">
+            <Price amount={product.b2bPrice} className="text-2xl font-bold text-primary" />
+            <span className="text-sm text-muted-foreground">per unit, excl. GST</span>
+          </p>
+        </div>
+      ) : null}
+
+      {/*
+        `whitespace-normal` matters: the Button base sets `whitespace-nowrap`, which makes
+        this label's min-content width ~315px. That is wider than the 343px product column
+        minus its padding at a 375px viewport, so the nowrap version pushed the whole page
+        4px wide and gave the product page a horizontal scrollbar on a phone. Let it wrap,
+        and give it a height that grows with the second line.
+      */}
+      <Button
+        asChild
+        size="lg"
+        className="mt-6 h-auto min-h-12 w-full whitespace-normal rounded-full px-6 py-3 text-center sm:w-auto"
+      >
+        {/* The quote form reads `?product=<slug>` and pre-fills the enquiry — pages/request-a-quote.tsx */}
+        <Link href={`/request-a-quote?product=${encodeURIComponent(product.slug)}`}>
+          Request a quote for this product
+          <ArrowRight className="ml-2 h-4 w-4" />
+        </Link>
+      </Button>
+
+      <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+        Wholesale within India and export enquiries both start there. Or read how{" "}
+        <Link href="/wholesale" className="underline underline-offset-2 hover:text-foreground">
+          wholesale supply
+        </Link>{" "}
+        and{" "}
+        <Link href="/export" className="underline underline-offset-2 hover:text-foreground">
+          export
+        </Link>{" "}
+        work.
+      </p>
+    </section>
   );
 }
 
@@ -235,31 +355,39 @@ export default function ProductDetail() {
                 </Button>
               </div>
 
-              {/* Product Meta */}
+              {/*
+                Product Meta — real columns only. The previous version fell back to
+                "6 Months" for a missing shelf life and printed an HSN code of
+                `product.hsnCode || '210690'`. Both were inventions: the shelf-life
+                default was a guess, and the database holds one shared placeholder HSN
+                (`21069099`) on every row, so rendering it per product asserted a tax
+                classification nobody supplied. A missing value now renders nothing.
+                Carton configuration moved to the business block below, where it
+                belongs and where it reads `cartonQty` rather than reusing the MOQ.
+              */}
               <div className="grid grid-cols-2 gap-4 pt-8 border-t">
-                <div>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Net Weight</h4>
-                  <p className="font-medium">{product.weightGrams}g</p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Shelf Life</h4>
-                  <p className="font-medium">{product.shelfLifeMonths ? `${product.shelfLifeMonths} Months` : '6 Months'}</p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-1">HSN Code</h4>
-                  <p className="font-medium">{product.hsnCode || '210690'}</p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-1">GST Rate</h4>
-                  <p className="font-medium">{product.gstPercent}%</p>
-                </div>
-                {isB2BApproved && product.moq && (
-                  <div className="col-span-2">
-                    <h4 className="text-sm font-medium text-muted-foreground mb-1">Carton Configuration</h4>
-                    <p className="font-medium">{product.moq} units per master carton</p>
+                {!!product.weightGrams && (
+                  <div>
+                    <h4 className="text-sm font-medium text-muted-foreground mb-1">Net Weight</h4>
+                    <p className="font-medium">{product.weightGrams}g</p>
+                  </div>
+                )}
+                {!!product.shelfLifeMonths && (
+                  <div>
+                    <h4 className="text-sm font-medium text-muted-foreground mb-1">Shelf Life</h4>
+                    <p className="font-medium">{product.shelfLifeMonths} Months</p>
+                  </div>
+                )}
+                {/* `!= null`, not a truthiness check: 0% is a real GST rate for exempt goods. */}
+                {product.gstPercent != null && (
+                  <div>
+                    <h4 className="text-sm font-medium text-muted-foreground mb-1">GST Rate</h4>
+                    <p className="font-medium">{product.gstPercent}%</p>
                   </div>
                 )}
               </div>
+
+              <BusinessEnquiryBlock product={product} isB2BApproved={isB2BApproved} />
             </div>
           </div>
         )}

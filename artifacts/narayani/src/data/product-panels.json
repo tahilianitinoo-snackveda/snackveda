@@ -1,0 +1,1208 @@
+{
+  "beetroot-chips-indie-masala": {
+    "sheetName": "Beetroot Indie Masala Chips",
+    "brand": "Twirtles",
+    "ingredients": "Beetroot Pulp, Urad Dal Flour, Rice Flour, Tapioca Starch, Rice Bran Oil, Salt & Spices.",
+    "servingSize": "28g",
+    "nutrition": [
+      {
+        "nutrient": "Energy",
+        "per100g": "529.82 kcal",
+        "perServe": "148.35 kcal",
+        "rda": "7%"
+      },
+      {
+        "nutrient": "Protein",
+        "per100g": "7.45 g",
+        "perServe": "2.09 g",
+        "rda": "4%"
+      },
+      {
+        "nutrient": "Carbohydrate",
+        "per100g": "58.09 g",
+        "perServe": "16.27 g",
+        "rda": "5%"
+      },
+      {
+        "nutrient": "Total sugars",
+        "per100g": "0 g",
+        "perServe": "0 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Added sugars",
+        "per100g": "0 g",
+        "perServe": "0 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Dietary fiber",
+        "per100g": "3.74 g",
+        "perServe": "1.04 g",
+        "rda": "3%"
+      },
+      {
+        "nutrient": "Total fat",
+        "per100g": "29.74 g",
+        "perServe": "8.32 g",
+        "rda": "12%"
+      },
+      {
+        "nutrient": "Trans fat",
+        "per100g": "0 g",
+        "perServe": "0 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Cholesterol",
+        "per100g": "0 g",
+        "perServe": "0 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Sodium",
+        "per100g": "236.4 mg",
+        "perServe": "66.19 mg",
+        "rda": "3%"
+      }
+    ],
+    "manufacturer": {
+      "name": "Deccan Food Ventures LLP",
+      "address": "847/22, 1st Floor, Crown Market, Tilak Gali, Kashmere Gate, Delhi, 110006",
+      "fssaiLicence": "13324005000323",
+      "customerCare": "011 40454920; +91 8957560093",
+      "email": "support@twirtles.com",
+      "website": "www.twirtles.com"
+    },
+    "notes": "Panel fully legible; nothing estimated or inferred. Ingredients/nutrition image is BYTE-IDENTICAL to Beetroot Cream N Onion and Beetroot Peri Peri (shared beetroot-base panel), so these figures are not flavour-specific and the ingredient list never names masala seasoning beyond 'Salt & Spices'. Verify against the physical pack before publishing. No allergen declaration of any kind on the panel; Urad Dal Flour is listed as an ingredient. The manufacturer panel is textually identical to the other five in this batch, differing only in banner and QR border colour (blue here, green on Cream N Onion, red on Peri Peri).",
+    "slug": "beetroot-chips-indie-masala"
+  },
+  "oats-chips-indie-masala": {
+    "sheetName": "Oats Indie Masala Chips",
+    "brand": "Twirtles",
+    "ingredients": "Oats Flour, Urad Dal Flour, Rice Flour, Tapioca Starch, Rice Bran Oil, Salt & Spices.",
+    "servingSize": "28g",
+    "nutrition": [
+      {
+        "nutrient": "Energy",
+        "per100g": "526.04 kcal",
+        "perServe": "147.29 kcal",
+        "rda": "7%"
+      },
+      {
+        "nutrient": "Protein",
+        "per100g": "8.45 g",
+        "perServe": "2.37 g",
+        "rda": "5%"
+      },
+      {
+        "nutrient": "Carbohydrate",
+        "per100g": "57.45 g",
+        "perServe": "16.09 g",
+        "rda": "5%"
+      },
+      {
+        "nutrient": "Total sugars",
+        "per100g": "0 g",
+        "perServe": "0 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Added sugars",
+        "per100g": "0 g",
+        "perServe": "0 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Dietary fiber",
+        "per100g": "4.85 g",
+        "perServe": "1.36 g",
+        "rda": "3%"
+      },
+      {
+        "nutrient": "Total fat",
+        "per100g": "29.16 g",
+        "perServe": "8.16 g",
+        "rda": "12%"
+      },
+      {
+        "nutrient": "Trans fat",
+        "per100g": "0 g",
+        "perServe": "0 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Cholesterol",
+        "per100g": "0 g",
+        "perServe": "0 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Sodium",
+        "per100g": "219.40 mg",
+        "perServe": "61.43 mg",
+        "rda": "3%"
+      }
+    ],
+    "manufacturer": {
+      "name": "Deccan Food Ventures LLP",
+      "address": "847/22, 1st Floor, Crown Market, Tilak Gali, Kashmere Gate, Delhi, 110006",
+      "fssaiLicence": "13324005000323",
+      "customerCare": "011 40454920; +91 8957560093",
+      "email": "support@twirtles.com",
+      "website": "www.twirtles.com"
+    },
+    "notes": "Panel fully legible; nothing estimated or inferred. The ingredients/nutrition image at this product's 'ing' URL is BYTE-IDENTICAL (md5 8e6c43da0192ab02102509023985ed58) to the one for Oats Peri Peri, so these figures come from a shared oats-base panel rather than a flavour-specific one. Ingredient list is flavour-neutral ('Salt & Spices'). Verify against the physical pack before publishing per-flavour nutrition. No allergen declaration on the panel even though Oats Flour and Urad Dal Flour are listed; oats are a gluten cross-contact concern, so this is worth confirming with the supplier.",
+    "slug": "oats-chips-indie-masala"
+  },
+  "oats-chips-peri-peri": {
+    "sheetName": "Oats Peri Peri Chips",
+    "brand": "Twirtles",
+    "ingredients": "Oats Flour, Urad Dal Flour, Rice Flour, Tapioca Starch, Rice Bran Oil, Salt & Spices.",
+    "servingSize": "28g",
+    "nutrition": [
+      {
+        "nutrient": "Energy",
+        "per100g": "526.04 kcal",
+        "perServe": "147.29 kcal",
+        "rda": "7%"
+      },
+      {
+        "nutrient": "Protein",
+        "per100g": "8.45 g",
+        "perServe": "2.37 g",
+        "rda": "5%"
+      },
+      {
+        "nutrient": "Carbohydrate",
+        "per100g": "57.45 g",
+        "perServe": "16.09 g",
+        "rda": "5%"
+      },
+      {
+        "nutrient": "Total sugars",
+        "per100g": "0 g",
+        "perServe": "0 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Added sugars",
+        "per100g": "0 g",
+        "perServe": "0 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Dietary fiber",
+        "per100g": "4.85 g",
+        "perServe": "1.36 g",
+        "rda": "3%"
+      },
+      {
+        "nutrient": "Total fat",
+        "per100g": "29.16 g",
+        "perServe": "8.16 g",
+        "rda": "12%"
+      },
+      {
+        "nutrient": "Trans fat",
+        "per100g": "0 g",
+        "perServe": "0 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Cholesterol",
+        "per100g": "0 g",
+        "perServe": "0 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Sodium",
+        "per100g": "219.40 mg",
+        "perServe": "61.43 mg",
+        "rda": "3%"
+      }
+    ],
+    "manufacturer": {
+      "name": "Deccan Food Ventures LLP",
+      "address": "847/22, 1st Floor, Crown Market, Tilak Gali, Kashmere Gate, Delhi, 110006",
+      "fssaiLicence": "13324005000323",
+      "customerCare": "011 40454920; +91 8957560093",
+      "email": "support@twirtles.com",
+      "website": "www.twirtles.com"
+    },
+    "notes": "Panel fully legible; nothing estimated or inferred. Ingredients/nutrition image is BYTE-IDENTICAL to Oats Indie Masala (shared oats-base panel), so these figures are not flavour-specific and the ingredient list never names peri peri seasoning beyond 'Salt & Spices'. Verify against the physical pack before publishing. No allergen declaration on the panel despite Oats Flour and Urad Dal Flour being listed.",
+    "slug": "oats-chips-peri-peri"
+  },
+  "quinoa-chips-indie-masala": {
+    "sheetName": "Quinoa Indie Masala Chips",
+    "brand": "Twirtles",
+    "ingredients": "Quinoa Flour, Urad Dal Flour, Rice Flour, Tapioca Starch, Rice Bran Oil, Salt & Spices.",
+    "servingSize": "28g",
+    "nutrition": [
+      {
+        "nutrient": "Energy",
+        "per100g": "520.20 kcal",
+        "perServe": "145.66 kcal",
+        "rda": "7%"
+      },
+      {
+        "nutrient": "Protein",
+        "per100g": "12.42 g",
+        "perServe": "3.48 g",
+        "rda": "7%"
+      },
+      {
+        "nutrient": "Carbohydrate",
+        "per100g": "54.99 g",
+        "perServe": "15.39 g",
+        "rda": "5%"
+      },
+      {
+        "nutrient": "Total sugars",
+        "per100g": "0 g",
+        "perServe": "0 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Added sugars",
+        "per100g": "0 g",
+        "perServe": "0 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Dietary fiber",
+        "per100g": "4.13 g",
+        "perServe": "1.16 g",
+        "rda": "3%"
+      },
+      {
+        "nutrient": "Total fat",
+        "per100g": "27.84 g",
+        "perServe": "7.8 g",
+        "rda": "12%"
+      },
+      {
+        "nutrient": "Trans fat",
+        "per100g": "0 g",
+        "perServe": "0 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Cholesterol",
+        "per100g": "0 g",
+        "perServe": "0 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Sodium",
+        "per100g": "219.80 mg",
+        "perServe": "61.54 mg",
+        "rda": "3%"
+      }
+    ],
+    "manufacturer": {
+      "name": "Deccan Food Ventures LLP",
+      "address": "847/22, 1st Floor, Crown Market, Tilak Gali, Kashmere Gate, Delhi, 110006",
+      "fssaiLicence": "13324005000323",
+      "customerCare": "011 40454920; +91 8957560093",
+      "email": "support@twirtles.com",
+      "website": "www.twirtles.com"
+    },
+    "notes": "Panel fully legible; nothing estimated or inferred. This is the only ingredients/nutrition image in indices 0-5 that is unique to its product; it also uses a different layout and typography from the beetroot and oats panels. Total fat per serve is printed as '7.8 g' with a single decimal while every other value in the table carries two - transcribed verbatim and confirmed by zooming in, not truncated during transcription. Ingredient list is flavour-neutral ('Salt & Spices') and never names masala seasoning. No allergen declaration on the panel; Urad Dal Flour is listed as an ingredient.",
+    "slug": "quinoa-chips-indie-masala"
+  },
+  "quinoa-chips-peri-peri": {
+    "sheetName": "Quinoa Peri Peri Chips",
+    "brand": "Twirtles",
+    "ingredients": "Quinoa Flour, Urad Dal Flour, Rice Flour, Tapioca Starch, Rice Bran Oil, Salt & Spices.",
+    "servingSize": "28g",
+    "nutrition": [
+      {
+        "nutrient": "Energy",
+        "per100g": "520.20 kcal",
+        "perServe": "145.66 kcal",
+        "rda": "7%"
+      },
+      {
+        "nutrient": "Protein",
+        "per100g": "12.42 g",
+        "perServe": "3.48 g",
+        "rda": "7%"
+      },
+      {
+        "nutrient": "Carbohydrate",
+        "per100g": "54.99 g",
+        "perServe": "15.39 g",
+        "rda": "5%"
+      },
+      {
+        "nutrient": "Total sugars",
+        "per100g": "0 g",
+        "perServe": "0 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Added sugars",
+        "per100g": "0 g",
+        "perServe": "0 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Dietary fiber",
+        "per100g": "4.13 g",
+        "perServe": "1.16 g",
+        "rda": "3%"
+      },
+      {
+        "nutrient": "Total fat",
+        "per100g": "27.84 g",
+        "perServe": "7.8 g",
+        "rda": "12%"
+      },
+      {
+        "nutrient": "Trans fat",
+        "per100g": "0 g",
+        "perServe": "0 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Cholesterol",
+        "per100g": "0 g",
+        "perServe": "0 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Sodium",
+        "per100g": "219.80 mg",
+        "perServe": "61.54 mg",
+        "rda": "3%"
+      }
+    ],
+    "manufacturer": {
+      "name": "Deccan Food Ventures LLP",
+      "address": "847/22, 1st Floor, Crown Market, Tilak Gali, Kashmere Gate, Delhi, 110006",
+      "fssaiLicence": "13324005000323",
+      "customerCare": "011 40454920; +91 8957560093",
+      "email": "support@twirtles.com",
+      "website": "www.twirtles.com"
+    },
+    "notes": "Table header is '% RDA per serve'; the '-' cells are printed as a dash. Total fat per serve is printed '7.8 g' (one decimal) while every other value carries two decimals - transcribed as printed, not padded. Panel is titled 'NUTRITIONAL INFORMATION (Approx. Values)'. The ingredients/nutrition panel does not print the flavour name anywhere, so the Peri Peri attribution comes only from the source filename. Manufacturer panel is headed 'Mfd. & Marketed By'. Footer: 'Images are for illustration purposes only. Actual product may vary.' No allergen statement is printed on this panel.",
+    "slug": "quinoa-chips-peri-peri"
+  },
+  "ragi-chips-indie-masala": {
+    "sheetName": "Ragi Indie Masala Chips",
+    "brand": "Twirtles",
+    "ingredients": "Ragi Flour, Urad Dal Flour, Rice Flour, Tapioca Starch, Rice Bran Oil, Salt, Spice.",
+    "servingSize": "28g",
+    "nutrition": [
+      {
+        "nutrient": "Energy",
+        "per100g": "517.25 kcal",
+        "perServe": "144.83 kcal",
+        "rda": "7%"
+      },
+      {
+        "nutrient": "Protein",
+        "per100g": "9.25 g",
+        "perServe": "2.59 g",
+        "rda": "5%"
+      },
+      {
+        "nutrient": "Carbohydrate",
+        "per100g": "56.14 g",
+        "perServe": "15.71 g",
+        "rda": "5%"
+      },
+      {
+        "nutrient": "Total sugars",
+        "per100g": "0 g",
+        "perServe": "0 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Added sugars",
+        "per100g": "0 g",
+        "perServe": "0 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Dietary fiber",
+        "per100g": "4.73 g",
+        "perServe": "1.32 g",
+        "rda": "3%"
+      },
+      {
+        "nutrient": "Total fat",
+        "per100g": "28.41 g",
+        "perServe": "7.95 g",
+        "rda": "12%"
+      },
+      {
+        "nutrient": "Trans fat",
+        "per100g": "0 g",
+        "perServe": "0 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Cholesterol",
+        "per100g": "0 g",
+        "perServe": "0 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Sodium",
+        "per100g": "305.40 mg",
+        "perServe": "85.51 mg",
+        "rda": "4%"
+      }
+    ],
+    "manufacturer": {
+      "name": "Deccan Food Ventures LLP",
+      "address": "847/22, 1st Floor, Crown Market, Tilak Gali, Kashmere Gate, Delhi, 110006",
+      "fssaiLicence": "13324005000323",
+      "customerCare": "011 40454920; +91 8957560093",
+      "email": "support@twirtles.com",
+      "website": "www.twirtles.com"
+    },
+    "notes": "DO NOT PUBLISH WITHOUT SOURCE VERIFICATION. The 'ing' URL for this product (Ragi Chips Indie Masala 3.png) and the 'ing' URL for Ragi Peri Peri Chips (Ragi Chips Peri Peri 3.png) return a BYTE-IDENTICAL image (both MD5 0bdcb3021e639fe0b66f25aa8d7cd364). The panel prints no flavour name, so there is no way to tell from the image which of the two Ragi flavours these ingredients and figures actually belong to. At most one of the two Ragi records can be correct. The manufacturer panels for the two ARE distinct (this one has a blue banner and a different QR code; Peri Peri has a red banner), which confirms they are genuinely two separate SKUs and that the shared ingredients image is a source-data error, not a duplicate product. Ingredients wording differs from the Quinoa pack: this one reads 'Salt, Spice.' (singular, comma) rather than 'Salt & Spices.' - transcribed as printed. No allergen statement is printed on this panel.",
+    "slug": "ragi-chips-indie-masala"
+  },
+  "ragi-chips-peri-peri": {
+    "sheetName": "Ragi Peri Peri Chips",
+    "brand": "Twirtles",
+    "ingredients": "Ragi Flour, Urad Dal Flour, Rice Flour, Tapioca Starch, Rice Bran Oil, Salt, Spice.",
+    "servingSize": "28g",
+    "nutrition": [
+      {
+        "nutrient": "Energy",
+        "per100g": "517.25 kcal",
+        "perServe": "144.83 kcal",
+        "rda": "7%"
+      },
+      {
+        "nutrient": "Protein",
+        "per100g": "9.25 g",
+        "perServe": "2.59 g",
+        "rda": "5%"
+      },
+      {
+        "nutrient": "Carbohydrate",
+        "per100g": "56.14 g",
+        "perServe": "15.71 g",
+        "rda": "5%"
+      },
+      {
+        "nutrient": "Total sugars",
+        "per100g": "0 g",
+        "perServe": "0 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Added sugars",
+        "per100g": "0 g",
+        "perServe": "0 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Dietary fiber",
+        "per100g": "4.73 g",
+        "perServe": "1.32 g",
+        "rda": "3%"
+      },
+      {
+        "nutrient": "Total fat",
+        "per100g": "28.41 g",
+        "perServe": "7.95 g",
+        "rda": "12%"
+      },
+      {
+        "nutrient": "Trans fat",
+        "per100g": "0 g",
+        "perServe": "0 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Cholesterol",
+        "per100g": "0 g",
+        "perServe": "0 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Sodium",
+        "per100g": "305.40 mg",
+        "perServe": "85.51 mg",
+        "rda": "4%"
+      }
+    ],
+    "manufacturer": {
+      "name": "Deccan Food Ventures LLP",
+      "address": "847/22, 1st Floor, Crown Market, Tilak Gali, Kashmere Gate, Delhi, 110006",
+      "fssaiLicence": "13324005000323",
+      "customerCare": "011 40454920; +91 8957560093",
+      "email": "support@twirtles.com",
+      "website": "www.twirtles.com"
+    },
+    "notes": "DO NOT PUBLISH WITHOUT SOURCE VERIFICATION. The 'ing' URL for this product (Ragi Chips Peri Peri 3.png) and the 'ing' URL for Ragi Indie Masala Chips (Ragi Chips Indie Masala 3.png) return a BYTE-IDENTICAL image (both MD5 0bdcb3021e639fe0b66f25aa8d7cd364). The panel prints no flavour name, so there is no way to tell from the image which of the two Ragi flavours these ingredients and figures actually belong to. At most one of the two Ragi records can be correct. The manufacturer panels for the two ARE distinct (this one has a red banner and a different QR code; Indie Masala has a blue banner), which confirms they are genuinely two separate SKUs and that the shared ingredients image is a source-data error, not a duplicate product. Ingredients wording differs from the Quinoa pack: this one reads 'Salt, Spice.' (singular, comma) rather than 'Salt & Spices.' - transcribed as printed. No allergen statement is printed on this panel.",
+    "slug": "ragi-chips-peri-peri"
+  },
+  "superpuffs-cream-and-onion": {
+    "sheetName": "Superpuffs Cream N Onion",
+    "brand": "Twirtles",
+    "ingredients": "Protein Blend (35%) (Pea Protein Hydrolysate, Brown Rice Protein Hydrolysate, Green Gram Flour & Chickpea Flour), Rice Crisps, Rice Bran Oil, Spices & Condiments ( Red Chillies, Dried Mango Powder, Dried Onion Powder, Coriander Seeds, Cumin Powder, Dried Garlic Flakes, Nutmeg, Mace & Edible Common Salt), Dried Tomato Powder, Peanut Protein Hydrolysate,  Potassium Chloride, Zinc Sulphate Monohydrate,   Colour (Paprika Extract), Acidity Regulators (INS 296, INS 330 & INS 510), Flavour Enhancer (INS 627 & INS 631), Cyanocobalamin & Natural and Nature Identical Flavouring Substances.",
+    "servingSize": "50 g",
+    "nutrition": [
+      {
+        "nutrient": "Energy (kcal)",
+        "per100g": "371.2",
+        "perServe": "185.60",
+        "rda": "9.28"
+      },
+      {
+        "nutrient": "Protein (g)†",
+        "per100g": "25",
+        "perServe": "12.50",
+        "rda": "27.77"
+      },
+      {
+        "nutrient": "Carbohydrates (g)",
+        "per100g": "57.32",
+        "perServe": "28.66",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Total Sugars (g)",
+        "per100g": "0.08",
+        "perServe": "0.04",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Added Sugars (g)",
+        "per100g": "0",
+        "perServe": "0",
+        "rda": "0.00"
+      },
+      {
+        "nutrient": "Dietary Fibre (g)†",
+        "per100g": "7.76",
+        "perServe": "3.88",
+        "rda": "12.93"
+      },
+      {
+        "nutrient": "Total Fat (g)",
+        "per100g": "5.8",
+        "perServe": "2.90",
+        "rda": "4.33"
+      },
+      {
+        "nutrient": "Saturated Fat (g)",
+        "per100g": "0.40",
+        "perServe": "0.20",
+        "rda": "0.91"
+      },
+      {
+        "nutrient": "PUFA (g)",
+        "per100g": "2.18",
+        "perServe": "1.09",
+        "rda": "-"
+      },
+      {
+        "nutrient": "MUFA (g)",
+        "per100g": "0.96",
+        "perServe": "0.48",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Trans Fat (g)",
+        "per100g": "0",
+        "perServe": "0",
+        "rda": "0.00"
+      },
+      {
+        "nutrient": "Cholesterol (mg)",
+        "per100g": "0",
+        "perServe": "0",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Sodium (mg)",
+        "per100g": "700",
+        "perServe": "350",
+        "rda": "17.50"
+      },
+      {
+        "nutrient": "Calcium (mg)†",
+        "per100g": "450",
+        "perServe": "225",
+        "rda": "22.50"
+      },
+      {
+        "nutrient": "Potassium (mg)†",
+        "per100g": "265",
+        "perServe": "132.50",
+        "rda": "3.79"
+      },
+      {
+        "nutrient": "Vitamin D (IU)†",
+        "per100g": "500",
+        "perServe": "250",
+        "rda": "41.67"
+      }
+    ],
+    "manufacturer": {
+      "name": "Deccan Food Ventures LLP",
+      "address": "A108, Wazirpur Industrial Area, North West Delhi, Delhi- 110052, INDIA",
+      "fssaiLicence": "13324005000323",
+      "customerCare": "011 40454920",
+      "email": "support@twirtles.com",
+      "website": "www.twirtles.com"
+    },
+    "notes": "TWO ENTITIES ARE PRINTED, each with its own FSSAI licence. The manufacturer object above holds the 'Packed & Marketed By' entity. The panel ALSO prints: 'Manufactured By SWASTHUM WELLNESS Pvt. Ltd., A-43, Naresh Park, Nangloi, New Delhi-110041, INDIA, FSSAI Lic. No. 10017011004609'. Both must be carried through if the site displays manufacturer detail. Also printed: 'TWIRTLES(R) IS A REGISTERED TRADEMARK OF Deccan Food Ventures LLP, TRADEMARK NO- 6440213'; barcode 8 906192 290354. Customer care here lists only ONE number (011 40454920), unlike the chip packs which list two. ALLERGEN INFORMATION (printed verbatim): 'Contains Nut. Manufactured in the same facility which processes Soy & Milk.' Also printed: '^Used as Natural Flavouring Agent', 'CONTAINS NATURALLY OCCURRING SUGARS', 'STORAGE INSTRUCTIONS: Store in a cool and dry place, keep away from direct sunlight.', 'PROPRIETARY FOOD [15.1] SNACK', 'Servings Per Jar : 3', and a batch/MFG/EXP/MRP block reading 'Refer to the bottom of the jar'. The %RDA column is printed as bare numbers with no % sign - transcribed as printed. Footnotes verbatim: '#%RDA value per serving based on 2000 kcal diet for average adult. / †%RDA value per serving established by ICMR 2020, Women Moderate Work. / -- RDA values not established. / *Values per 150gm'. NOTE A PRINTED INCONSISTENCY: the column header reads '%RDA*' and the footnote says '*Values per 150gm', but the figures compute against the 50 g serve, not 150 g. FLAVOUR MISMATCH FLAG: the panel prints no flavour name, and the ingredient list for this 'Cream N Onion' SKU contains Red Chillies, Dried Mango Powder and Dried Tomato Powder with no dairy or cream component - it is the same spice profile as the other two Superpuffs. Verify against the physical pack before publishing. Ingredient spacing/punctuation oddities (double spaces, the space inside 'Condiments ( Red Chillies') are reproduced as printed.",
+    "slug": "superpuffs-cream-and-onion"
+  },
+  "superpuffs-hot-n-sweet-chilli": {
+    "sheetName": "Superpuffs Hot N Sweet Chilli",
+    "brand": "Twirtles",
+    "ingredients": "Protein Blend (35%) (Pea Protein Hydrolysate, Brown Rice Protein Hydrolysate, Green Gram Flour & Chickpea Flour), Rice Grits, Rice Bran Oil, Spices & Condiments ( Red Chillies, Dried Mango Powder, Dried Onion Powder, Coriander Seeds, Cumin Powder, Dried Garlic Flakes, Nutmeg, Mace & Edible Common Salt), Dried Tomato Powder, Peanut Protein Hydrolysate,  Potassium Chloride, Zinc Sulphate Monohydrate,   Colour (Paprika Extract), Acidity Regulators (INS 296, INS 330 & INS 510), Flavour Enhancer (INS 627 & INS 631), Cyanocobalamin & Natural and Nature Identical Flavouring Substances.",
+    "servingSize": "50 g",
+    "nutrition": [
+      {
+        "nutrient": "Energy (kcal)",
+        "per100g": "381.48",
+        "perServe": "194.74",
+        "rda": "9.74"
+      },
+      {
+        "nutrient": "Protein (g)†",
+        "per100g": "25",
+        "perServe": "12.50",
+        "rda": "27.77"
+      },
+      {
+        "nutrient": "Carbohydrates (g)",
+        "per100g": "57.32",
+        "perServe": "28.66",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Total Sugars (g)",
+        "per100g": "0.08",
+        "perServe": "0.04",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Added Sugars (g)",
+        "per100g": "0",
+        "perServe": "0",
+        "rda": "0.00"
+      },
+      {
+        "nutrient": "Dietary Fibre (g)†",
+        "per100g": "7.76",
+        "perServe": "3.88",
+        "rda": "12.93"
+      },
+      {
+        "nutrient": "Total Fat (g)",
+        "per100g": "5.8",
+        "perServe": "2.90",
+        "rda": "4.33"
+      },
+      {
+        "nutrient": "Saturated Fat (g)",
+        "per100g": "0.40",
+        "perServe": "0.20",
+        "rda": "0.91"
+      },
+      {
+        "nutrient": "PUFA (g)",
+        "per100g": "2.18",
+        "perServe": "1.09",
+        "rda": "-"
+      },
+      {
+        "nutrient": "MUFA (g)",
+        "per100g": "0.96",
+        "perServe": "0.48",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Trans Fat (g)",
+        "per100g": "0",
+        "perServe": "0",
+        "rda": "0.00"
+      },
+      {
+        "nutrient": "Cholesterol (mg)",
+        "per100g": "0",
+        "perServe": "0",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Sodium (mg)",
+        "per100g": "700",
+        "perServe": "350",
+        "rda": "17.50"
+      },
+      {
+        "nutrient": "Calcium (mg)†",
+        "per100g": "450",
+        "perServe": "225",
+        "rda": "22.50"
+      },
+      {
+        "nutrient": "Potassium (mg)†",
+        "per100g": "265",
+        "perServe": "132.50",
+        "rda": "3.78"
+      },
+      {
+        "nutrient": "Vitamin C (mg)†",
+        "per100g": "75.4",
+        "perServe": "37.70",
+        "rda": "58.00"
+      },
+      {
+        "nutrient": "Iron (mg)†",
+        "per100g": "25",
+        "perServe": "12.50",
+        "rda": "43.10"
+      },
+      {
+        "nutrient": "Vitamin B12 (mcg)†",
+        "per100g": "2.5",
+        "perServe": "1.25",
+        "rda": "56.82"
+      }
+    ],
+    "manufacturer": {
+      "name": "Deccan Food Ventures LLP",
+      "address": "A108, Wazirpur Industrial Area, North West Delhi, Delhi- 110052, INDIA",
+      "fssaiLicence": "13324005000323",
+      "customerCare": "011 40454920",
+      "email": "support@twirtles.com",
+      "website": "www.twirtles.com"
+    },
+    "notes": "TWO ENTITIES ARE PRINTED, each with its own FSSAI licence. The manufacturer object above holds the 'Packed & Marketed By' entity. The panel ALSO prints: 'Manufactured By SWASTHUM WELLNESS Pvt. Ltd., A-43, Naresh Park, Nangloi, New Delhi-110041, INDIA, FSSAI Lic. No. 10017011004609'. Also printed: 'TWIRTLES(R) IS A REGISTERED TRADEMARK OF Deccan Food Ventures LLP, TRADEMARK NO- 6440213'; barcode 8 906192 290330. Customer care lists only ONE number. ALLERGEN INFORMATION (printed verbatim): 'Contains Nut. Manufactured in the same facility which processes Soy & Milk.' Also printed: '^Used as Natural Flavouring Agent', 'CONTAINS NATURALLY OCCURRING SUGARS', 'STORAGE INSTRUCTIONS: Store in a cool and dry place, keep away from direct sunlight.', 'PROPRIETARY FOOD [15.1] SNACK', 'Servings Per Jar : 3', batch/MFG/EXP/MRP block reading 'Refer to the bottom of the jar'. The %RDA column is printed as bare numbers with no % sign. Footnotes verbatim: '#%RDA value per serving based on 2000 kcal diet for average adult. / †%RDA value per serving established by ICMR 2020, Women Moderate Work. / -- RDA values not established. / *Values per 150gm' - the same 150gm-vs-50g inconsistency as the other Superpuffs. This SKU's micronutrient rows differ from the other two Superpuffs (Vitamin C, Iron and Vitamin B12 here; Vitamin D on Cream N Onion; Zinc and B12 on Indie Masala), and its Potassium %RDA is printed 3.78 where the other two print 3.79 - verified at magnification, transcribed as printed. Ingredient text says 'Rice Grits' where Cream N Onion says 'Rice Crisps'. The panel prints no flavour name; the Hot N Sweet Chilli attribution comes only from the source filename. Ingredient spacing/punctuation oddities reproduced as printed.",
+    "slug": "superpuffs-hot-n-sweet-chilli"
+  },
+  "makhana-cream-and-onion": {
+    "sheetName": "Makhana Cream N Onion",
+    "brand": "Twirtles",
+    "ingredients": "Roasted Makhana, Rice Bran Oil, Spices and condiments (yellow chilly, Onion (2%), Parsley), iodized Salt, sugar, milk solid (3.5%), Maltodextrin, Hydrolyze Vegetable Protein (Peanut), Acidity Regulator (INS 330) & (INS 296), Flavors Enhancers (INS 627) (INS 631). Contains added Natural and Nature Identical Flavoring Substances.",
+    "servingSize": "28g",
+    "nutrition": [
+      {
+        "nutrient": "Energy",
+        "per100g": "535.61 kcal",
+        "perServe": "149.9 kcal",
+        "rda": "7.5%"
+      },
+      {
+        "nutrient": "Protein",
+        "per100g": "8.74 g",
+        "perServe": "2.4 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Carbohydrate",
+        "per100g": "60.07 g",
+        "perServe": "16.8 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Total Sugar",
+        "per100g": "5.43g",
+        "perServe": "1.5 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Added Sugars",
+        "per100g": "0 mg",
+        "perServe": "0 mg",
+        "rda": "0%"
+      },
+      {
+        "nutrient": "Dietary Fiber",
+        "per100g": "4.69 mg",
+        "perServe": "1.3 mg",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Total Fat",
+        "per100g": "28.93 mg",
+        "perServe": "8.1 mg",
+        "rda": "12.0%"
+      },
+      {
+        "nutrient": "Saturated Fat",
+        "per100g": "10.82 mg",
+        "perServe": "3 mg",
+        "rda": "13.7%"
+      },
+      {
+        "nutrient": "Trans Fat",
+        "per100g": "0 mg",
+        "perServe": "0 mg",
+        "rda": "0%"
+      },
+      {
+        "nutrient": "Cholesterol",
+        "per100g": "0 mg",
+        "perServe": "0 mg",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Sodium",
+        "per100g": "229.42 mg",
+        "perServe": "64.2 mg",
+        "rda": "3.2%"
+      }
+    ],
+    "manufacturer": {
+      "name": "Deccan Food Ventures LLP",
+      "address": "A108/1 A block Wazirpur Industrial Area, New Delhi - 110052",
+      "fssaiLicence": "13324005000323",
+      "customerCare": "011 40454920",
+      "email": "support@twirtles.com",
+      "website": "www.twirtles.com"
+    },
+    "notes": "Every value legible; nothing guessed. Pack states 'Manufactured & Marketed by' Deccan Food Ventures LLP. Transcribed verbatim including apparent printing errors on the pack: Dietary Fiber, Total Fat and Saturated Fat are printed in 'mg' where 'g' is almost certainly intended (28.93 mg total fat per 100g is not consistent with 535.61 kcal) - NOT corrected here. 'Total Sugar' per 100g is printed as '5.43g' with no space. Allergen line (not part of the ingredient sentence): 'Contains Peanuts. (Produced in a facility where tree nuts and dairy maybe present)'. Storage: 'Store in a cool & dry place, away from sunlight. Keep airtight all the time.' A footer box lists Net weight (g), MRP, USP and Date of Manufacturing with no values printed - it says 'Refer to the bottom of the jar'. Only one customer care number is printed.",
+    "slug": "makhana-cream-and-onion"
+  },
+  "makhana-himalayan-salt": {
+    "sheetName": "Makhana Himalayan Salt",
+    "brand": "Twirtles",
+    "ingredients": "Roasted Makhana, Rice Bran Oil, Spices and condiments (yellow chilly, Onion (2%), Parsley), iodized Salt, sugar, milk solid (3.5%), Maltodextrin, Hydrolyze Vegetable Protein (Peanut), Acidity Regulator (INS 330) & (INS 296), Flavors Enhancers (INS 627) (INS 631). Contains added Natural and Nature Identical Flavoring Substances",
+    "servingSize": "28g",
+    "nutrition": [
+      {
+        "nutrient": "Energy",
+        "per100g": "535.61 kcal",
+        "perServe": "149.9 kcal",
+        "rda": "7.5%"
+      },
+      {
+        "nutrient": "Protein",
+        "per100g": "8.74 g",
+        "perServe": "2.4 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Carbohydrate",
+        "per100g": "60.07 g",
+        "perServe": "16.8 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Total Sugar",
+        "per100g": "5.43g",
+        "perServe": "1.5 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Added Sugars",
+        "per100g": "0 mg",
+        "perServe": "0 mg",
+        "rda": "0%"
+      },
+      {
+        "nutrient": "Dietary Fiber",
+        "per100g": "4.69 mg",
+        "perServe": "1.3 mg",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Total Fat",
+        "per100g": "28.93 mg",
+        "perServe": "8.1 mg",
+        "rda": "12.0%"
+      },
+      {
+        "nutrient": "Saturated Fat",
+        "per100g": "10.82 mg",
+        "perServe": "3 mg",
+        "rda": "13.7%"
+      },
+      {
+        "nutrient": "Trans Fat",
+        "per100g": "0 mg",
+        "perServe": "0 mg",
+        "rda": "0"
+      },
+      {
+        "nutrient": "Cholesterol",
+        "per100g": "0 mg",
+        "perServe": "0 mg",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Sodium",
+        "per100g": "229.42 mg",
+        "perServe": "64.2 mg",
+        "rda": "3.2%"
+      }
+    ],
+    "manufacturer": {
+      "name": "Deccan Food Ventures LLP",
+      "address": "A108/1 A block Wazirpur Industrial Area, New Delhi - 110052",
+      "fssaiLicence": "13324005000323",
+      "customerCare": "011 40454920",
+      "email": "support@twirtles.com",
+      "website": "www.twirtles.com"
+    },
+    "notes": "Every value legible; nothing guessed. IMPORTANT DISCREPANCY ON THE PACK, NOT A TRANSCRIPTION ERROR: this Himalayan Salt pack prints the Cream N Onion ingredient list and the identical nutrition figures - it declares 'Onion (2%)', 'Parsley' and 'milk solid (3.5%)', and the salt is declared as 'iodized Salt' with no mention of Himalayan salt. Transcribed exactly as printed; recommend confirming with the brand before publishing, as the milk-solid declaration is allergen-relevant. Ingredient sentence ends without a full stop after 'Substances' (the Cream N Onion pack has one). Trans Fat %RDA is printed as '0' here, not '0%'. Same 'mg' unit anomaly as Cream N Onion on Dietary Fiber, Total Fat and Saturated Fat - not corrected. Allergen line: 'Contains Peanuts. (Produced in a facility where tree nuts and dairy maybe present)'. No net weight / MRP box on this panel. Only one customer care number is printed.",
+    "slug": "makhana-himalayan-salt"
+  },
+  "makhana-pudina": {
+    "sheetName": "Makhana Mint",
+    "brand": "Twirtles",
+    "ingredients": "Makhana(foxnut), Rice Bran Oil, Amchur Powder, Chilli Powder, Coriander Powder, Turmeric Powder, Edible Common Salt, Cumin Powder, Clove, Black Pepper Powder, Big Cardamon, Ginger Powder, Bay leaves, Fenugreek powder, Edible Starch, Mint Powder, Asafoetida, Cinnamon Powder, Mace Powder, Acidifying Agent(330), Anti Caking Agent(INS 551)",
+    "servingSize": "20g",
+    "nutrition": [
+      {
+        "nutrient": "Energy",
+        "per100g": "389.6 kcal",
+        "perServe": "77.92 kcal",
+        "rda": "3.9%"
+      },
+      {
+        "nutrient": "Protein",
+        "per100g": "10.5 g",
+        "perServe": "2.1 g",
+        "rda": "4.2%"
+      },
+      {
+        "nutrient": "Carbohydrate",
+        "per100g": "86.43 g",
+        "perServe": "17.28 g",
+        "rda": "6.12%"
+      },
+      {
+        "nutrient": "Sucrose",
+        "per100g": "3.0 g",
+        "perServe": "0.6 g",
+        "rda": "1.2%"
+      },
+      {
+        "nutrient": "Added Sugars",
+        "per100g": "0 mg",
+        "perServe": "0 mg",
+        "rda": "0%"
+      },
+      {
+        "nutrient": "Dietary Fiber",
+        "per100g": "11.2 g",
+        "perServe": "2.24 g",
+        "rda": "8%"
+      },
+      {
+        "nutrient": "Total Fat",
+        "per100g": "0.22 g",
+        "perServe": "0.04 g",
+        "rda": "0.06%"
+      },
+      {
+        "nutrient": "Saturated Fat",
+        "per100g": "0 mg",
+        "perServe": "0 mg",
+        "rda": "0%"
+      },
+      {
+        "nutrient": "Trans Fat",
+        "per100g": "0 mg",
+        "perServe": "0 mg",
+        "rda": "0%"
+      },
+      {
+        "nutrient": "Cholesterol",
+        "per100g": "0 mg",
+        "perServe": "0 mg",
+        "rda": "0%"
+      },
+      {
+        "nutrient": "Sodium",
+        "per100g": "100 mg",
+        "perServe": "20 mg",
+        "rda": "0.87%"
+      }
+    ],
+    "manufacturer": {
+      "name": "Deccan Food Ventures LLP",
+      "address": "A108/1 A block Wazirpur Industrial Area, New Delhi - 110052",
+      "fssaiLicence": "13324005000323",
+      "customerCare": "011 40454920",
+      "email": "support@twirtles.com",
+      "website": "www.twirtles.com"
+    },
+    "notes": "Every value legible; nothing guessed. This product's panels differ structurally from the other four Makhana SKUs - do not assume they match. Serving size is 20g (printed 'Serving Size : 20g'), the sugar row is labelled 'Sucrose' rather than 'Total Sugar', and every row carries a %RDA value rather than '-'. Ingredient list is a spice-blend format with no Maltodextrin, no INS 627/631 and no milk solid, yet the allergen line still reads 'Contains Peanuts. (Produced in a facility where tree nuts and dairy maybe present)' while no peanut ingredient is declared - printed that way, not inferred. 'Big Cardamon' is spelt that way on the pack. Note the pack's own figures are internally inconsistent (86.43 g carbohydrate + 10.5 g protein + 11.2 g fibre + 0.22 g fat exceeds 100 g); transcribed verbatim without correction. The manufacturer panel also uses a different layout from the other four: no 'Twirtles Makhana is crafted from the finest, hand-picked makhana' block, the tagline reads 'because your cravings deserve better!' rather than 'Fun Snacks, Serious Nutrition!', the logo carries a registered (R) mark rather than TM, and the Recyclable Jar / Keep Your city clean / Made in India icon row and the 'Images are for illustrative purposes' line are absent. Manufacturer, address, FSSAI licence, phone, email and website are nonetheless identical to the other four. Only one customer care number is printed.",
+    "slug": "makhana-pudina"
+  },
+  "makhana-peri-peri": {
+    "sheetName": "Makhana Peri Peri",
+    "brand": "Twirtles",
+    "ingredients": "Roasted Makhana, Rice Bran Oil, Spices & Condiments (Red Chili, Dried Garlic, Dried Onion, Cumin, Dried Mango, Coriander Seeds, Dried Ginger, Turmeric, Bishop's Weed, Black Pepper, Cinnamon, Fenugreek Seeds, Nutmeg, Mace), iodized Salt, Sugar, Maltodextrin, Hydrolyzed vegetable Protein (Peanut), Acidity Regulator (INS 330)& (INS 296), Color (INS160c), Flavor Enhancer (INS 627) (INS 631), Contains added Natural And Nature Identical Flavoring Substances.",
+    "servingSize": "28g",
+    "nutrition": [
+      {
+        "nutrient": "Energy",
+        "per100g": "465.37 kcal",
+        "perServe": "130.3 kcal",
+        "rda": "6.5%"
+      },
+      {
+        "nutrient": "Protein",
+        "per100g": "6.86 g",
+        "perServe": "1.9 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Carbohydrate",
+        "per100g": "64.91 g",
+        "perServe": "18.2 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Total Sugar",
+        "per100g": "5.47 g",
+        "perServe": "1.5 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Added Sugars",
+        "per100g": "0 mg",
+        "perServe": "0 mg",
+        "rda": "0%"
+      },
+      {
+        "nutrient": "Dietary Fiber",
+        "per100g": "2.54 mg",
+        "perServe": "0.7 mg",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Total Fat",
+        "per100g": "23.41 mg",
+        "perServe": "6.6 mg",
+        "rda": "9.7%"
+      },
+      {
+        "nutrient": "Saturated Fat",
+        "per100g": "2.79 mg",
+        "perServe": "0.8 mg",
+        "rda": "3.5%"
+      },
+      {
+        "nutrient": "Trans Fat",
+        "per100g": "0 mg",
+        "perServe": "0 mg",
+        "rda": "0"
+      },
+      {
+        "nutrient": "Cholesterol",
+        "per100g": "0 mg",
+        "perServe": "0 mg",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Sodium",
+        "per100g": "45.41 mg",
+        "perServe": "12.7 mg",
+        "rda": "1%"
+      }
+    ],
+    "manufacturer": {
+      "name": "Deccan Food Ventures LLP",
+      "address": "A108/1 A block Wazirpur Industrial Area, New Delhi - 110052",
+      "fssaiLicence": "13324005000323",
+      "customerCare": "011 40454920",
+      "email": "support@twirtles.com",
+      "website": "www.twirtles.com"
+    },
+    "notes": "Every value legible; nothing guessed. Ingredient sentence transcribed with the pack's own spacing and punctuation, including 'Acidity Regulator (INS 330)& (INS 296)' with no space before the ampersand, 'Color (INS160c)' and 'Flavor Enhancer' singular; the final clause is joined by a comma rather than a full stop before 'Contains added'. Same 'mg' unit anomaly as the other 28g SKUs on Dietary Fiber, Total Fat and Saturated Fat - not corrected. Trans Fat %RDA is printed as '0', not '0%'. Sodium at 45.41 mg per 100g is markedly lower than the Cream N Onion / Himalayan Salt panels (229.42 mg) despite an identical 'iodized Salt' declaration - read carefully and re-checked, transcribed as printed. Allergen line: 'Contains Peanuts. (Produced in a facility where tree nuts and dairy maybe present)'. Only one customer care number is printed.",
+    "slug": "makhana-peri-peri"
+  },
+  "makhana-tandoori": {
+    "sheetName": "Makhana Tandoori",
+    "brand": "Twirtles",
+    "ingredients": "Roasted Makhana, Rice Bran Oil, Spices and Condiments (Red Chilly, Onion Powder, Dried Mango Powder, Garlic Powder, Coriander Seeds, Dried Ginger, Bishop's Weed, Turmeric, Cinnamon, Big Cardamom, Fenugreek), Iodized Salt, Sugar, Pomegranate Powder, Coriander Leaves, Hydrolyze Vegetable Protein (Peanut), Acidifying Agent (INS330), Color (INS160c), Flavors Enhancers (INS627) (INS631). Contains Added Natural and Nature Identical Flavoring Substances.",
+    "servingSize": "28g",
+    "nutrition": [
+      {
+        "nutrient": "Energy",
+        "per100g": "467.49kcal",
+        "perServe": "130.8 kcal",
+        "rda": "6.5%"
+      },
+      {
+        "nutrient": "Protein",
+        "per100g": "7.67 g",
+        "perServe": "2.1 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Carbohydrate",
+        "per100g": "67.24 g",
+        "perServe": "18.8 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Total Sugar",
+        "per100g": "6.14 g",
+        "perServe": "1.7 g",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Added Sugars",
+        "per100g": "0 mg",
+        "perServe": "0 mg",
+        "rda": "0%"
+      },
+      {
+        "nutrient": "Dietary Fiber",
+        "per100g": "0.87mg",
+        "perServe": "0.2 mg",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Total Fat",
+        "per100g": "23.21 mg",
+        "perServe": "6.5 mg",
+        "rda": "9.6%"
+      },
+      {
+        "nutrient": "Saturated Fat",
+        "per100g": "2.62 mg",
+        "perServe": "0.7 mg",
+        "rda": "3.3%"
+      },
+      {
+        "nutrient": "Trans Fat",
+        "per100g": "0 mg",
+        "perServe": "0 mg",
+        "rda": "0%"
+      },
+      {
+        "nutrient": "Cholesterol",
+        "per100g": "0 mg",
+        "perServe": "0 mg",
+        "rda": "-"
+      },
+      {
+        "nutrient": "Sodium",
+        "per100g": "46.82 mg",
+        "perServe": "13.1 mg",
+        "rda": "0.7%"
+      }
+    ],
+    "manufacturer": {
+      "name": "Deccan Food Ventures LLP",
+      "address": "A108/1 A block Wazirpur Industrial Area, New Delhi - 110052",
+      "fssaiLicence": "13324005000323",
+      "customerCare": "011 40454920",
+      "email": "support@twirtles.com",
+      "website": "www.twirtles.com"
+    },
+    "notes": "Every value legible; nothing guessed. Transcribed with the pack's own spacing: Energy per 100g is printed '467.49kcal' and Dietary Fiber per 100g '0.87mg', both without a space before the unit; INS codes are printed closed-up as '(INS330)', '(INS160c)', '(INS627)' '(INS631)'. Unlike the Peri Peri pack this one spells 'Big Cardamom' with an m. Same 'mg' unit anomaly on Dietary Fiber, Total Fat and Saturated Fat - not corrected. Allergen line: 'Contains Peanuts. (Produced in a facility where tree nuts and dairy maybe present)'. Only one customer care number is printed.",
+    "slug": "makhana-tandoori"
+  }
+}

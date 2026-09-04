@@ -9,10 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ProductCard } from "@/components/product/product-card";
 import { ProductGrid } from "@/components/product/product-grid";
-import { ArrowRight, Building2, Minus, Plus, ShoppingBag, ArrowLeft, Info, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, Building2, Minus, Plus, ShoppingBag, ArrowLeft, Info, ChevronLeft, ChevronRight, AlertTriangle, Factory, ScrollText } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getPackPanel } from "@/data/product-panels";
+import type { PackEntity, PackPanel } from "@/data/product-panels";
 
 // Image gallery component with thumbnail strip
 function ProductImageGallery({ product, getCategoryGradient }: { product: any; getCategoryGradient: (c: string) => string }) {
@@ -187,6 +189,311 @@ function BusinessEnquiryBlock({ product, isB2BApproved }: { product: Product; is
   );
 }
 
+/**
+ * One legal entity as the pack names it, with the licence that is that entity's.
+ *
+ * The licence number is always printed alongside the name that holds it. An
+ * FSSAI licence is a specific company's registration to make or handle food;
+ * detaching it from its holder — or letting it sit under a Narayani heading —
+ * would read as Narayani's own credential. It is not. Narayani distributes.
+ */
+function PackEntityBlock({ label, entity }: { label: string; entity: PackEntity }) {
+  return (
+    <div>
+      <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</dt>
+      <dd className="mt-1 text-sm leading-relaxed text-foreground">
+        <span className="font-medium">{entity.name}</span>
+        <span className="mt-0.5 block text-muted-foreground">{entity.address}</span>
+        <span className="mt-1 block text-muted-foreground">
+          FSSAI Lic. No. <span className="font-medium tabular-nums text-foreground">{entity.fssaiLicence}</span>{" "}
+          ({entity.name})
+        </span>
+      </dd>
+    </div>
+  );
+}
+
+/**
+ * "As printed on the pack" — ingredients, nutrition and the manufacturer chain.
+ *
+ * ─── THIS IS A REPRODUCTION, NOT A CLAIM ────────────────────────────────────
+ * Every figure and every sentence below is transcribed from a photograph of the
+ * physical pack (see src/data/product-panels.ts). Nothing is computed, rounded,
+ * unit-converted or defaulted, and where the packaging contradicts itself — mg
+ * printed where g is meant, a %RDA footnote citing a serving weight the figures
+ * do not use, an ingredient list that does not match the flavour on the front —
+ * the error is reproduced and called out rather than quietly fixed. Correcting
+ * a printed food label on a retailer's website invents a declaration the
+ * manufacturer never made. Say what the pack says; flag the discrepancy.
+ *
+ * The whole section is rendered only when `getPackPanel(slug)` returns a record.
+ * There is no fallback, no "typical values", and no borrowing from a sibling
+ * flavour: a product we have not transcribed shows nothing at all.
+ *
+ * ─── NARAYANI DOES NOT MANUFACTURE ──────────────────────────────────────────
+ * See docs/decisions/0002-never-imply-manufacturing.md. The pack brand is
+ * Twirtles and the makers are third parties, so the entity block spells the
+ * chain out: brand · distributed by Narayani · manufactured by the actual maker.
+ * On the Superpuffs packs those are three different companies — Deccan is only
+ * "Packed & Marketed By", and SWASTHUM WELLNESS Pvt. Ltd. is the manufacturer
+ * with its own separate FSSAI licence. They are rendered as two rows with two
+ * licences. Do not flatten them into one "manufacturer" line; doing so credits
+ * the packer with making the food.
+ */
+function PackPanelSection({ panel }: { panel: PackPanel }) {
+  const { manufacturer, alsoManufacturedBy, entityRole } = panel;
+  // When the pack names a separate maker, the `manufacturer` record is the packer.
+  const isPackerOnly = entityRole === "packer";
+
+  return (
+    <section aria-labelledby="pack-panel-heading" className="border-t border-border pt-12">
+      <header className="max-w-3xl">
+        <p className="text-xs font-medium uppercase tracking-widest text-primary">As printed on the pack</p>
+        <h2 id="pack-panel-heading" className="mt-2 font-serif text-3xl font-bold text-foreground">
+          Ingredients, nutrition and manufacturer
+        </h2>
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+          Everything in this section is reproduced from the {panel.brand} pack exactly as it is
+          printed there, including the places where the pack contradicts itself. These are the
+          manufacturer's declarations. Narayani Distributors distributes and exports this product
+          and does not make it, so none of the figures below originate with us.
+        </p>
+      </header>
+
+      {/*
+        Pack inconsistencies live directly under the heading and above the table,
+        not in a footnote under it. Several of them change how the numbers should
+        be read — one of them is allergen-relevant — so a reader who scrolls to
+        the table must have passed them first.
+      */}
+      {panel.advisories.length > 0 && (
+        <div className="mt-8 rounded-2xl border border-border bg-secondary/60 p-5 sm:p-6">
+          <div className="flex items-start gap-3">
+            <span
+              aria-hidden="true"
+              className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"
+            >
+              <AlertTriangle className="h-4 w-4" />
+            </span>
+            <div className="min-w-0">
+              <h3 className="text-sm font-semibold text-foreground">
+                Worth knowing before you read the figures
+              </h3>
+              <ul className="mt-2 space-y-2 text-sm leading-relaxed text-muted-foreground">
+                {panel.advisories.map((advisory) => (
+                  <li key={advisory} className="flex gap-2">
+                    <span aria-hidden="true" className="select-none">&middot;</span>
+                    <span>{advisory}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        {/* Ingredients — the sentence exactly as it is printed, spacing and all. */}
+        <div className="min-w-0 space-y-6">
+          <div className="rounded-2xl border border-border bg-card p-5 sm:p-6">
+            <div className="flex items-center gap-2">
+              <ScrollText aria-hidden="true" className="h-4 w-4 shrink-0 text-primary" />
+              <h3 className="font-serif text-xl font-bold text-foreground">Ingredients</h3>
+            </div>
+            <p className="mt-3 text-sm leading-relaxed text-foreground">{panel.ingredients}</p>
+
+            {/*
+              Three states, deliberately distinct: a printed allergen line, a pack
+              that positively prints none, and a pack whose allergen line was never
+              recorded. The third renders nothing — silence is not "no allergens".
+            */}
+            {typeof panel.allergen === "string" && (
+              <div className="mt-5 border-t border-border pt-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Allergen information, as printed
+                </p>
+                <p className="mt-1 text-sm font-medium leading-relaxed text-foreground">{panel.allergen}</p>
+              </div>
+            )}
+            {panel.allergen === null && (
+              <div className="mt-5 border-t border-border pt-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Allergen information
+                </p>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                  This pack prints no allergen declaration. Read the ingredients above, and write to
+                  us if you need the manufacturer's allergen statement before ordering.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Nutrition — printed columns, printed order, printed values. */}
+        <div className="min-w-0">
+          <div className="rounded-2xl border border-border bg-card p-5 sm:p-6">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+              <h3 className="font-serif text-xl font-bold text-foreground">Nutritional information</h3>
+              <p className="text-sm text-muted-foreground">
+                Serving size <span className="font-medium text-foreground">{panel.servingSize}</span>
+              </p>
+            </div>
+
+            {/*
+              `overflow-x-auto` with `min-w-0` on this container and on its grid
+              parent: the table is given a min-width so its columns stay readable,
+              and it scrolls INSIDE this box on a phone. Without the `min-w-0` the
+              grid item's `min-width: auto` would let the table widen the column,
+              which widens the page — the same failure the "Buying for business?"
+              button hit above. The page itself must never scroll sideways.
+            */}
+            <div className="mt-4 min-w-0 overflow-x-auto">
+              <table className="w-full min-w-[26rem] border-collapse text-sm">
+                <caption className="sr-only">
+                  Nutritional information as printed on the {panel.brand} pack, per 100g and per{" "}
+                  {panel.servingSize} serve
+                </caption>
+                <thead>
+                  <tr className="border-b border-border">
+                    <th scope="col" className="py-2 pr-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Nutrient
+                    </th>
+                    <th scope="col" className="whitespace-nowrap px-3 py-2 text-right text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Per 100g
+                    </th>
+                    <th scope="col" className="whitespace-nowrap px-3 py-2 text-right text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Per serve
+                    </th>
+                    <th scope="col" className="whitespace-nowrap py-2 pl-3 text-right text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      %RDA
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {panel.nutrition.map((row, i) => (
+                    <tr key={`${row.nutrient}-${i}`} className="border-b border-border last:border-b-0">
+                      <th scope="row" className="py-2 pr-3 text-left font-normal text-foreground">
+                        {row.nutrient}
+                      </th>
+                      <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums text-foreground">
+                        {row.per100g}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums text-foreground">
+                        {row.perServe}
+                      </td>
+                      <td className="whitespace-nowrap py-2 pl-3 text-right tabular-nums text-muted-foreground">
+                        {row.rda}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
+              Values and units are reproduced from the pack in the order it prints them. Nothing has
+              been recalculated or corrected.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/*
+        The entity chain. Point 43 of the brief, and the one block on this page
+        with legal weight: brand Twirtles, distributed by Narayani, manufactured
+        by whoever actually made it. Never merge the packer row into the
+        manufacturer row, and never let an FSSAI number float free of its holder.
+      */}
+      <div className="mt-6 rounded-2xl border border-border bg-secondary/50 p-5 sm:p-6">
+        <div className="flex items-start gap-3">
+          <span
+            aria-hidden="true"
+            className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"
+          >
+            <Factory className="h-4 w-4" />
+          </span>
+          <div className="min-w-0">
+            <h3 className="font-serif text-xl font-bold text-foreground">Who makes this, and who supplies it</h3>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              {panel.brand} is a third-party brand. Narayani Distributors is a merchant exporter and
+              distributor: we buy, hold, export and supply this product. We do not manufacture or
+              pack it.
+            </p>
+          </div>
+        </div>
+
+        <dl className="mt-5 grid gap-5 border-t border-border pt-5 sm:grid-cols-2">
+          <div>
+            <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Brand</dt>
+            <dd className="mt-1 text-sm font-medium leading-relaxed text-foreground">{panel.brand}</dd>
+          </div>
+
+          <div>
+            <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Distributed by</dt>
+            <dd className="mt-1 text-sm leading-relaxed text-foreground">
+              <span className="font-medium">Narayani Distributors</span>
+              <span className="mt-0.5 block text-muted-foreground">
+                Merchant exporter and distributor — not the manufacturer or packer
+              </span>
+            </dd>
+          </div>
+
+          {/*
+            Manufacturer first: it is the entity that actually made the food. On a
+            pack that names only one entity that is `manufacturer`; on the
+            Superpuffs packs it is the separate `alsoManufacturedBy` company, and
+            `manufacturer` drops to the "Packed & marketed by" row below.
+          */}
+          {isPackerOnly
+            ? alsoManufacturedBy && <PackEntityBlock label="Manufactured by" entity={alsoManufacturedBy} />
+            : <PackEntityBlock label="Manufactured by" entity={manufacturer} />}
+
+          {isPackerOnly && <PackEntityBlock label="Packed & marketed by" entity={manufacturer} />}
+
+          <div>
+            <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Customer care</dt>
+            <dd className="mt-1 text-sm leading-relaxed text-foreground">{manufacturer.customerCare}</dd>
+          </div>
+
+          <div>
+            <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Email</dt>
+            <dd className="mt-1 text-sm leading-relaxed text-foreground">
+              <a href={`mailto:${manufacturer.email}`} className="underline underline-offset-2 hover:text-primary">
+                {manufacturer.email}
+              </a>
+            </dd>
+          </div>
+
+          <div>
+            <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Website</dt>
+            <dd className="mt-1 text-sm leading-relaxed text-foreground">
+              <a
+                href={`https://${manufacturer.website.replace(/^https?:\/\//, "")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-2 hover:text-primary"
+              >
+                {manufacturer.website}
+              </a>
+            </dd>
+          </div>
+
+          <div>
+            <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Country of origin</dt>
+            <dd className="mt-1 text-sm font-medium leading-relaxed text-foreground">India</dd>
+          </div>
+        </dl>
+
+        <p className="mt-5 border-t border-border pt-4 text-xs leading-relaxed text-muted-foreground">
+          Brand, addresses, FSSAI licence numbers and contact details above are as printed on the
+          pack. Each FSSAI licence is the licence of the company named beside it. Narayani
+          Distributors holds none of them and is not the manufacturer or packer of this product.
+        </p>
+      </div>
+    </section>
+  );
+}
+
 export default function ProductDetail() {
   const [, params] = useRoute("/shop/:slug");
   const slug = params?.slug || "";
@@ -201,6 +508,14 @@ export default function ProductDetail() {
 
   const product = productData?.product;
   const relatedProducts = productData?.related || [];
+
+  /*
+    `null` for any product we have not transcribed a pack for — which is a real
+    case, not a theoretical one: there are more live SKUs than panels. A missing
+    panel renders nothing at all. It must never inherit a sibling flavour's
+    ingredients, nutrition or licence numbers.
+  */
+  const packPanel = getPackPanel(product?.slug);
 
   const addItem = useCartStore((state) => state.addItem);
   const { user, isB2BApproved } = useAuth();
@@ -286,6 +601,7 @@ export default function ProductDetail() {
             </div>
           </div>
         ) : (
+          <>
           <div className="grid md:grid-cols-2 gap-8 mb-24">
             {/* Image Gallery */}
             <div className="md:sticky md:top-24">
@@ -390,6 +706,10 @@ export default function ProductDetail() {
               <BusinessEnquiryBlock product={product} isB2BApproved={isB2BApproved} />
             </div>
           </div>
+
+          {/* Full width, below the buy box: the table needs the room. */}
+          {packPanel && <PackPanelSection panel={packPanel} />}
+          </>
         )}
 
         {/* Related Products */}

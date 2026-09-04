@@ -14,7 +14,7 @@ import { z } from "zod";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { eq, inArray, and, asc, desc, gte, like, sql } from "drizzle-orm";
-import { computeQuote, type QuoteItem } from "./_lib/pricing";
+import { computeQuote, pricingRulesFrom, type QuoteItem } from "./_lib/pricing";
 import {
   usersTable, productsTable, productImagesTable, addressesTable,
   ordersTable, orderItemsTable, paymentsTable, invoicesTable, blogPostsTable,
@@ -805,7 +805,8 @@ export default async function handler(req, res) {
       if (!items.length) return ok({ orderType, lines: [], subtotal: 0, discountAmount: 0, discountPercent: 0, discountLabel: "No items", gstAmount: 0, shippingCharge: 0, total: 0, meetsMinimumOrder: orderType === "b2c", minimumOrderValue: orderType === "b2b" ? 5000 : 0, moqViolations: [] });
       const db = getDb();
       const products = await db.select().from(productsTable).where(inArray(productsTable.id, items.map(i => i.productId)));
-      return ok(computeQuote(items, products, orderType, user));
+      // Commercial rules from Admin → Settings, so the cart charges what the shop set.
+      return ok(computeQuote(items, products, orderType, user, pricingRulesFrom(await loadSettings(db))));
     }
 
     // ── ORDERS ───────────────────────────────────────────────────────────────
@@ -817,7 +818,7 @@ export default async function handler(req, res) {
       const d = b.data;
       const db = getDb();
       const products = await db.select().from(productsTable).where(inArray(productsTable.id, d.items.map(i => i.productId)));
-      const quote = computeQuote(d.items, products, "b2c", user);
+      const quote = computeQuote(d.items, products, "b2c", user, pricingRulesFrom(await loadSettings(db)));
       if (!quote.lines.length) return err("No valid items", "EMPTY_ORDER", 400);
       const [addr] = await db.insert(addressesTable).values({ userId: user.id, fullName: d.shippingAddress.fullName, phone: d.shippingAddress.phone, line1: d.shippingAddress.line1, line2: d.shippingAddress.line2 ?? null, city: d.shippingAddress.city, state: d.shippingAddress.state, pincode: d.shippingAddress.pincode }).returning();
       const orderNumber = await generateOrderNumber("b2c");
@@ -849,7 +850,7 @@ export default async function handler(req, res) {
       const d = b.data;
       const db = getDb();
       const products = await db.select().from(productsTable).where(inArray(productsTable.id, d.items.map(i => i.productId)));
-      const quote = computeQuote(d.items, products, "b2b", user);
+      const quote = computeQuote(d.items, products, "b2b", user, pricingRulesFrom(await loadSettings(db)));
       if (!quote.lines.length) return err("No valid items", "EMPTY_ORDER", 400);
       if (!quote.meetsMinimumOrder) return err(`Minimum B2B order is ₹${quote.minimumOrderValue}`, "BELOW_MIN_ORDER", 400);
       if (quote.moqViolations.length) return err(quote.moqViolations.join(" "), "MOQ_VIOLATION", 400);
@@ -1412,6 +1413,16 @@ const PUBLIC_SETTING_KEYS = new Set([
   // the moment a tag loads, so serving them here gives nothing away. Keeping them
   // as settings is what lets the business connect Analytics without a deploy.
   "ga4_id", "meta_pixel_id", "linkedin_partner_id", "google_site_verification",
+  // Commercial rules. PUBLIC ON PURPOSE, and the reason is important: the
+  // storefront used to hardcode "15% first order, 10% second, 5% after" in two
+  // components while pricing.ts hardcoded the same numbers a third time. A shop
+  // that changed one and missed the others would show a customer one price and
+  // charge them another. Serving them here makes pricing.ts the single authority
+  // and the display a reader of it. None of it is secret — every one of these
+  // numbers is visible in a cart total anyway.
+  "discount_first_order_percent", "discount_second_order_percent",
+  "discount_repeat_percent", "free_shipping_threshold", "shipping_charge",
+  "b2b_minimum_order_value",
 ]);
 
 const ALL_SETTING_KEYS = new Set([

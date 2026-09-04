@@ -4,18 +4,21 @@ import { useGetProductBySlug, getGetProductBySlugQueryKey } from "@workspace/api
 import type { Product } from "@workspace/api-client-react";
 import { useCartStore } from "@/lib/store";
 import { useAuth } from "@/hooks/use-auth";
+import { usePricingRules, discountPercentFor } from "@/hooks/use-pricing-rules";
 import { Price } from "@/components/ui/price";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ProductCard } from "@/components/product/product-card";
 import { ProductGrid } from "@/components/product/product-grid";
 import { ArrowRight, Building2, Minus, Plus, ShoppingBag, ArrowLeft, Info, ChevronLeft, ChevronRight, AlertTriangle, Factory, ScrollText } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getPackPanel } from "@/data/product-panels";
 import { MOQ_BANNER, MOQ_SPEC } from "@/lib/trade-terms";
 import { ProductReviews } from "@/components/product/product-reviews";
+import { RecentlyViewed } from "@/components/product/recently-viewed";
+import { useBrowsingStore } from "@/lib/browsing";
 import { track } from "@/lib/analytics";
 import { useSeo, SITE_URL } from "@/lib/seo";
 import type { PackEntity, PackPanel } from "@/data/product-panels";
@@ -712,8 +715,10 @@ export default function ProductDetail() {
   const { user, isB2BApproved } = useAuth();
 
   const ordersCount = user?.ordersCount ?? 0;
-  const discountPercent = user?.role === 'b2c_customer'
-    ? ordersCount === 0 ? 15 : ordersCount === 1 ? 10 : 5
+  // Same source as the cart and the server. See hooks/use-pricing-rules.ts.
+  const pricingRules = usePricingRules();
+  const discountPercent = user?.role === "b2c_customer"
+    ? discountPercentFor(pricingRules, ordersCount)
     : 0;
   
   const originalPrice = product?.b2cPrice || 0;
@@ -725,6 +730,44 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(minQty);
 
   const showStrikethrough = discountPercent > 0 && !isB2BApproved && !!user;
+
+  /** The gallery's primary shot. Used by the view recorder, the SEO block and JSON-LD. */
+  const primaryImage =
+    (product as any)?.images?.find((i: any) => i.isPrimary)?.url ??
+    (product as any)?.images?.[0]?.url ??
+    product?.imageUrl ??
+    undefined;
+
+  /*
+    Spec points 12 and 32: remember this for the "recently viewed" row, and report
+    the view to analytics.
+
+    Keyed on the slug rather than the whole product object — that object is a fresh
+    reference on every render of the query, which would put this effect into a loop.
+    The retail price is recorded, never the trade price: the strip renders for
+    anyone, including a visitor who is not signed in.
+  */
+  const recordView = useBrowsingStore((s) => s.recordView);
+  useEffect(() => {
+    if (!product) return;
+    recordView({
+      slug: product.slug,
+      name: product.name,
+      imageUrl: primaryImage ?? null,
+      price: product.b2cPrice,
+    });
+    track("view_item", {
+      currency: "INR",
+      value: product.b2cPrice,
+      items: [{
+        item_id: product.slug,
+        item_name: product.name,
+        item_category: product.category,
+        price: product.b2cPrice,
+      }],
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product?.slug]);
 
   /*
     ─── SEO (spec point 27) ──────────────────────────────────────────────────
@@ -748,12 +791,6 @@ export default function ProductDetail() {
     aggregate ratings is the single most common way a food site earns a manual
     action from Google.
   */
-  const primaryImage =
-    (product as any)?.images?.find((i: any) => i.isPrimary)?.url ??
-    (product as any)?.images?.[0]?.url ??
-    product?.imageUrl ??
-    undefined;
-
   const categoryName = product ? CATEGORY_LABELS[product.category] ?? product.category : "";
 
   useSeo({
@@ -1023,6 +1060,9 @@ export default function ProductDetail() {
             opinion. A reader scrolling for an allergen should reach the panel first.
           */}
           <ProductReviews slug={product.slug} productName={product.name} />
+
+          {/* Renders nothing until there is somewhere worth going back to. */}
+          <RecentlyViewed excludeSlug={product.slug} />
           </>
         )}
 

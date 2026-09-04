@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
-import { ShoppingBag, User, Menu, Search, ChevronDown } from "lucide-react";
+import { ShoppingBag, User, Menu, Search, ChevronDown, Heart } from "lucide-react";
 import { useCartStore } from "@/lib/store";
+import { useBrowsingStore } from "@/lib/browsing";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -43,6 +44,7 @@ const MOBILE_LINKS = [
 export function SiteHeader() {
   const cartItems = useCartStore((state) => state.items);
   const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+  const wishlistCount = useBrowsingStore((s) => s.wishlist.length);
   const { user } = useAuth();
   const [location, setLocation] = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
@@ -212,6 +214,22 @@ export function SiteHeader() {
             <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(true)}>
               <Search className="h-5 w-5" />
               <span className="sr-only">Search</span>
+            </Button>
+          )}
+
+          {/*
+            Only once something is saved. An empty-state heart in the header on a
+            first visit is chrome for a feature the visitor has not used yet.
+          */}
+          {wishlistCount > 0 && (
+            <Button variant="ghost" size="icon" className="relative" asChild title="Your wishlist">
+              <Link href="/wishlist">
+                <Heart className="h-5 w-5" />
+                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                  {wishlistCount}
+                </span>
+                <span className="sr-only">Wishlist</span>
+              </Link>
             </Button>
           )}
 

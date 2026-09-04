@@ -25,7 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Building2, CreditCard, LineChart, Loader2, ShieldCheck } from "lucide-react";
+import { Building2, CreditCard, LineChart, Loader2, Percent, ShieldCheck } from "lucide-react";
 
 type Settings = Record<string, string>;
 
@@ -75,6 +75,40 @@ const GROUPS: GroupDef[] = [
       { key: "iec", label: "IEC (Import Export Code)", hint: "10 characters. Required to export." },
       { key: "apeda_rcmc", label: "APEDA RCMC", hint: "Only if you are registered with APEDA." },
       { key: "cin", label: "CIN", hint: "Only if incorporated as a company." },
+    ],
+  },
+  {
+    title: "Discounts & shipping",
+    icon: Percent,
+    intro:
+      "What the shop charges. These were fixed in the code and written out in three separate places — the cart, the product page and the server — so changing one and missing another showed a customer one price and billed them a different one. They are read from here now, by all three.",
+    fields: [
+      {
+        key: "discount_first_order_percent",
+        label: "First order discount (%)",
+        hint: "Applied to a retail customer who has never ordered. Set 0 to switch it off.",
+      },
+      {
+        key: "discount_second_order_percent",
+        label: "Second order discount (%)",
+        hint: "Their next order after that.",
+      },
+      {
+        key: "discount_repeat_percent",
+        label: "Repeat customer discount (%)",
+        hint: "Every order after the second.",
+      },
+      {
+        key: "free_shipping_threshold",
+        label: "Free shipping above (₹)",
+        hint: "Order value after discount, before GST.",
+      },
+      { key: "shipping_charge", label: "Shipping charge below that (₹)" },
+      {
+        key: "b2b_minimum_order_value",
+        label: "Wholesale minimum order (₹)",
+        hint: "A wholesale order below this cannot be placed.",
+      },
     ],
   },
   {

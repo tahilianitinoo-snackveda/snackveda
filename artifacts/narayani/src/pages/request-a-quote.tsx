@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
+import { useSeo } from "@/lib/seo";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -319,6 +320,22 @@ export default function RequestAQuote() {
   const [sourceProduct] = useState(() => readProductParam(search));
   const [submitted, setSubmitted] = useState<QuoteEnquiry | null>(null);
   const [copied, setCopied] = useState(false);
+
+  /*
+    Called before the `if (submitted)` early return below, so the hook order is the
+    same on both screens. The canonical is the bare path: `?product=` and `?type=`
+    are pre-fill hints, not distinct pages, and letting each product spawn its own
+    indexable quote URL would duplicate this page across the catalogue.
+
+    The description describes the form, not an outcome — see the TODO at the top of
+    this file: there is no RFQ endpoint yet, so nothing here should promise a reply.
+  */
+  useSeo({
+    title: "Request a Quote — Wholesale & Export Enquiries",
+    description:
+      "Send a wholesale or export enquiry for Indian snacks and packaged foods — the products, quantities and destination you need quoted, in one form.",
+    canonical: "/request-a-quote",
+  });
 
   const form = useForm<QuoteFormValues>({
     resolver: quoteResolver,

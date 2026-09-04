@@ -342,7 +342,25 @@ export default async function handler(req, res) {
     if ((path === "/sitemap.xml" || path === "/sitemap") && method === "GET") {
       const site = (process.env.SITE_URL || "https://narayanidistributors.com").replace(/\/$/, "");
       const today = new Date().toISOString().slice(0, 10);
-      const staticPaths = ["/", "/shop", "/b2b", "/about", "/blog", "/faq", "/contact", "/policies"];
+      // Static routes. Must stay in step with the router in
+      // artifacts/narayani/src/App.tsx — a path listed here that 404s is a crawl
+      // error, and a real page missing from here is invisible to Search Console.
+      // /business, /wholesale, /export and /request-a-quote are the B2B surface;
+      // /b2b is the older account page and stays until it is retired.
+      const staticPaths = [
+        "/",
+        "/shop",
+        "/business",
+        "/wholesale",
+        "/export",
+        "/request-a-quote",
+        "/b2b",
+        "/about",
+        "/blog",
+        "/faq",
+        "/contact",
+        "/policies",
+      ];
       const entries: { loc: string; lastmod: string; priority: string; changefreq: string }[] =
         staticPaths.map(p => ({
           loc: `${site}${p}`,

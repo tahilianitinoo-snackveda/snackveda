@@ -1,6 +1,7 @@
 import { SiteShell } from "@/components/layout/site-shell";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { useSeo } from "@/lib/seo";
 import {
   ArrowRight,
   Boxes,
@@ -100,6 +101,21 @@ const TERMS = [
 ];
 
 export default function Business() {
+  /*
+    SEO. The rebuild brief asks these pages to rank for buyer intent, and the
+    temptation in that sentence is to reach for "leading" or "trusted" or a number.
+    Every word here is a description of what the business is, not a claim about how
+    well it does it — a search snippet is published copy and inherits the same rule
+    as the page it summarises. See the global constraints in
+    docs/superpowers/plans/2026-09-04-subplan-1-visible-site.md.
+  */
+  useSeo({
+    title: "Business & Export — Indian Food Products Supplier",
+    description:
+      "Merchant exporter and distributor of Indian packaged foods — wholesale supply within India and export enquiries for retailers, distributors and overseas buyers.",
+    canonical: "/business",
+  });
+
   return (
     <SiteShell>
       {/* Hero */}

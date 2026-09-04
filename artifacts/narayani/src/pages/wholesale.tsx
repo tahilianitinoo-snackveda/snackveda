@@ -1,6 +1,7 @@
 import { SiteShell } from "@/components/layout/site-shell";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { useSeo } from "@/lib/seo";
 import {
   ArrowRight,
   Boxes,
@@ -113,6 +114,19 @@ const CATEGORIES = [
 ];
 
 export default function Wholesale() {
+  /*
+    The two numbers in this description are the two that are enforced in code —
+    ₹5,000 minimum order value (api/_lib/pricing.ts) and a per-SKU MOQ — which is
+    exactly why they are the only numbers here. No volumes, no delivery times, no
+    customer counts.
+  */
+  useSeo({
+    title: "Indian Snacks Wholesale — Bulk Supply in India",
+    description:
+      "Wholesale Indian snacks and packaged foods for retailers and distributors — ₹5,000 minimum order value, a minimum order quantity per product, and GST invoicing.",
+    canonical: "/wholesale",
+  });
+
   return (
     <SiteShell>
       {/* Hero */}

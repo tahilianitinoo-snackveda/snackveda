@@ -1,6 +1,7 @@
 import { SiteShell } from "@/components/layout/site-shell";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { useSeo } from "@/lib/seo";
 import {
   ArrowRight,
   Boxes,
@@ -119,6 +120,20 @@ const CATEGORIES = [
 ];
 
 export default function Export() {
+  /*
+    "Merchant exporter" is the term to rank for and it happens to be the accurate
+    one — see docs/decisions/0002-never-imply-manufacturing.md. The description
+    names only activities this page already describes (sourcing, quotations,
+    documentation) and no market, volume, certification or HS code, because the
+    business has supplied none of those.
+  */
+  useSeo({
+    title: "Merchant Exporter of Indian Packaged Foods",
+    description:
+      "Export enquiries for Indian snacks and packaged foods — a merchant exporter in Indore sourcing from selected Indian manufacturers, with commercial quotations.",
+    canonical: "/export",
+  });
+
   return (
     <SiteShell>
       {/* Hero */}

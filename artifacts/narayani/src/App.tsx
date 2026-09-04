@@ -37,6 +37,7 @@ import AdminPayments from "@/pages/admin/payments";
 import AdminBlog from "@/pages/admin/blog";
 import AdminEnquiries from "@/pages/admin/enquiries";
 import AdminSettings from "@/pages/admin/settings";
+import AdminReviews from "@/pages/admin/reviews";
 import NotFound from "@/pages/not-found";
 
 // Ensure credentials flow for auth
@@ -94,6 +95,7 @@ function Router() {
       <Route path="/admin/blog" component={AdminBlog} />
       <Route path="/admin/enquiries" component={AdminEnquiries} />
       <Route path="/admin/settings" component={AdminSettings} />
+      <Route path="/admin/reviews" component={AdminReviews} />
       
       <Route component={NotFound} />
     </Switch>

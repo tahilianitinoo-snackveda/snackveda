@@ -18,7 +18,7 @@ import { computeQuote, type QuoteItem } from "./_lib/pricing";
 import {
   usersTable, productsTable, productImagesTable, addressesTable,
   ordersTable, orderItemsTable, paymentsTable, invoicesTable, blogPostsTable,
-  quoteEnquiriesTable, siteSettingsTable,
+  quoteEnquiriesTable, siteSettingsTable, productReviewsTable,
 } from "./_lib/schema";
 import { signToken, verifyToken, profileUser } from "./_lib/auth";
 import { sendEmail, sendSMS, emailBase, notifyRegistration, notifyOrderPlaced, notifyShipping, notifyQuoteEnquiry } from "./_lib/notify";
@@ -89,6 +89,27 @@ async function getProductImages(productId: string) {
 }
 function serializeProduct(p: typeof productsTable.$inferSelect, images?: any[]) {
   return { id: p.id, name: p.name, slug: p.slug, category: p.category, variant: p.variant, b2cPrice: Number(p.b2cPrice), b2bPrice: Number(p.b2bPrice), moq: p.moq, cartonQty: p.cartonQty, gstPercent: Number(p.gstPercent), hsnCode: p.hsnCode, shelfLifeMonths: p.shelfLifeMonths, weightGrams: p.weightGrams, description: p.description, stockQty: p.stockQty, status: p.status, sortOrder: p.sortOrder, imageUrl: p.imageUrl, images: images ?? [] };
+}
+
+/**
+ * A review as the storefront sees it.
+ *
+ * `userId` is deliberately absent. It is of no use to a reader and publishing it
+ * would let anyone correlate every review one customer has written across the
+ * catalogue. `authorName` is what the customer put on their own account.
+ */
+function serializeReview(r: typeof productReviewsTable.$inferSelect) {
+  return {
+    id: r.id,
+    productId: r.productId,
+    authorName: r.authorName,
+    rating: r.rating,
+    title: r.title,
+    body: r.body,
+    verifiedPurchase: r.verifiedPurchase,
+    status: r.status,
+    createdAt: r.createdAt.toISOString(),
+  };
 }
 
 function serializeEnquiry(e: typeof quoteEnquiriesTable.$inferSelect) {
@@ -442,6 +463,94 @@ export default async function handler(req, res) {
         .map(e => `  <url>\n    <loc>${xmlEscape(e.loc)}</loc>\n    <lastmod>${e.lastmod}</lastmod>\n    <changefreq>${e.changefreq}</changefreq>\n    <priority>${e.priority}</priority>\n  </url>`)
         .join("\n")}\n</urlset>`;
       return sendRaw(xml, "application/xml; charset=utf-8");
+    }
+
+    // ── PRODUCT REVIEWS ──────────────────────────────────────────────────────
+    // Public read. Only APPROVED reviews are ever served here — a pending review is
+    // invisible to everyone but its author and an admin.
+    const reviewsListMatch = path.match(/^\/products\/([^/]+)\/reviews$/);
+    if (reviewsListMatch && method === "GET") {
+      const db = getDb();
+      const [product] = await db.select({ id: productsTable.id }).from(productsTable)
+        .where(eq(productsTable.slug, reviewsListMatch[1])).limit(1);
+      if (!product) return err("Product not found", "NOT_FOUND", 404);
+
+      const rows = await db.select().from(productReviewsTable)
+        .where(and(eq(productReviewsTable.productId, product.id), eq(productReviewsTable.status, "approved")))
+        .orderBy(desc(productReviewsTable.createdAt));
+
+      // Computed from the approved rows only, so an average can never be moved by a
+      // review nobody can read.
+      const count = rows.length;
+      const average = count
+        ? Number((rows.reduce((sum, r) => sum + r.rating, 0) / count).toFixed(2))
+        : null;
+      const distribution: Record<string, number> = { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0 };
+      for (const r of rows) distribution[String(r.rating)] += 1;
+
+      // The author's own pending review, so they see it awaiting moderation rather
+      // than concluding their submission vanished.
+      let mine: ReturnType<typeof serializeReview> | null = null;
+      const viewer = await getUser(authHeader);
+      if (viewer) {
+        const [own] = await db.select().from(productReviewsTable)
+          .where(and(eq(productReviewsTable.productId, product.id), eq(productReviewsTable.userId, viewer.id)))
+          .limit(1);
+        if (own) mine = serializeReview(own);
+      }
+
+      return ok({ count, average, distribution, reviews: rows.map(serializeReview), mine });
+    }
+
+    // Authenticated write. Signing in is the cheapest spam control there is, and it
+    // is also what makes the verified-purchase check possible.
+    const reviewsPostMatch = path.match(/^\/products\/([^/]+)\/reviews$/);
+    if (reviewsPostMatch && method === "POST") {
+      const user = await getUser(authHeader);
+      if (!user) return err("Sign in to write a review", "UNAUTHORIZED", 401);
+
+      const b = ReviewBody.safeParse(parsedBody);
+      if (!b.success) {
+        const first = b.error.issues[0];
+        return err(first ? `${first.path.join(".")}: ${first.message}` : "Invalid review", "VALIDATION_ERROR", 400);
+      }
+
+      const db = getDb();
+      const [product] = await db.select({ id: productsTable.id }).from(productsTable)
+        .where(eq(productsTable.slug, reviewsPostMatch[1])).limit(1);
+      if (!product) return err("Product not found", "NOT_FOUND", 404);
+
+      // Did this customer actually buy it? Recorded at write time and never
+      // recomputed — it says they had bought it when they wrote it.
+      const purchased = await db.select({ id: orderItemsTable.id })
+        .from(orderItemsTable)
+        .innerJoin(ordersTable, eq(ordersTable.id, orderItemsTable.orderId))
+        .where(and(eq(orderItemsTable.productId, product.id), eq(ordersTable.userId, user.id)))
+        .limit(1);
+
+      // Editing an existing review returns it to the moderation queue. A review that
+      // could be approved once and rewritten afterwards is an open publishing channel.
+      const [saved] = await db.insert(productReviewsTable).values({
+        productId: product.id,
+        userId: user.id,
+        authorName: user.fullName || "Customer",
+        rating: b.data.rating,
+        title: b.data.title || null,
+        body: b.data.body || null,
+        verifiedPurchase: purchased.length > 0,
+        status: "pending",
+      }).onConflictDoUpdate({
+        target: [productReviewsTable.productId, productReviewsTable.userId],
+        set: {
+          rating: b.data.rating,
+          title: b.data.title || null,
+          body: b.data.body || null,
+          status: "pending",
+          updatedAt: new Date(),
+        },
+      }).returning();
+
+      return ok({ review: serializeReview(saved), moderated: true }, 201);
     }
 
     // ── SITE SETTINGS ────────────────────────────────────────────────────────
@@ -901,6 +1010,39 @@ export default async function handler(req, res) {
         return ok({ ok: true, status: "dispatched", orderId: updatedOrder.id });
       }
 
+      // ── REVIEWS (admin moderation) ─────────────────────────────────────────
+      if (path === "/admin/reviews" && method === "GET") {
+        const rows = await db.select({
+          review: productReviewsTable,
+          productName: productsTable.name,
+          productSlug: productsTable.slug,
+        })
+          .from(productReviewsTable)
+          .innerJoin(productsTable, eq(productsTable.id, productReviewsTable.productId))
+          .orderBy(desc(productReviewsTable.createdAt));
+        return ok(rows.map(r => ({
+          ...serializeReview(r.review),
+          productName: r.productName,
+          productSlug: r.productSlug,
+        })));
+      }
+
+      const adminReviewMatch = path.match(/^\/admin\/reviews\/([^/]+)$/);
+      if (adminReviewMatch && method === "PATCH") {
+        const b = z.object({ status: z.enum(["pending", "approved", "rejected"]) }).safeParse(parsedBody);
+        if (!b.success) return err("Invalid review status", "VALIDATION_ERROR", 400);
+        const [updated] = await db.update(productReviewsTable)
+          .set({ status: b.data.status, updatedAt: new Date() })
+          .where(eq(productReviewsTable.id, adminReviewMatch[1])).returning();
+        if (!updated) return err("Review not found", "NOT_FOUND", 404);
+        return ok(serializeReview(updated));
+      }
+
+      if (adminReviewMatch && method === "DELETE") {
+        await db.delete(productReviewsTable).where(eq(productReviewsTable.id, adminReviewMatch[1]));
+        return ok({ ok: true });
+      }
+
       // ── SITE SETTINGS (admin) ──────────────────────────────────────────────
       if (path === "/admin/settings" && method === "GET") {
         const rows = await db.select().from(siteSettingsTable);
@@ -1082,6 +1224,17 @@ async function loadSettings(db: ReturnType<typeof getDb>): Promise<Record<string
   for (const r of rows) out[r.key] = (r.value || "").trim();
   return out;
 }
+
+/**
+ * A submitted review. The body is optional: a customer who gives four stars and
+ * nothing else has still told you something, and forcing prose to get a rating is
+ * how review sections end up with "good" a hundred times.
+ */
+const ReviewBody = z.object({
+  rating: z.number().int().min(1, "Choose a rating from 1 to 5").max(5),
+  title: z.string().trim().max(120).optional(),
+  body: z.string().trim().max(2000).optional(),
+});
 
 /**
  * The wire contract for POST /rfq.

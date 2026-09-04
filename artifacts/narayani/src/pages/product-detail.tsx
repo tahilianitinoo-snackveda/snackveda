@@ -15,7 +15,9 @@ import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getPackPanel } from "@/data/product-panels";
 import { MOQ_BANNER, MOQ_SPEC } from "@/lib/trade-terms";
+import { ProductReviews } from "@/components/product/product-reviews";
 import { useSeo, SITE_URL } from "@/lib/seo";
+import type { PackEntity, PackPanel } from "@/data/product-panels";
 
 /** Category storage keys are not words a person reads. Shared with the crumb trail. */
 const CATEGORY_LABELS: Record<string, string> = {
@@ -23,7 +25,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   makhana: "Makhana",
   superpuffs: "Superpuffs",
 };
-import type { PackEntity, PackPanel } from "@/data/product-panels";
 
 // Image gallery component with thumbnail strip
 function ProductImageGallery({ product, getCategoryGradient }: { product: any; getCategoryGradient: (c: string) => string }) {
@@ -810,6 +811,13 @@ export default function ProductDetail() {
 
           {/* Full width, below the buy box: the table needs the room. */}
           {packPanel && <PackPanelSection panel={packPanel} />}
+
+          {/*
+            Reviews sit below the pack panel deliberately. What is printed on the
+            pack is the legally binding statement; what a customer thought of it is
+            opinion. A reader scrolling for an allergen should reach the panel first.
+          */}
+          <ProductReviews slug={product.slug} productName={product.name} />
           </>
         )}
 

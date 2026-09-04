@@ -111,6 +111,33 @@ export const productImagesTable = pgTable("product_images", {
 });
 
 /**
+ * Customer reviews of a product.
+ *
+ * Moderated: a review is `pending` until an admin approves it, and only approved
+ * reviews are ever served publicly. That is not censorship, it is the only way a
+ * review section on a food site stays worth reading — and spec point 37 is explicit
+ * that reviews must be genuine or absent, never fabricated to fill the space.
+ *
+ * `verifiedPurchase` is computed at submission time from the customer's own order
+ * history and stored, not recomputed on read: it records that they had bought it
+ * when they wrote it, which stays true even if the order is later refunded.
+ */
+export const productReviewsTable = pgTable("product_reviews", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  productId: uuid("product_id").notNull(),
+  userId: uuid("user_id").notNull(),
+  /** Denormalised so a review survives with a name even if the account is closed. */
+  authorName: text("author_name").notNull(),
+  rating: integer("rating").notNull(),
+  title: text("title"),
+  body: text("body"),
+  verifiedPurchase: boolean("verified_purchase").notNull().default(false),
+  status: text("status").notNull().default("pending"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
  * Business identity and registration numbers, editable from Admin → Settings.
  *
  * These were hardcoded. `GET /orders/:id/invoice` shipped a seller block carrying

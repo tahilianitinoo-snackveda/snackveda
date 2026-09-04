@@ -30,14 +30,35 @@ function getDb() {
   // Replace port 6543 (transaction pooler) with 5432 (direct/session pooler)
   // Direct connections work more reliably with postgres.js
   const url = (process.env.DATABASE_URL || "").replace(":6543/", ":5432/");
-  const client = postgres(url, {
-    ssl: { rejectUnauthorized: false },
-    max: 1,
-    idle_timeout: 20,
-    connect_timeout: 30,
-    prepare: false,
-    onnotice: () => {},
-  });
+
+  // Database passwords routinely contain characters that are structural in a
+  // URL — `?` opens a query string, `#` a fragment, `/` a path — so handing the
+  // whole string to postgres.js throws "Invalid URL" and every route 500s with
+  // no indication that the credential is the cause. Split it ourselves and pass
+  // the parts, which needs no encoding from whoever sets the variable.
+  const parts = url.match(/^\w+:\/\/([^:]+):(.*)@([^@/]+)\/(.+)$/);
+  const client = parts
+    ? postgres({
+        username: parts[1],
+        password: parts[2],
+        host: parts[3].split(":")[0],
+        port: Number(parts[3].split(":")[1] || 5432),
+        database: parts[4].split("?")[0],
+        ssl: { rejectUnauthorized: false },
+        max: 1,
+        idle_timeout: 20,
+        connect_timeout: 30,
+        prepare: false,
+        onnotice: () => {},
+      })
+    : postgres(url, {
+        ssl: { rejectUnauthorized: false },
+        max: 1,
+        idle_timeout: 20,
+        connect_timeout: 30,
+        prepare: false,
+        onnotice: () => {},
+      });
   _db = drizzle(client);
   return _db;
 }

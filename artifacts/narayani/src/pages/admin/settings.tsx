@@ -25,7 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Building2, CreditCard, Loader2, ShieldCheck } from "lucide-react";
+import { Building2, CreditCard, LineChart, Loader2, ShieldCheck } from "lucide-react";
 
 type Settings = Record<string, string>;
 
@@ -75,6 +75,27 @@ const GROUPS: GroupDef[] = [
       { key: "iec", label: "IEC (Import Export Code)", hint: "10 characters. Required to export." },
       { key: "apeda_rcmc", label: "APEDA RCMC", hint: "Only if you are registered with APEDA." },
       { key: "cin", label: "CIN", hint: "Only if incorporated as a company." },
+    ],
+  },
+  {
+    title: "Analytics & tracking",
+    icon: LineChart,
+    intro:
+      "Paste the IDs from each platform. Nothing is loaded until an ID is set here — with all four blank the site sends no tracking script and sets no tracking cookie at all.",
+    fields: [
+      {
+        key: "ga4_id",
+        label: "Google Analytics 4 measurement ID",
+        placeholder: "G-XXXXXXXXXX",
+        hint: "Analytics → Admin → Data streams → your web stream.",
+      },
+      {
+        key: "google_site_verification",
+        label: "Google Search Console verification",
+        hint: "The content value from the HTML tag method. Needed to submit your sitemap.",
+      },
+      { key: "meta_pixel_id", label: "Meta Pixel ID", placeholder: "15 digits" },
+      { key: "linkedin_partner_id", label: "LinkedIn Partner ID", placeholder: "7 digits" },
     ],
   },
   {

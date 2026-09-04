@@ -1,5 +1,7 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
+import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { initAnalytics, trackPageView, type AnalyticsConfig } from "@/lib/analytics";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import axios from "axios";
@@ -102,11 +104,51 @@ function Router() {
   );
 }
 
+/**
+ * Analytics — spec point 32.
+ *
+ * Measurement IDs come from Admin → Settings rather than a build, so the business
+ * can connect Google Analytics without a developer. With nothing configured, no
+ * third-party script is fetched at all: a site with no analytics set up should ship
+ * no analytics, not an empty stub with a cookie behind it.
+ *
+ * Page views are sent manually because wouter navigates without reloading the
+ * document, so gtag's automatic page_view would fire once on the first paint and
+ * never again — which is how a single-page site ends up reporting one page view
+ * per session.
+ */
+function Analytics() {
+  const [location] = useLocation();
+
+  const { data: settings } = useQuery<Record<string, string>>({
+    queryKey: ["site-settings"],
+    queryFn: async () => {
+      const res = await fetch("/api/settings");
+      if (!res.ok) return {};
+      return res.json();
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  useEffect(() => {
+    if (settings) initAnalytics(settings as AnalyticsConfig);
+  }, [settings]);
+
+  useEffect(() => {
+    // A frame's delay, so the page has set its own title before it is reported.
+    const id = window.setTimeout(() => trackPageView(location), 0);
+    return () => window.clearTimeout(id);
+  }, [location, settings]);
+
+  return null;
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+          <Analytics />
           <Router />
         </WouterRouter>
         <Toaster />

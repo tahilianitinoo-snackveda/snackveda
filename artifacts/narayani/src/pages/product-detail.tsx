@@ -16,6 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getPackPanel } from "@/data/product-panels";
 import { MOQ_BANNER, MOQ_SPEC } from "@/lib/trade-terms";
 import { ProductReviews } from "@/components/product/product-reviews";
+import { track } from "@/lib/analytics";
 import { useSeo, SITE_URL } from "@/lib/seo";
 import type { PackEntity, PackPanel } from "@/data/product-panels";
 
@@ -834,6 +835,26 @@ export default function ProductDetail() {
       moq: product.moq ?? 1,
     });
     
+    /*
+      Spec point 32, B2C funnel. `displayPrice` carries the signed-in customer's
+      own discount, which is the right number for a conversion value.
+
+      What is NOT sent: b2bPrice. Analytics events reach a third party in the
+      clear, and the trade price list is gated everywhere else on this site — it
+      would be pointless to gate it in the DOM and then post it to Google.
+    */
+    track("add_to_cart", {
+      currency: "INR",
+      value: displayPrice * quantity,
+      items: [{
+        item_id: product.slug,
+        item_name: product.name,
+        item_category: product.category,
+        price: displayPrice,
+        quantity,
+      }],
+    });
+
     toast.success(`${quantity} x ${product.name} added to cart`);
   };
 

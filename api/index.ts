@@ -1280,6 +1280,10 @@ const QuoteBody = z.object({ orderType: z.enum(["b2c","b2b"]), items: z.array(Or
 const PUBLIC_SETTING_KEYS = new Set([
   "legal_name", "gstin", "iec", "fssai", "apeda_rcmc", "cin", "pan",
   "registered_address", "support_email", "support_phone", "whatsapp",
+  // Analytics measurement IDs. Public by nature — they end up in the page source
+  // the moment a tag loads, so serving them here gives nothing away. Keeping them
+  // as settings is what lets the business connect Analytics without a deploy.
+  "ga4_id", "meta_pixel_id", "linkedin_partner_id", "google_site_verification",
 ]);
 
 const ALL_SETTING_KEYS = new Set([

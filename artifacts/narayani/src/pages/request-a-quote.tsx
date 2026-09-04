@@ -30,6 +30,7 @@ import {
 import { COUNTRIES, INDIAN_STATES, dialCodeFor } from "@/data/geography";
 import { cn } from "@/lib/utils";
 import { useSeo } from "@/lib/seo";
+import { track } from "@/lib/analytics";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -531,6 +532,22 @@ export default function RequestAQuote() {
       if (res.ok) {
         const body = (await res.json()) as { reference?: string };
         if (body?.reference) enquiry.reference = body.reference;
+
+        /*
+          Spec point 32, B2B funnel. For a distributor this is THE conversion —
+          an enquiry that cannot be attributed to the campaign that produced it
+          is a campaign nobody can judge.
+
+          No personal data goes with it: no name, no company, no email, no phone.
+          Analytics events reach a third party in the clear, and none of that is
+          theirs to have. The enquiry type and the product count are enough to
+          tell wholesale demand from export demand.
+        */
+        track("rfq_submitted", {
+          enquiry_type: enquiry.enquiryType,
+          destination: enquiry.enquiryType === "export" ? enquiry.destinationCountry : "India",
+          product_count: enquiry.productSlugs.length,
+        });
       } else {
         console.error("RFQ submit failed:", res.status, await res.text().catch(() => ""));
       }

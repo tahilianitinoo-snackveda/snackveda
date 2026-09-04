@@ -11,8 +11,11 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSeo } from "@/lib/seo";
 
 function OrderDetailInner() {
+  useSeo({ title: "Your Order", noIndex: true });
+
   const [, params] = useRoute("/account/orders/:id");
   const id = params?.id ?? "";
 

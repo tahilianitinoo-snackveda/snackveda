@@ -8,6 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useState } from "react";
+import { useSeo } from "@/lib/seo";
 
 const schema = z.object({
   password: z.string().min(6, "Minimum 6 characters"),
@@ -15,6 +16,8 @@ const schema = z.object({
 }).refine(d => d.password === d.confirm, { message: "Passwords don't match", path: ["confirm"] });
 
 export default function ResetPassword() {
+  useSeo({ title: "Choose a New Password", canonical: "/reset-password", noIndex: true });
+
   const [, setLocation] = useLocation();
   const [loading, setLoading] = useState(false);
   const token = new URLSearchParams(window.location.search).get("token");

@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect } from "react";
+import { useSeo } from "@/lib/seo";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -19,6 +20,8 @@ const loginSchema = z.object({
 });
 
 export default function Login() {
+  useSeo({ title: "Sign In", canonical: "/login", noIndex: true });
+
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const loginMutation = useLoginUser();

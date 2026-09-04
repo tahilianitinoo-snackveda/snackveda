@@ -9,10 +9,13 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useState } from "react";
 import { ArrowLeft } from "lucide-react";
+import { useSeo } from "@/lib/seo";
 
 const schema = z.object({ email: z.string().email("Enter a valid email") });
 
 export default function ForgotPassword() {
+  useSeo({ title: "Reset Your Password", canonical: "/forgot-password", noIndex: true });
+
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
 

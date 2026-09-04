@@ -1,5 +1,6 @@
 import { SiteShell } from "@/components/layout/site-shell";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { useSeo } from "@/lib/seo";
 
 const faqs = [
   {
@@ -61,6 +62,13 @@ const faqs = [
 ];
 
 export default function FAQ() {
+  useSeo({
+    title: "Frequently Asked Questions",
+    description:
+      "Answers on ordering, delivery, wholesale pricing, export enquiries and product information at Narayani Distributors.",
+    canonical: "/faq",
+  });
+
   return (
     <SiteShell>
       <div className="bg-muted/30 py-16 border-b">

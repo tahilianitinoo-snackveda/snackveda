@@ -2,8 +2,16 @@ import { SiteShell } from "@/components/layout/site-shell";
 import { Mail, Phone, MapPin } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useSeo } from "@/lib/seo";
 
 export default function Contact() {
+  useSeo({
+    title: "Contact Narayani Distributors",
+    description:
+      "Get in touch with Narayani Distributors — retail orders, wholesale supply in India and export enquiries.",
+    canonical: "/contact",
+  });
+
   return (
     <SiteShell>
       <div className="container mx-auto px-4 py-16 md:py-24 max-w-5xl">

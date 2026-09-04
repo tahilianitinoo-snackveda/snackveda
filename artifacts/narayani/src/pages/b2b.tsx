@@ -2,8 +2,16 @@ import { SiteShell } from "@/components/layout/site-shell";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Store, TrendingUp, Truck, FileText, BadgeCheck, Shield, Package } from "lucide-react";
+import { useSeo } from "@/lib/seo";
 
 export default function B2B() {
+  useSeo({
+    title: "Wholesale & Business Accounts",
+    description:
+      "Trade accounts, wholesale pricing and business supply from Narayani Distributors.",
+    canonical: "/business",
+  });
+
   return (
     <SiteShell>
       {/* Hero */}

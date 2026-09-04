@@ -14,8 +14,11 @@ import { Link } from "wouter";
 import { EmptyState } from "@/components/ui/empty-state";
 import { toast } from "sonner";
 import { useState } from "react";
+import { useSeo } from "@/lib/seo";
 
 function AccountInner() {
+  useSeo({ title: "Your Account", canonical: "/account", noIndex: true });
+
   const { user, isB2BApproved } = useAuth();
   const { data: profile, isLoading: profileLoading } = useGetMyProfile();
   const { data: orders, isLoading: ordersLoading } = useListMyOrders();

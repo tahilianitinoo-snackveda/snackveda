@@ -33,8 +33,11 @@ const registerSchema = z.object({
 
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect } from "react";
+import { useSeo } from "@/lib/seo";
 
 export default function Register() {
+  useSeo({ title: "Create an Account", canonical: "/register", noIndex: true });
+
   const [location, setLocation] = useLocation();
   const searchParams = new URLSearchParams(window.location.search);
   const initialType = searchParams.get("type") === "b2b" ? "b2b" : "b2c";

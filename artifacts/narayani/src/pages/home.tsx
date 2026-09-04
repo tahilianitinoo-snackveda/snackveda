@@ -12,6 +12,7 @@ import heroImg from "@/assets/images/hero.png";
 import categoryChips from "@/assets/images/category-chips.png";
 import categoryMakhana from "@/assets/images/category-makhana.png";
 import categorySuperpuffs from "@/assets/images/category-superpuffs.png";
+import { useSeo } from "@/lib/seo";
 
 /**
  * The three categories the catalogue actually has. These ids are the
@@ -40,6 +41,13 @@ const CATEGORIES: { id: ProductCategory; label: string; image: string; alt: stri
 ];
 
 export default function Home() {
+  useSeo({
+    title: "Narayani Distributors | Indian Food Products for Every Market",
+    description:
+      "Merchant exporter and distributor of Indian packaged foods — roasted makhana, millet and grain chips and protein superpuffs, for consumers, retailers, distributors and international buyers.",
+    canonical: "/",
+  });
+
   const { data: products, isLoading } = useListProducts();
   const featuredProducts = products?.slice(0, 6) || [];
 

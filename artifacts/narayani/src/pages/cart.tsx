@@ -7,8 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Minus, Plus, Trash2, ArrowRight, ShoppingBag } from "lucide-react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useSeo } from "@/lib/seo";
 
 export default function Cart() {
+  useSeo({ title: "Your Cart", canonical: "/cart", noIndex: true });
+
   const { items, updateQty, removeItem } = useCartStore();
   const { isB2BApproved } = useAuth();
 

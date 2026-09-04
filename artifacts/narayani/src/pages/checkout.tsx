@@ -15,6 +15,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { Loader2, ArrowLeft, Building2, QrCode } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useSeo } from "@/lib/seo";
 
 const checkoutSchema = z.object({
   shippingName: z.string().min(2, "Name is required"),
@@ -29,6 +30,8 @@ const checkoutSchema = z.object({
 });
 
 function CheckoutInner() {
+  useSeo({ title: "Checkout", canonical: "/checkout", noIndex: true });
+
   const { items, orderType, clearCart } = useCartStore();
   const { isB2BApproved } = useAuth();
   const [, setLocation] = useLocation();

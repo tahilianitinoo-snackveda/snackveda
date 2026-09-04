@@ -18,6 +18,7 @@ import Export from "@/pages/export";
 import Wholesale from "@/pages/wholesale";
 import PrivateLabel from "@/pages/private-label";
 import Quality from "@/pages/quality";
+import Catalogue from "@/pages/catalogue";
 import RequestAQuote from "@/pages/request-a-quote";
 import About from "@/pages/about";
 import FAQ from "@/pages/faq";
@@ -71,6 +72,7 @@ function Router() {
       <Route path="/wholesale" component={Wholesale} />
       <Route path="/private-label" component={PrivateLabel} />
       <Route path="/quality" component={Quality} />
+      <Route path="/catalogue" component={Catalogue} />
       <Route path="/export" component={Export} />
       {/* The conversion point every B2B call to action lands on. */}
       <Route path="/request-a-quote" component={RequestAQuote} />

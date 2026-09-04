@@ -151,6 +151,24 @@ export const productImagesTable = pgTable("product_images", {
 });
 
 /**
+ * Who asked for the wholesale and export catalogue — spec point 20.
+ *
+ * The details are collected once and the download happens immediately after. This
+ * is a lead capture, not a paywall: nothing is approved and nothing is withheld.
+ */
+export const catalogueLeadsTable = pgTable("catalogue_leads", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  fullName: text("full_name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone").notNull(),
+  companyName: text("company_name"),
+  country: text("country"),
+  interest: text("interest"),
+  sourcePath: text("source_path"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
  * Customer reviews of a product.
  *
  * Moderated: a review is `pending` until an admin approves it, and only approved

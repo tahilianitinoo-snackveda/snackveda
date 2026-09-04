@@ -36,6 +36,7 @@ const MOBILE_LINKS = [
   { href: "/wholesale", label: "Wholesale" },
   { href: "/export", label: "Export" },
   { href: "/private-label", label: "Private Label" },
+  { href: "/catalogue", label: "Catalogue" },
   ...SECONDARY_LINKS,
 ];
 
@@ -62,6 +63,7 @@ export function SiteHeader() {
     "/wholesale",
     "/export",
     "/private-label",
+    "/catalogue",
     "/request-a-quote",
   ].some((href) => location === href || location.startsWith(`${href}/`));
 
@@ -153,6 +155,9 @@ export function SiteHeader() {
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href="/private-label">Private Label</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/catalogue">Download catalogue</Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>

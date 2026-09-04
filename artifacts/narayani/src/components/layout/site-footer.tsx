@@ -76,6 +76,7 @@ export function SiteFooter() {
               <li><Link href="/wholesale" className="hover:text-foreground transition-colors">Wholesale</Link></li>
               <li><Link href="/export" className="hover:text-foreground transition-colors">Export / International</Link></li>
               <li><Link href="/private-label" className="hover:text-foreground transition-colors">Private Label</Link></li>
+              <li><Link href="/catalogue" className="hover:text-foreground transition-colors">Download Catalogue</Link></li>
               <li><Link href="/request-a-quote" className="hover:text-foreground transition-colors">Request a Quote</Link></li>
             </ul>
           </div>

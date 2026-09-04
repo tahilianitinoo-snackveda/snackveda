@@ -18,11 +18,12 @@ import { computeQuote, type QuoteItem } from "./_lib/pricing";
 import {
   usersTable, productsTable, productImagesTable, addressesTable,
   ordersTable, orderItemsTable, paymentsTable, invoicesTable, blogPostsTable,
-  quoteEnquiriesTable, siteSettingsTable, productReviewsTable,
+  quoteEnquiriesTable, siteSettingsTable, productReviewsTable, catalogueLeadsTable,
 } from "./_lib/schema";
 import { signToken, verifyToken, profileUser } from "./_lib/auth";
 import { sendEmail, sendSMS, emailBase, notifyRegistration, notifyOrderPlaced, notifyShipping, notifyQuoteEnquiry } from "./_lib/notify";
 import { formatOrderNumber, formatInvoiceNumber, orderNumberPrefix, formatEnquiryReference } from "./_lib/orderNumbers";
+import { slugify, estimateReadMinutes } from "./_lib/content";
 
 // ─── DB ───────────────────────────────────────────────────────────────────────
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -210,21 +211,6 @@ function serializeBlogPost(p: typeof blogPostsTable.$inferSelect, withContent = 
     createdAt: p.createdAt.toISOString(),
     updatedAt: p.updatedAt.toISOString(),
   };
-}
-
-function slugify(value: string) {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .slice(0, 90);
-}
-
-function estimateReadMinutes(content: string) {
-  const words = content.trim().split(/\s+/).filter(Boolean).length;
-  return Math.max(1, Math.round(words / 200));
 }
 
 const xmlEscape = (s: string) =>
@@ -479,6 +465,7 @@ export default async function handler(req, res) {
         "/b2b",
         "/about",
         "/quality",
+        "/catalogue",
         "/blog",
         "/faq",
         "/contact",
@@ -525,6 +512,61 @@ export default async function handler(req, res) {
         .map(e => `  <url>\n    <loc>${xmlEscape(e.loc)}</loc>\n    <lastmod>${e.lastmod}</lastmod>\n    <changefreq>${e.changefreq}</changefreq>\n    <priority>${e.priority}</priority>\n  </url>`)
         .join("\n")}\n</urlset>`;
       return sendRaw(xml, "application/xml; charset=utf-8");
+    }
+
+    // ── CATALOGUE (spec point 20) ────────────────────────────────────────────
+    // Public. Records who asked, then returns the catalogue data in the same
+    // response — the details are a lead capture, not a gate, and nobody waits for
+    // approval. A failure to record the lead must never withhold the catalogue.
+    if (path === "/catalogue" && method === "POST") {
+      const b = CatalogueLeadBody.safeParse(parsedBody);
+      if (!b.success) {
+        const first = b.error.issues[0];
+        return err(first ? `${first.path.join(".")}: ${first.message}` : "Invalid details", "VALIDATION_ERROR", 400);
+      }
+      const db = getDb();
+
+      try {
+        await db.insert(catalogueLeadsTable).values({
+          fullName: b.data.fullName,
+          email: b.data.email,
+          phone: b.data.phone,
+          companyName: b.data.companyName || null,
+          country: b.data.country || null,
+          interest: b.data.interest || null,
+          sourcePath: b.data.sourcePath || null,
+        });
+      } catch (e: any) {
+        console.error("Catalogue lead not recorded:", e?.message);
+      }
+
+      // Active products only, and NO b2bPrice. The catalogue is handed to anyone
+      // who fills in a form; the trade price list is not public and is quoted
+      // against an enquiry. Prices here are retail, and the specification fields
+      // are what a business buyer actually needs to shortlist.
+      const rows = await db.select().from(productsTable)
+        .where(eq(productsTable.status, "active"))
+        .orderBy(asc(productsTable.category), asc(productsTable.name));
+
+      const settings = await loadSettings(db);
+      const company: Record<string, string> = {};
+      for (const key of ["legal_name", "registered_address", "support_email", "support_phone",
+                         "gstin", "fssai", "iec", "apeda_rcmc"]) {
+        if (settings[key]) company[key] = settings[key];
+      }
+
+      return ok({
+        generatedAt: new Date().toISOString(),
+        company,
+        products: rows.map(p => ({
+          name: p.name, slug: p.slug, category: p.category, variant: p.variant,
+          brand: p.brand, weightGrams: p.weightGrams, cartonQty: p.cartonQty,
+          shelfLifeMonths: p.shelfLifeMonths, hsnCode: p.hsnCode,
+          gstPercent: Number(p.gstPercent), b2cPrice: Number(p.b2cPrice),
+          mrp: p.mrp == null ? null : Number(p.mrp),
+          wholesaleAvailable: p.wholesaleAvailable, exportAvailable: p.exportAvailable,
+        })),
+      }, 201);
     }
 
     // ── PRODUCT REVIEWS ──────────────────────────────────────────────────────
@@ -1080,6 +1122,17 @@ export default async function handler(req, res) {
         return ok({ ok: true, status: "dispatched", orderId: updatedOrder.id });
       }
 
+      // ── CATALOGUE LEADS (admin) ────────────────────────────────────────────
+      if (path === "/admin/catalogue-leads" && method === "GET") {
+        const rows = await db.select().from(catalogueLeadsTable)
+          .orderBy(desc(catalogueLeadsTable.createdAt));
+        return ok(rows.map(l => ({
+          id: l.id, fullName: l.fullName, email: l.email, phone: l.phone,
+          companyName: l.companyName, country: l.country, interest: l.interest,
+          sourcePath: l.sourcePath, createdAt: l.createdAt.toISOString(),
+        })));
+      }
+
       // ── REVIEWS (admin moderation) ─────────────────────────────────────────
       if (path === "/admin/reviews" && method === "GET") {
         const rows = await db.select({
@@ -1298,6 +1351,21 @@ async function loadSettings(db: ReturnType<typeof getDb>): Promise<Record<string
   for (const r of rows) out[r.key] = (r.value || "").trim();
   return out;
 }
+
+/**
+ * The details asked for before the catalogue downloads — spec point 20.
+ * Three required fields and no more: a form that asks for eight is a form a buyer
+ * abandons, and the catalogue is meant to be given away.
+ */
+const CatalogueLeadBody = z.object({
+  fullName: z.string().trim().min(2, "Your name, please").max(120),
+  email: z.string().trim().email("Enter an email we can reach you on").max(160),
+  phone: z.string().trim().min(8).max(24).regex(/^[+\d][\d\s().-]{6,}$/, "Enter a phone number"),
+  companyName: z.string().trim().max(120).optional(),
+  country: z.string().trim().max(80).optional(),
+  interest: z.string().trim().max(200).optional(),
+  sourcePath: z.string().trim().max(200).optional(),
+});
 
 /**
  * A submitted review. The body is optional: a customer who gives four stars and

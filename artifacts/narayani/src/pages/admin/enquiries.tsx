@@ -63,6 +63,18 @@ interface Enquiry {
   createdAt: string;
 }
 
+/** Somebody who gave their details to download the catalogue — spec point 20. */
+interface CatalogueLead {
+  id: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  companyName: string | null;
+  country: string | null;
+  interest: string | null;
+  createdAt: string;
+}
+
 const STATUSES = ["new", "contacted", "quoted", "won", "lost"] as const;
 
 /** Colour carries the same meaning as the word, for scanning a long list. */
@@ -192,6 +204,17 @@ function EnquiriesInner() {
     },
   });
 
+  const { data: catalogueLeads } = useQuery<CatalogueLead[]>({
+    queryKey: ["admin-catalogue-leads"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/catalogue-leads", {
+        headers: { Authorization: `Bearer ${token()}` },
+      });
+      if (!res.ok) return [];
+      return res.json();
+    },
+  });
+
   const setStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const res = await fetch(`/api/admin/rfq/${id}`, {
@@ -218,6 +241,55 @@ function EnquiriesInner() {
           Wholesale and export enquiries from the Request a Quote form
         </p>
       </div>
+
+      {/*
+        Catalogue downloads are leads too, and they were invisible: somebody who
+        gives you their name, email and phone to get your catalogue is further down
+        the funnel than a visitor, and nothing surfaced them.
+      */}
+      {catalogueLeads && catalogueLeads.length > 0 && (
+        <details className="mb-8 rounded-xl border bg-card p-5 shadow-sm">
+          <summary className="cursor-pointer font-semibold">
+            Catalogue downloads ({catalogueLeads.length})
+          </summary>
+          <p className="mt-2 text-sm text-muted-foreground">
+            People who gave their details to download the wholesale &amp; export catalogue.
+            Not enquiries — but they went looking for one.
+          </p>
+          <div className="mt-4 overflow-hidden rounded-lg border">
+            <Table>
+              <TableHeader className="bg-muted/50">
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Contact</TableHead>
+                  <TableHead>Company</TableHead>
+                  <TableHead>Looking for</TableHead>
+                  <TableHead>When</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {catalogueLeads.map((lead) => (
+                  <TableRow key={lead.id}>
+                    <TableCell className="font-medium">
+                      {lead.fullName}
+                      {lead.country && (
+                        <div className="text-xs font-normal text-muted-foreground">{lead.country}</div>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      <a href={`mailto:${lead.email}`} className="hover:underline">{lead.email}</a>
+                      <div className="text-xs text-muted-foreground">{lead.phone}</div>
+                    </TableCell>
+                    <TableCell className="text-sm">{lead.companyName || "—"}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{lead.interest || "—"}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{formatDate(lead.createdAt)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </details>
+      )}
 
       <Tabs value={filter} onValueChange={setFilter} className="mb-6">
         <TabsList>

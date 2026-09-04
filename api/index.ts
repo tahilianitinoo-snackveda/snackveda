@@ -979,7 +979,37 @@ export default async function handler(req, res) {
         const [ls] = await db.select({ c: sql<number>`count(*)::int` }).from(productsTable).where(sql`stock_qty < 20`);
         const recent = await db.select().from(ordersTable).orderBy(desc(ordersTable.createdAt)).limit(10);
         const [cu] = await db.select({ c: sql<number>`count(*)::int` }).from(usersTable).where(eq(usersTable.role, "b2c_customer"));
-        const catData = [{ name: "Chips", orders: 0 }, { name: "Makhana", orders: 0 }, { name: "Superpuffs", orders: 0 }];
+        /*
+          Units sold per category. This used to be three hardcoded zeros —
+          [{name:"Chips",orders:0},…] — so the dashboard's only chart could never
+          show anything however many orders were placed. It was also keyed wrong:
+          the chart reads `category` and `quantity`, and the placeholder sent `name`
+          and `orders`, so even real numbers in that shape would have rendered an
+          empty plot with no axis labels.
+
+          Every category is returned even at zero, so the chart keeps a stable set
+          of bars rather than rearranging itself as the first orders come in.
+        */
+        const sold = await db
+          .select({
+            category: sql<string>`${productsTable.category}::text`,
+            quantity: sql<number>`coalesce(sum(${orderItemsTable.quantity}),0)::int`,
+          })
+          .from(orderItemsTable)
+          .innerJoin(productsTable, eq(productsTable.id, orderItemsTable.productId))
+          .innerJoin(ordersTable, eq(ordersTable.id, orderItemsTable.orderId))
+          .where(sql`${ordersTable.status} <> 'cancelled'`)
+          .groupBy(productsTable.category);
+
+        const CATEGORY_LABEL: Record<string, string> = {
+          healthy_chips: "Healthy Chips", makhana: "Makhana", superpuffs: "Superpuffs",
+        };
+        const soldByCategory = new Map(sold.map(r => [r.category, r.quantity]));
+        const catData = Object.entries(CATEGORY_LABEL).map(([key, label]) => ({
+          category: label,
+          quantity: soldByCategory.get(key) ?? 0,
+        }));
+
         return ok({ thisMonthRevenue: mr.total, todayOrdersCount: tc.c, totalCustomers: cu.c, lowStockCount: ls.c, pendingPayments: pp.c, recentOrders: recent.map(o => ({ id: o.id, orderNumber: o.orderNumber, orderType: o.orderType, status: o.status, totalAmount: Number(o.totalAmount), createdAt: o.createdAt.toISOString() })), ordersByCategory: catData });
       }
       if (path === "/admin/products" && method === "GET") {

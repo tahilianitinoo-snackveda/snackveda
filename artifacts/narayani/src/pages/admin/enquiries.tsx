@@ -10,7 +10,7 @@
  * admin/products.tsx: `/admin/rfq` is not in lib/api-spec/openapi.yaml yet, and
  * hand-editing anything under generated/ is forbidden by CLAUDE.md.
  */
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { AdminShell } from "@/components/layout/admin-shell";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -331,10 +331,17 @@ function EnquiriesInner() {
                 </TableCell>
               </TableRow>
             ) : (
+              /*
+                A Fragment with a key, not a bare <>. Each enquiry renders TWO rows
+                when it is expanded — the summary and the detail — and a keyless
+                fragment leaves React with no stable identity for the pair. It warns,
+                and when a row is expanded or the filter changes it can reuse the
+                wrong element, which shows up as one enquiry's detail appearing under
+                another's heading.
+              */
               rows.map((e) => (
-                <>
+                <Fragment key={e.id}>
                   <TableRow
-                    key={e.id}
                     className="cursor-pointer"
                     onClick={() => setExpanded(expanded === e.id ? null : e.id)}
                   >
@@ -388,13 +395,13 @@ function EnquiriesInner() {
                     </TableCell>
                   </TableRow>
                   {expanded === e.id && (
-                    <TableRow key={`${e.id}-detail`}>
+                    <TableRow>
                       <TableCell colSpan={7} className="p-0">
                         <EnquiryDetail enquiry={e} />
                       </TableCell>
                     </TableRow>
                   )}
-                </>
+                </Fragment>
               ))
             )}
           </TableBody>
